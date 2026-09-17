@@ -70,8 +70,11 @@ with sync_playwright() as p:
     ok(pg.evaluate("(i)=>tmpById(i).status", tid) == '已反馈', '提交反馈后状态 → 已反馈')
     ok(bool(pg.evaluate("(i)=>tmpById(i).fbAt", tid)), '反馈时间已记录')
 
-    # 首页行动区
+    # 首页行动区（分页后临时任务不一定在第 1 页，先翻到含临时任务的页）
     pg.evaluate("()=>showPage('home')"); pg.wait_for_timeout(400)
+    tp = pg.evaluate("()=>{var L=homeActList();for(var i=0;i<L.length;i++){if(L[i].source==='临时任务')return Math.floor(i/HOME_ACT_PS)+1;}return 1;}")
+    if tp > 1:
+        pg.evaluate("(p)=>homeActPage(p)", tp); pg.wait_for_timeout(300)
     tags = pg.eval_on_selector_all(".act-item .tag", "e=>e.map(x=>x.textContent.trim())")
     ok('临时任务' in tags, '首页行动区出现「临时任务」标签（当前标签：%s）' % tags)
     ok(pg.evaluate("()=>taskTodos().every(function(t){return t.executor===TMP_ME;})"),

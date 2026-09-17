@@ -153,8 +153,10 @@ with sync_playwright() as p:
     ok(any('设备保养' in t for t in items), '首页行动区出现「设备保养」条目')
     first = pg.eval_on_selector(".act-item", "e=>e.className")
     ok('act-urgent' in first, '超期保养项置顶且整行标红（class=%s）' % first)
-    ok(pg.evaluate("()=>document.querySelectorAll('.act-item').length") >= 6,
-       '行动区条目数增加（静态 5 条 + 保养待办）')
+    ok(pg.evaluate("()=>document.querySelectorAll('.act-item').length") == 5,
+       '行动区分页：每页固定 5 条')
+    ok(pg.evaluate("()=>homeActList().length") >= 6,
+       '行动区总条目 ≥ 6（静态 + 保养待办，实际 %d）' % pg.evaluate("()=>homeActList().length"))
 
     print('\n=== 八、一键重置 ===')
     pg.evaluate("()=>wzReset()"); pg.wait_for_timeout(400)
