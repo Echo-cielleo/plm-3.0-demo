@@ -62,10 +62,19 @@ with sync_playwright() as p:
     ok(len(rows) == 12, '台账 12 行（每台设备 1 条保养要求）实际 %d' % len(rows))
     dues = [r['due'] for r in rows]
     ok(dues == sorted(dues), '默认按下次到期日升序（%s … %s）' % (dues[0], dues[-1]))
-    ok(rows[0]['st'] == '逾期', '最前一条为逾期（due=%s）' % rows[0]['due'])
-    ok(sum(1 for r in rows if r['st'] == '逾期') == 1, '逾期 1 台')
-    ok(sum(1 for r in rows if r['st'] == '临期') == 6, '临期 6 台（实际 %d）'
-       % sum(1 for r in rows if r['st'] == '临期'))
+    # 2026-09-17：状态灯随运行日浮动（临期台数会一天天变多），改为断言「与规则一致」而非硬编码台数
+    ok(rows[0]['left'] == min(r['left'] for r in rows),
+       '首行为到期日最近的一条（due=%s，剩余 %d 天）' % (rows[0]['due'], rows[0]['left']))
+    bad = [r['eq'] + '=' + r['st'] for r in rows
+           if r['st'] != ('逾期' if r['left'] < 0 else ('临期' if r['left'] <= r['lead'] else '正常'))]
+    ok(not bad, '每行状态灯与规则一致（left<0 逾期 / left≤lead 临期 / 其余正常）'
+       + ('，不符：' + '、'.join(bad) if bad else ''))
+    n_over = sum(1 for r in rows if r['st'] == '逾期')
+    n_soon = sum(1 for r in rows if r['st'] == '临期')
+    ok(n_over == sum(1 for r in rows if r['left'] < 0), '逾期台数 = left<0 的台数（%d 台）' % n_over)
+    ok(n_over + n_soon + sum(1 for r in rows if r['st'] == '正常') == len(rows),
+       '逾期 %d / 临期 %d / 正常 %d，合计 %d 台'
+       % (n_over, n_soon, len(rows) - n_over - n_soon, len(rows)))
     txt = pg.inner_text('#pageHost')
     ok('逾期' in txt and '临期' in txt, '台账副标题显示逾期 / 临期统计')
     ok(pg.eval_on_selector_all("#lpHost table tbody tr", "els=>els.length") > 0, '台账表格渲染出数据行')

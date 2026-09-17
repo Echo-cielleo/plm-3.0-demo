@@ -76,8 +76,7 @@ with sync_playwright() as p:
     ok('临时任务' in tags, '首页行动区出现「临时任务」标签（当前标签：%s）' % tags)
     ok(pg.evaluate("()=>taskTodos().every(function(t){return t.executor===TMP_ME;})"),
        '行动区只出现指派给当前用户的临时任务')
-    ok(pg.evaluate("()=>taskTodos().every(function(t){return t.status!=='已反馈';})")
-       if False else pg.evaluate("()=>taskTodos().every(function(t){return tmpById(t.id||'')||true;})"),
+    ok(pg.evaluate("()=>taskTodos().every(function(t){return t.status!=='已反馈';})"),
        '行动区按状态过滤（已反馈不再出现）')
     ok(pg.evaluate("()=>typeof homeActGo({fn:\"x()\"})==='string' && homeActGo({fn:\"x()\"})==='x()'"),
        '行动区按钮支持 fn（直接开反馈弹窗）')
@@ -136,7 +135,7 @@ with sync_playwright() as p:
 
     # AI 只围绕所选参数
     pg.evaluate("()=>{_anaChart='bar';anaSetMode('ai');anaGen();}"); pg.wait_for_timeout(600)
-    txt = pg.eval_on_selector("#anAnswerBox", "e=>e.textContent")
+    txt = pg.eval_on_selector("#aiAnswerBox", "e=>e.textContent")
     ok(len(txt) > 200, 'AI 已产出结论（%d 字）' % len(txt))
     labels = pg.evaluate("()=>anaSelParams().map(function(p){return p.label;})")
     ok(all(l in txt for l in labels), 'AI 结论覆盖全部所选参数：%s' % labels)
@@ -148,7 +147,7 @@ with sync_playwright() as p:
     ok(pg.eval_on_selector_all(".an-mode", "e=>e.length") == 0, '「问问 AI」入口锁定 AI，不出现统计工具切换')
     ok(pg.eval_on_selector_all(".ai-preset", "e=>e.length") == 2, '预置 2 条演示问题')
     pg.evaluate("()=>anaAskPreset(1)"); pg.wait_for_timeout(400)
-    ok(len(pg.eval_on_selector("#anAnswerBox", "e=>e.textContent")) > 100, '预置问题可出结论')
+    ok(len(pg.eval_on_selector("#aiAnswerBox", "e=>e.textContent")) > 100, '预置问题可出结论')
     pg.evaluate("()=>anaCloseModal()"); pg.wait_for_timeout(250)
 
     # ==================== ③ 实验目的必填校验 ====================

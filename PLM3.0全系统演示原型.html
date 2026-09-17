@@ -13640,6 +13640,8 @@ function openSumAnalysis(sumId, entry){
   }
   if(!_anaSelKeys.length) _anaSelKeys = anaDefaultKeys(_anaParams);
 
+  /* 24z4 的下游（aiReportHtml / aiCtxList / aiSaveReport）依赖这两个全局，打开即对齐 */
+  _aiSum = _anaSum; _aiIds = _anaSelIds.slice();
   _anaResult = null; _anaAnswer = '';
   anaRenderModal();
 }
@@ -13759,7 +13761,8 @@ function anaAiHtml(){
          '<input class="input" id="anQuestion" placeholder="围绕所选参数提问，例如：温度对耐干擦的影响大吗？">' +
          '<button class="btn btn-primary" onclick="anaAskFree()">' + aiSparkIcon() + ' 提问</button></div>';
   }
-  h += '<div id="anAnswerBox">' + (_anaAnswer || '') + '</div></div>';
+  /* 沿用 24z4 的 #aiAnswerBox，使既有问答样式与自检选择器保持一致 */
+  h += '<div id="aiAnswerBox" class="ai-answer-box">' + (_anaAnswer || '') + '</div></div>';
   return h;
 }
 function anaStatHtml(){
@@ -13831,16 +13834,21 @@ function anaGen(){
   if(!ps.length){ toast('请至少勾选 1 个分析参数', 'warn'); return; }
   if(_anaMode === 'ai'){
     _anaResult = 'ai';
-    _aiSum = _anaSum; _aiIds = _anaSelIds.slice();      /* 供 aiSaveReport 使用 */
+    _aiSum = _anaSum; _aiIds = _anaSelIds.slice();      /* 供 aiSaveReport / aiCtxList 使用 */
     _aiReportDraft = {sumId: _anaSum.id, expIds: _anaSelIds.slice(), createdAt: nowStr()};
-    _anaAnswer = '<div class="ai-answer"><div class="ai-avatar">AI</div><div><p>' +
+    /* AI 结论只围绕所选参数；报表入口额外附 24z4 的投料 / 工艺步骤 / 结果三段作为数据支撑 */
+    var concl = '<div class="ai-answer"><div class="ai-avatar">AI</div><div><p>' +
                  anaAiText() + '</p>' +
                  '<p class="ai-source">数据来源：' + _anaSelIds.map(esc).join('、') +
-                 ' · 总结报告 ' + esc(_anaSum.id) + ' · 参数 ' +
+                 ' · 总结报告 ' + esc(_anaSum.id) + ' · 所选参数 ' +
                  ps.map(function(p){ return esc(p.label); }).join('、') + '</p></div></div>' +
                  '<div class="ai-disclaimer">结论只基于所选参数给出，未做全量数据分析；仅供参考。</div>';
-    var b = $('anAnswerBox'); if(b) b.innerHTML = _anaAnswer;
-    toast('已生成 AI 分析结论（' + ps.length + ' 个参数）', 'ok');
+    _anaAnswer = (_anaEntry === 'report') ? (concl + aiReportHtml(_aiSum, _aiIds)) : concl;
+    var b = $('aiAnswerBox'); if(b) b.innerHTML = _anaAnswer;
+    if(_anaEntry === 'report') setTimeout(aiRenderCharts, 30);
+    toast(_anaEntry === 'report'
+            ? ('已生成智能分析报表（' + ps.length + ' 个参数 + 投料/工艺/结果三段）')
+            : ('已生成 AI 分析结论（' + ps.length + ' 个参数）'), 'ok');
   }else{
     _anaResult = 'stat';
     _aiSum = _anaSum; _aiIds = _anaSelIds.slice();
@@ -13865,7 +13873,7 @@ function anaAskPreset(i){
                '<p class="ai-source">数据来源：' + _anaSelIds.map(esc).join('、') +
                ' · 总结报告 ' + esc(_anaSum.id) + '</p></div></div>' +
                '<div class="ai-disclaimer">结论只基于所选参数给出，未做全量数据分析；仅供参考。</div>';
-  var b = $('anAnswerBox'); if(b) b.innerHTML = _anaAnswer;
+  var b = $('aiAnswerBox'); if(b) b.innerHTML = _anaAnswer;
   anaSaveCache();
 }
 function anaAskFree(){
@@ -13885,7 +13893,7 @@ function anaAskFree(){
                ' · 总结报告 ' + esc(_anaSum.id) + '</p></div></div>' +
                '<div class="ai-disclaimer">结论只基于所选参数给出，未做全量数据分析；如需更聚焦的结论，' +
                '可在左栏收窄参数范围后重新分析。</div>';
-  var b = $('anAnswerBox'); if(b) b.innerHTML = _anaAnswer;
+  var b = $('aiAnswerBox'); if(b) b.innerHTML = _anaAnswer;
   anaSaveCache();
 }
 

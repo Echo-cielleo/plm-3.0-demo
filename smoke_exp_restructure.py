@@ -187,7 +187,10 @@ with sync_playwright() as pw:
     n1 = pg.evaluate("()=>experiments.length")
     pg.evaluate("showPage('exp:list')"); pg.wait_for_timeout(500)
     pg.evaluate("openNewNormalExp()"); pg.wait_for_timeout(400)
-    pg.evaluate("()=>{document.getElementById('neName').value='自检用普通实验';document.getElementById('neRuns').value='4';}")
+    # 2026-09-17：24z6 起「实验目的」必填（≥5 字），自检须一并填上，否则会被正常拦截
+    pg.evaluate("()=>{document.getElementById('neName').value='自检用普通实验';"
+                "document.getElementById('nePurpose').value='验证该工艺在大生产条件下的稳定性与重现性';"
+                "document.getElementById('neRuns').value='4';}")
     pg.evaluate("saveNewNormalExp()"); pg.wait_for_timeout(600)
     ok(pg.evaluate("()=>experiments.length") == n1 + 1, "新增 1 条普通实验记录")
     ok(pg.evaluate("()=>experiments[0].source==='普通'"), "新记录来源为「普通」")
