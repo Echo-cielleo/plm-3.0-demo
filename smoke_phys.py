@@ -89,15 +89,19 @@ with sync_playwright() as pw:
     g2 = pg.eval_on_selector_all('.ph-group h4', 'els=>els.map(e=>e.innerText.trim())')
     ok('酶活力' in g2 and '特征成分含量' not in g2,
        "酶制剂类：有「酶活力」、无「特征成分含量」（%s）" % "、".join(g2))
-    e1 = pg.eval_on_selector_all('.ph-grid .ph-item', 'els=>els.length')
-    ok(e1 == 12, "酶制剂类产品渲染 12 张指标卡片（实际 %d）" % e1)
-    ok(pg.eval_on_selector_all('.ph-grid', 'els=>els.length') >= 1, "指标区为两列卡片网格")
+    e1 = pg.eval_on_selector_all('.ph-table tbody tr.ph-item', 'els=>els.length')
+    ok(e1 == 12, "酶制剂类产品渲染 12 行指标（实际 %d）" % e1)
+    ok(pg.eval_on_selector_all('.ph-table table', 'els=>els.length') >= 1, "指标区为分组表格（方案A）")
     ok(pg.eval_on_selector_all('table.ph-tbl', 'els=>els.length') == 0, "已不再使用旧三列表格")
+    ths = pg.eval_on_selector_all('.ph-table thead th', 'els=>els.map(e=>e.innerText.trim()).slice(0,5)')
+    ok(ths == ['指标', '标准值', '实测值', '来源', '操作'], "表头五列：%s" % " / ".join(ths))
     ok(pg.eval_on_selector_all('.ph-item .ph-item-v', 'els=>els.length') == 12,
-       "每张卡片只承载一个指标值")
+       "每行只承载一个指标值")
     ok(pg.eval_on_selector_all('.ph-item-v.wait', 'els=>els.length') == 1,
        "未填值的指标渲染为「待填」（不显示 N/A 空行）")
-    failtxt = pg.eval_on_selector_all('.ph-grid', 'els=>els.map(e=>e.innerText)')
+    ok(pg.eval_on_selector_all('.ph-row-wait', 'els=>els.length') == 1,
+       "待填项整行置灰（.ph-row-wait）")
+    failtxt = pg.eval_on_selector_all('.ph-table', 'els=>els.map(e=>e.innerText)')
     ok('Not available' not in ''.join(failtxt) and 'N/A' not in ''.join(failtxt),
        "详情页无 N/A / Not available 字样")
 

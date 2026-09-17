@@ -96,13 +96,14 @@ with sync_playwright() as pw:
     ok(pg.evaluate("()=>curPage") == 'prod:detail', "点行仍可进入产品详情")
     ok('所属目录' in pg.inner_text('#pageHost'), "详情页基本信息含「所属目录」")
 
-    print("\n== 6. 理化性质区两列卡片（D1） ==")
+    print("\n== 6. 理化性质区分组表格（第二十七轮 · 方案A） ==")
     pg.evaluate("()=>showPage('prod:detail',{code:'PRD-2026-001'})")
     pg.wait_for_timeout(800)
-    ok(pg.eval_on_selector_all('.ph-grid .ph-item', 'els=>els.length') >= 20,
-       "指标渲染为卡片网格（%d 张）" % pg.eval_on_selector_all('.ph-grid .ph-item', 'e=>e.length'))
-    ok(pg.eval_on_selector_all('table.ph-tbl', 'els=>els.length') == 0, "旧三列表格已移除")
-    ok('标准值' not in pg.inner_text('.ph-grid'), "卡片区不再出现「标准值」列")
+    ok(pg.eval_on_selector_all('.ph-table tbody tr.ph-item', 'els=>els.length') >= 20,
+       "指标渲染为分组表格（%d 行）" % pg.eval_on_selector_all('.ph-table tbody tr.ph-item', 'e=>e.length'))
+    ok(pg.eval_on_selector_all('table.ph-tbl', 'els=>els.length') == 0, "旧三列表格仍已移除")
+    ths = pg.eval_on_selector_all('.ph-table thead th', 'els=>els.map(e=>e.innerText.trim()).slice(0,5)')
+    ok(ths == ['指标', '标准值', '实测值', '来源', '操作'], "表头五列（标准/实测同列对齐）")
     ok(pg.eval_on_selector_all('.src-chip', 'els=>els.length') == 0, "来源不再用彩色色块")
     ok(pg.eval_on_selector_all('.ph-src', 'els=>els.length') > 0,
        "来源以浅色小字留痕（%d 条）" % pg.eval_on_selector_all('.ph-src', 'e=>e.length'))

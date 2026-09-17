@@ -37,3 +37,29 @@
 .tbl tbody tr.tmp-row-over:hover{
   background:#fdeeee
 }
+
+/* ==================================================================
+   [27z7] 理化性质 · 分组表格布局（方案 A）
+   表格行复用卡片类名（.ph-item / .ph-item-nm / .ph-item-v / .ph-item-std，
+   保证 smoke 选择器兼容），卡片专用样式在此按 tr 场景重置。
+   ================================================================== */
+.ph-table{margin-top:6px;overflow-x:auto}
+.ph-table tr.ph-item{
+  display:table-row;border:0;border-radius:0;padding:0;background:transparent
+}
+.ph-table td{
+  padding:7px 10px;vertical-align:middle;border-bottom:1px solid var(--line)
+}
+.ph-table tbody tr:last-child td{border-bottom:0}
+.ph-table td.ph-td-name{white-space:nowrap}
+.ph-table td.ph-item-std{
+  display:table-cell;margin:0;font-size:12.5px;flex-wrap:nowrap
+}
+.ph-table td.ph-item-std b{font-weight:600}
+.ph-table tr.ph-row-over{background:var(--danger-bg)}
+.ph-table tr.ph-row-over td{border-bottom-color:#fda29b}
+.ph-table tr.ph-row-wait td{color:var(--muted)}
+.ph-table td.ph-td-val{white-space:nowrap}
+.ph-table td.ph-td-op{white-space:nowrap}
+.ph-table .ph-over-tag{margin-left:6px;vertical-align:middle}
+
