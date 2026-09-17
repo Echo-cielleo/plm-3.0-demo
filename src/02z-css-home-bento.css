@@ -1,0 +1,78 @@
+/* ==================================================================
+   首页 Bento Grid 栅格（G16 · 2026-09-11）
+   · 两列栅格，卡片按重要性占 1~2 栏，高卡片可跨行
+   · 「接下来要做」与「风险预警」同处首屏最上层
+   · 跨行卡片内部条目等高分布，避免大片留白
+   ================================================================== */
+
+.bento{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+  margin-bottom:18px;
+  align-items:stretch;
+}
+.bento>*{min-width:0;margin-bottom:0!important}
+
+/* 位置工具 */
+.b-c1{grid-column:1}
+.b-c2{grid-column:2}
+.b-span2{grid-column:1 / -1}   /* 占满两栏（宽表用） */
+.b-row2{grid-row:span 2}       /* 高卡片跨两行 */
+
+/* 单元格：内部卡片撑满，用于包裹独立函数返回的 .card */
+.bento>.b-cell{display:flex;flex-direction:column}
+.bento>.b-cell>.card{flex:1;margin-bottom:0}
+
+/* 行动区（跨行卡片）：内部纵向 flex，条目等高分摊剩余高度 */
+.b-act{display:flex;flex-direction:column}
+.b-act .act-list{display:flex;flex-direction:column;gap:8px;flex:1}
+.b-act .act-item{flex:0 0 auto;min-height:56px;display:flex;align-items:center;gap:12px;padding:10px 12px;
+  background:#fff;border:1px solid var(--primary-border);border-radius:8px}
+/* 紧急任务：整行浅红底 + 左侧红条，状态不再另挂标签 */
+.b-act .act-item.act-urgent{
+  background:var(--danger-bg);border-color:var(--danger-b);
+  border-left:3px solid var(--danger);
+}
+.b-act .act-item.act-urgent b{color:var(--danger)}
+
+/* KPI 矮条（通栏，横向四格，不占左右列） */
+.kpi-bar>.card-b{padding:12px 16px}
+.kpi-box{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi-box .stat-box{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 14px;
+  border:1px solid var(--line);border-radius:9px;background:var(--card)}
+.kpi-box .stat-box:hover{border-color:var(--primary-border);background:var(--primary-soft)}
+/* 相邻指标之间的分隔线，弱化耦合感 */
+.kpi-box .stat-box+.stat-box{box-shadow:-7px 0 0 -6px var(--line-2)}
+.kpi-box .stat-box .si{font-size:22px;line-height:1;flex:0 0 auto}
+.kpi-box .stat-box .sd{display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi-box .stat-box .sd b{font-size:20px;font-weight:600;line-height:1.2;color:var(--text)}
+.kpi-box .stat-box .sd b small{font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
+.kpi-box .stat-box .sd span{font-size:12.5px;color:var(--muted)}
+
+/* 首页风险预警：去大面积底色 → 白底 + 左侧色条 + 圆形小图标
+   （仅作用于首页，不污染全局 .notice 组件） */
+.alerts-slim .card-b{padding:14px 18px}
+.alerts-slim .notice{
+  background:#fff;border:1px solid var(--line);border-left-width:3px;border-left-style:solid;
+  border-radius:8px;padding:10px 13px;margin-bottom:9px;
+  display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.6;color:var(--muted)
+}
+.alerts-slim .notice b{display:block;color:var(--text);font-weight:600}
+.alerts-slim .notice .ni{
+  width:18px;height:18px;border-radius:50%;display:grid;place-items:center;
+  font-size:11px;font-weight:700;color:#fff;font-style:normal;flex-shrink:0;margin-top:1px
+}
+.alerts-slim .notice-err{border-left-color:var(--danger)}
+.alerts-slim .notice-err .ni{background:var(--danger)}
+.alerts-slim .notice-warn{border-left-color:var(--warning)}
+.alerts-slim .notice-warn .ni{background:var(--warning)}
+.alerts-slim .notice-info{border-left-color:var(--primary)}
+.alerts-slim .notice-info .ni{background:var(--primary)}
+.alerts-slim .notice .btn-link{padding-left:0}
+
+/* 窄屏退化为单列 */
+@media(max-width:1100px){
+  .bento{grid-template-columns:1fr}
+  .b-c1,.b-c2,.b-span2,.b-row2{grid-column:1;grid-row:auto}
+}

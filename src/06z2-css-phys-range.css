@@ -1,0 +1,39 @@
+/* ==================================================================
+   [06z2] 产品理化性质 · 范围值展示（27z5 专用）
+   实测值超出指标上下限时标红；标准值以范围 / ≥ / ≤ 形式显示在实测值下方
+   ================================================================== */
+
+/* 实测值：超范围标红（不拦提交，仅提示） */
+.ph-item-v.ph-over-v{
+  color:#b42318;font-weight:600
+}
+.ph-item-v.ph-over-v::after{
+  content:" ⚠";font-size:11px;font-weight:400
+}
+
+/* 标准值行 */
+.ph-item-std{
+  margin-top:3px;font-size:11.5px;color:var(--muted);
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap
+}
+.ph-item-std b{
+  color:var(--text);font-weight:600;font-variant-numeric:tabular-nums
+}
+.ph-item-std.over b{
+  color:#b42318
+}
+.ph-over-tag{
+  display:inline-block;padding:0 6px;line-height:17px;border-radius:9px;
+  font-size:10.5px;font-weight:600;color:#b42318;background:#fef3f2;
+  border:1px solid #fda29b;white-space:nowrap
+}
+
+/* ==================================================================
+   临时任务（27z6 专用）：超期未反馈的行标浅红底
+   ================================================================== */
+.tbl tbody tr.tmp-row-over{
+  background:#fef6f6
+}
+.tbl tbody tr.tmp-row-over:hover{
+  background:#fdeeee
+}

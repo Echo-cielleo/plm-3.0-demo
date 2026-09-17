@@ -1,0 +1,37 @@
+<!-- =====[10] 应用骨架：侧栏容器 + 顶栏 + 内容宿主 + Modal + Toast ===== -->
+<aside id="sidebar">
+  <div class="brand" onclick="showPage('home')" title="返回个人工作台">
+    <div class="mark">PLM</div>
+    <div class="brand-txt"><b>PLM 3.0</b><small>研发管理平台</small></div>
+  </div>
+  <!-- 侧栏工具条：一键收起 / 展开全部菜单（按钮状态由 syncNavToggleAll() 维护） -->
+  <div class="nav-tools">
+    <button type="button" class="nav-tool-btn" id="navToggleAll" onclick="toggleAllMenu()"
+            title="一键收起所有菜单" aria-expanded="true">
+      <i class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></i>
+      <span class="nav-tool-txt" id="navToggleAllTxt">收起全部菜单</span>
+    </button>
+  </div>
+  <nav class="nav-scroll" id="navScroll"></nav>
+</aside>
+
+<header id="topbar">
+  <button class="nav-toggle" onclick="toggleNav()" title="收起/展开侧边栏">☰</button>
+  <div class="crumb" id="crumb"></div>
+  <div class="topbar-right">
+    <span class="env-chip">演示环境 · 数据为模拟数据</span>
+    <div class="user-chip" onclick="toast('演示原型，暂不支持切换账号','info')">
+      <div class="avatar">王</div>
+      <div class="uinfo">王研究员<small>研发工程师</small></div>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div id="pageHost" class="page-wrap fade-in"></div>
+</main>
+
+<div id="mask" onclick="if(event.target===this)closeModal()">
+  <div id="modal"></div>
+</div>
+<div id="toastWrap"></div>

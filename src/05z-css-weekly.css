@@ -1,0 +1,66 @@
+/* =====[05z] 周报模板（研发人员 / 研究室经理）=====
+   按《研发人员周总结报告》《研究室经理周总结报告》两份 Word 模板重建。
+   角色差异：经理版多「部门管理工作」（按项目负责人归集），少「工作量统计」与文献学习表。 */
+
+/* --- 角色 / 周期切换条 --- */
+.wr-role-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--primary-soft);border:1px solid var(--primary-border);border-radius:var(--radius);margin-bottom:16px;flex-wrap:wrap}
+.wr-role-bar .wr-role-cap{font-size:12.5px;color:var(--text-2)}
+.wr-role-seg{display:inline-flex;background:#fff;border:1px solid var(--line-2);border-radius:var(--radius-sm);overflow:hidden}
+.wr-role-seg button{padding:5px 14px;font-size:13px;color:var(--text-2);border-right:1px solid var(--line-2)}
+.wr-role-seg button:last-child{border-right:none}
+.wr-role-seg button.on{background:var(--primary);color:#fff;font-weight:500}
+.wr-role-bar .wr-period{display:flex;align-items:center;gap:7px;margin-left:auto;font-size:12.5px;color:var(--text-2)}
+.wr-role-bar .wr-period select{padding:3px 8px;border:1px solid var(--line-2);border-radius:var(--radius-xs);background:#fff}
+
+/* --- 文档表头（周总结报告 / 周期 / 姓名·研究室·汇报领导） --- */
+.wr-doc-hd{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:18px}
+.wr-doc-title{text-align:center;font-size:17px;font-weight:600;padding:15px 0 5px}
+.wr-doc-period{text-align:center;font-size:12.5px;color:var(--text-2);padding-bottom:13px}
+.wr-doc-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line)}
+.wr-doc-meta>div{padding:9px 14px;border-right:1px solid var(--line);font-size:13px;min-width:0}
+.wr-doc-meta>div:last-child{border-right:none}
+.wr-doc-meta span{color:var(--muted);font-size:12.5px;margin-right:6px}
+
+/* --- 章节 --- */
+.wr-sec{margin-top:22px}
+.wr-sec>h4{font-size:14.5px;font-weight:600;padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.wr-sec>h4 .sub{font-weight:400;font-size:12.5px;color:var(--muted);margin-left:8px}
+
+/* --- 项目块 --- */
+.wr-proj{margin-bottom:16px}
+.wr-proj:last-child{margin-bottom:0}
+.wr-proj-hd{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;padding:8px 12px;background:var(--bg);border:1px solid var(--line);border-bottom:none;border-radius:var(--radius-sm) var(--radius-sm) 0 0;flex-wrap:wrap}
+.wr-proj-hd em{font-style:normal;color:var(--muted);font-weight:400;font-size:12.5px}
+.wr-proj-bd{border:1px solid var(--line);border-radius:0 0 var(--radius-sm) var(--radius-sm);padding:13px 14px}
+
+/* --- 实验目的 --- */
+.wr-exp{margin-bottom:14px}
+.wr-exp:last-child{margin-bottom:0}
+.wr-exp-hd{font-size:13.5px;font-weight:600;margin-bottom:9px}
+.wr-exp-hd span{font-weight:400;color:var(--muted);font-size:12.5px;margin-left:7px}
+
+/* --- 4 个子小节 --- */
+.wr-sub{margin:0 0 11px 12px;padding-left:13px;border-left:2px solid var(--line-2)}
+.wr-sub:last-child{margin-bottom:0}
+.wr-sub-hd{font-size:13px;font-weight:500;color:var(--text-2);margin-bottom:5px}
+.wr-sub-hd .wr-auto-tag{display:inline-block;margin-left:6px;font-size:11px;font-weight:400;padding:1px 6px;border-radius:3px;background:var(--primary-soft);color:var(--primary);border:1px solid var(--primary-border)}
+.wr-sub-hd .wr-manual-tag{display:inline-block;margin-left:6px;font-size:11px;font-weight:400;padding:1px 6px;border-radius:3px;background:#fafafa;color:var(--muted);border:1px solid var(--line-2)}
+.wr-sub-bd{font-size:13px;line-height:1.8}
+.wr-sub-bd .ctrl{width:100%}
+.wr-sub-bd .ctrl+.wr-auto-note{margin-top:6px}
+
+/* --- 自动带出提示条 --- */
+.wr-auto-note{font-size:12px;color:var(--muted);background:var(--bg);border-radius:var(--radius-xs);padding:6px 9px;margin-top:7px;line-height:1.6}
+
+/* --- 表格内的行内输入 --- */
+.wr-inline-tbl td{padding:5px 8px}
+.wr-inline-tbl td input{width:100%;border:none;background:transparent;padding:2px 3px;border-radius:var(--radius-xs)}
+.wr-inline-tbl td input:focus{background:var(--primary-soft)}
+.wr-inline-tbl .wr-mini{width:74px}
+
+/* --- 工作量统计合计行 --- */
+.wr-sum-row td{background:var(--bg);font-weight:500}
+
+/* --- 只读态（历史周报 / 归档详情） --- */
+.wr-ro .wr-sub-bd{color:var(--text-2)}
+.wr-ro .wr-auto-note{display:none}

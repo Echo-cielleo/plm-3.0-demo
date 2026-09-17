@@ -1,0 +1,29 @@
+/* ==================================================================
+   [06z] 侧栏工具条：一键收起 / 展开全部菜单
+   — 位于品牌区下方、菜单列表上方，不随菜单滚动
+   — 侧栏整体收起（nav-collapsed）时只留图标
+   ================================================================== */
+.nav-tools{
+  flex-shrink:0;padding:9px 10px 8px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.nav-tool-btn{
+  width:100%;display:flex;align-items:center;gap:8px;
+  padding:7px 10px;border:0;border-radius:var(--radius-sm);
+  background:rgba(255,255,255,.07);color:rgba(255,255,255,.76);
+  font-size:12.5px;font-family:inherit;cursor:pointer;
+  transition:background .16s,color .16s;white-space:nowrap;
+}
+.nav-tool-btn:hover{background:rgba(255,255,255,.14);color:#fff}
+.nav-tool-btn .ico{width:16px;height:16px;display:grid;place-items:center;flex-shrink:0}
+.nav-tool-btn .ico svg{
+  width:14px;height:14px;fill:none;stroke:currentColor;
+  stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;
+  transition:transform .2s ease;
+}
+/* 收起状态下箭头翻转 180°，与文案「展开全部菜单」呼应 */
+.nav-tool-btn.is-collapsed .ico svg{transform:rotate(180deg)}
+.nav-tool-txt{flex:1;overflow:hidden;text-overflow:ellipsis;text-align:left}
+body.nav-collapsed .nav-tools{padding:9px 8px 8px}
+body.nav-collapsed .nav-tool-btn{justify-content:center;padding:7px 0}
+body.nav-collapsed .nav-tool-txt{display:none}

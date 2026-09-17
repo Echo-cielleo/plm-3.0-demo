@@ -1,0 +1,124 @@
+# -*- coding: utf-8 -*-
+"""法规统一查询 / 分库维护专项回归，并确认基础数据菜单未被本次修改。"""
+import os
+from playwright.sync_api import sync_playwright
+
+CHROME='/Users/dowell/Library/Caches/ms-playwright/chromium-1223/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'
+URL='file://'+os.path.abspath('PLM3.0全系统演示原型.html')
+passed=failed=0
+def ok(value,message):
+    global passed,failed
+    if value: passed+=1;print('  ✔ '+message)
+    else: failed+=1;print('  ✘ '+message)
+
+with sync_playwright() as pw:
+    browser=pw.chromium.launch(executable_path=CHROME,args=['--no-sandbox'])
+    page=browser.new_context(viewport={'width':1600,'height':1000}).new_page()
+    errors=[]
+    page.on('pageerror',lambda e:errors.append(str(e)))
+    page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+    page.goto(URL,wait_until='load');page.wait_for_timeout(800)
+
+    print('=== 修改边界 ===')
+    bd=page.evaluate("()=>MENU.find(x=>x.id==='bd').children.map(x=>({id:x.id,name:x.name,children:(x.children||[]).map(y=>y.id)}))")
+    ok(bd==[
+        {'id':'bd:mat','name':'原料管理','children':['bd:rawmat','bd:inv']},
+        {'id':'bd:sup','name':'供应商管理','children':['bd:supplier','bd:sup-data']},
+        {'id':'bd:cas','name':'组分与合规','children':['bd:comp','bd:comp-auto','bd:ghs']},
+        {'id':'bd:techcat','name':'关键技术分类','children':[]},
+        {'id':'bd:formula','name':'内置计算公式','children':[]},
+        {'id':'bd:exptpl','name':'实验模板','children':[]},
+        {'id':'bd:phys','name':'理化性质配置','children':['bd:phys-lib','bd:phys-tpl']}
+    ],'基础数据菜单保持 Work Buddy 的最新结构（含 27z1/27z2 新增的理化性质配置）')
+
+    comp=page.evaluate("()=>MENU.find(x=>x.id==='comp').children.map(x=>({id:x.id,name:x.name,children:(x.children||[]).map(y=>y.id)}))")
+    law=next(x for x in comp if x['id']=='law')
+    ok(next(x for x in comp if x['id']=='law:query')['name']=='法规统一查询','合规管理包含独立统一查询入口')
+    ok(law['name']=='法规库维护','维护入口统一命名为法规库维护')
+    ok(law['children']==['law:clp','law:reach','law:cl','law:cn','law:zdhc'],'五个法规库分别进入维护页面')
+
+    print('\n=== 法规统一查询 ===')
+    page.evaluate("showPage('law:query')");page.wait_for_timeout(250)
+    text=page.locator('#pageHost').inner_text()
+    ok('法规统一查询' in text and '统一查询、分库维护' in text,'页面清楚说明查询与维护的分工')
+    ok(page.locator('#lqTable tbody tr').count()==15,'默认跨库展示 15 条法规命中记录')
+    ok(page.locator('#lqSource option').count()==6,'来源筛选包含全部及 5 类法规库')
+    lamps=page.locator('#lqTable .ev')
+    ok(lamps.count()==15 and page.locator('#lqTable .ev-green').count()>0 and page.locator('#lqTable .ev-due').count()>0 and page.locator('#lqTable .ev-red').count()>0,'查询结果同时展示绿、黄、红三色只读证据灯')
+    ok('需改版' in page.locator('#lqKpi').inner_text(),'KPI 展示红灯需改版统计')
+    ok(page.locator('#lqTable').get_by_role('button',name='确认复审').count()==0 and page.locator('#lqTable').get_by_role('button',name='查看新版本 diff').count()==0,'查询页证据灯只读且无维护操作')
+    page.fill('#lqKw','50-00-0');page.wait_for_timeout(100)
+    ok(page.locator('#lqTable tbody tr').count()==6,'按 CAS 50-00-0 一次命中 6 条跨库记录')
+    sources=page.locator('#lqTable tbody tr td:nth-child(4)').all_text_contents()
+    ok(len(set(sources))==6,'同一物质可同时看到 6 个法规来源')
+    page.select_option('#lqSource','zdhc');page.wait_for_timeout(100)
+    ok(page.locator('#lqTable tbody tr').count()==1,'CAS 与法规来源筛选可组合')
+    page.evaluate('lawQueryClear()');page.wait_for_timeout(100)
+    page.locator('#lqTable tbody tr').first.get_by_role('button',name='查看').click();page.wait_for_timeout(120)
+    ok(page.locator('#modal .modal-hd h3').inner_text().startswith('法规命中详情'),'统一查询结果可查看详情')
+    ok('人工验证人' in page.locator('#mBody').inner_text(),'详情展示来源维护和验证信息')
+    detail=page.locator('#mBody').inner_text()
+    ok('复审到期' in detail and 'SCL（特定浓度限值）' in detail and 'M=10' in detail and '口服 ATE = 100 mg/kg' in detail,'甲醛 CLP 详情展示复审期、SCL、M 因子与 ATE')
+    page.screenshot(path='/private/tmp/law-query-clp-detail.png',full_page=True)
+    page.evaluate('closeModal()')
+    page.locator('#lqTable tbody tr').first.get_by_role('button',name='来源库').click();page.wait_for_timeout(150)
+    ok(page.evaluate('curPage')=='law:clp','查询结果可进入对应来源库维护页')
+
+    print('\n=== 分库维护 ===')
+    routes=[('law:clp','clp','CLP 附录 VI'),('law:reach','reach','REACH / RoHS'),('law:cl','cl','C&L Inventory'),('law:cn','cn','国内危化品分类'),('law:zdhc','zdhc','ZDHC MRSL')]
+    for route,kind,title in routes:
+        page.evaluate("r=>showPage(r)",route);page.wait_for_timeout(100)
+        ok(title in page.locator('#pageHost').inner_text(),route+' 显示正确维护标题')
+        ok(page.evaluate("k=>lawTypeFilter===k",kind),route+' 只加载所属法规库')
+        count=page.locator('#lawTable tbody tr').count()
+        ok(count>0,route+' 有可维护法规数据')
+        expected=page.evaluate("k=>lawRows.filter(r=>r.listType===k).length",kind)
+        ok(count==expected,route+' 不混入其他法规库数据')
+        ok('复审周期' in page.locator('#lawReviewInfo').inner_text() and '上次复审时间' in page.locator('#lawReviewInfo').inner_text() and '下次建议复审时间' in page.locator('#lawReviewInfo').inner_text(),route+' 展示法规库复审信息卡片')
+        ok(page.locator('#lawTable .ev').count()==count,route+' 每行展示证据灯')
+        page.get_by_role('button',name='查看详情').first.click();page.wait_for_timeout(100)
+        ok(page.evaluate('curPage')=='law:detail',route+' 的法规明细进入独立子页面')
+        ok(page.locator('#pageHost .kpi').count()==0,route+' 明细子页面不展示统计卡片')
+        ok(page.locator('#lawDetailKw').count()==1 and page.locator('#lawDetailField').count()==1 and page.locator('#lawDetailComplete').count()==1,route+' 明细子页面提供查询与筛选条件')
+        ok(page.locator('#lawDetailTable tbody tr').count()>0,route+' 明细子页面展示数据列表')
+        page.get_by_role('button',name='返回法规库').click();page.wait_for_timeout(80)
+        ok(page.evaluate('curPage')==route,route+' 明细子页面可返回对应维护页')
+    page.evaluate("showPage('law:clp')");page.wait_for_timeout(80)
+    page.get_by_role('button',name='查看详情').click();page.wait_for_timeout(80)
+    ok(all(x in page.locator('#lawDetailTable thead').inner_text() for x in ['SCL','M 因子','ATE']),'CLP 明细列表展示 SCL、M 因子与 ATE 字段')
+    page.fill('#lawDetailKw','50-00-0');page.wait_for_timeout(80)
+    ok(page.locator('#lawDetailTable tbody tr').count()==1 and '甲醛' in page.locator('#lawDetailTable tbody').inner_text(),'CLP 明细支持按 CAS 查询物质')
+    page.get_by_role('button',name='查看').click();page.wait_for_timeout(80)
+    ok('M=10' in page.locator('#mBody').inner_text() and '口服 ATE = 100 mg/kg' in page.locator('#mBody').inner_text(),'单物质弹窗展示完整 CLP 计算字段')
+    page.screenshot(path='/private/tmp/law-clp-subpage-entry.png',full_page=True)
+    page.evaluate('closeModal()');page.evaluate('lawDetailClear()')
+    page.screenshot(path='/private/tmp/law-clp-subpage.png',full_page=True)
+    page.evaluate("showPage('law:clp')");page.wait_for_timeout(100)
+    page.screenshot(path='/private/tmp/law-clp-maintenance-yellow.png',full_page=True)
+    ok(page.locator('#lawTable .ev-due').count()>0 and page.get_by_role('button',name='确认复审').count()>0,'CLP 黄灯行提供确认复审操作')
+    page.get_by_role('button',name='确认复审').first.click();page.wait_for_timeout(120)
+    ok(page.locator('#lawTable .ev-green').count()>0 and page.get_by_role('button',name='确认复审').count()==0,'确认复审后黄灯变绿')
+    ok(page.locator('#lawTable tbody tr').first.locator('td').nth(4).inner_text()==page.evaluate('todayStr()'),'确认复审记录本次复审时间')
+    page.screenshot(path='/private/tmp/law-clp-maintenance-reviewed.png',full_page=True)
+    page.evaluate("showPage('law:cn')");page.wait_for_timeout(100)
+    ok(page.locator('#lawTable .ev-red').count()>0 and page.get_by_role('button',name='查看新版本 diff').count()>0,'国内法规红灯行提供新版本 diff 操作')
+    page.get_by_role('button',name='查看新版本 diff').first.click();page.wait_for_timeout(100)
+    ok('当前引用版本' in page.locator('#mBody').inner_text() and '来源库最新版本' in page.locator('#mBody').inner_text(),'版本 diff 弹窗对比当前与最新版本')
+    page.screenshot(path='/private/tmp/law-cn-version-diff.png',full_page=True)
+    page.evaluate('closeModal()')
+    page.evaluate("showPage('law:reach')");page.wait_for_timeout(100)
+    page.get_by_role('button',name='＋ 新增法规清单').click();page.wait_for_timeout(100)
+    ok('上传官方渠道下载的法规清单文件' in page.locator('#mBody').inner_text(),'维护页保留分库上传导入流程')
+    page.evaluate('closeModal()')
+
+    page.evaluate("showPage('law:query')");page.wait_for_timeout(120)
+    page.screenshot(path='/private/tmp/law-unified-query.png',full_page=True)
+    page.evaluate("showPage('law:cn')");page.wait_for_timeout(120)
+    page.screenshot(path='/private/tmp/law-cn-maintenance.png',full_page=True)
+
+    print('\n=== 运行时 ===')
+    ok(not errors,'查询与分库维护流程 JavaScript 错误为 0'+(('：'+errors[0]) if errors else ''))
+    browser.close()
+
+print('=== 结果：通过 %d / 失败 %d ==='%(passed,failed))
+raise SystemExit(1 if failed else 0)

@@ -1,0 +1,64 @@
+/* ==================================================================
+   [03z2] 实验分析 · 两步选择 + 统计工具（24z5 专用）
+   · 左栏：① 选择实验 ② 选择分析参数
+   · 右栏：分析方式（AI / 统计工具）+ 图表类型 + 统计项
+   ================================================================== */
+
+/* 左栏加宽到 320，容纳参数勾选 */
+.an-two{grid-template-columns:320px minmax(0,1fr)}
+.an-pick{max-height:560px}
+.an-pick .ai-pick-list{max-height:180px}
+
+/* 步骤标题 */
+.an-step{display:flex;align-items:center;gap:7px;padding:9px 12px;
+  background:var(--bg);border-bottom:1px solid var(--line);font-size:12.5px}
+.an-step + .an-step{border-top:1px solid var(--line)}
+.an-step b{font-size:12.5px}
+.an-step .muted{margin-left:auto;font-size:11.5px}
+.an-no{display:inline-flex;align-items:center;justify-content:center;
+  width:17px;height:17px;border-radius:50%;background:var(--primary);color:#fff;
+  font-size:11px;font-weight:600;flex:0 0 auto}
+.an-pick-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:12px;color:var(--muted)}
+
+/* 参数分组 */
+.an-pg-list{max-height:230px;overflow:auto;padding:6px 8px 8px}
+.an-pg{margin-bottom:8px}
+.an-pg-t{font-size:11.5px;color:var(--muted);font-weight:600;margin:4px 0 4px 2px}
+.an-p{display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:6px;
+  cursor:pointer;font-size:12.5px;line-height:1.4}
+.an-p:hover{background:var(--bg)}
+.an-p.on{background:var(--primary-soft)}
+.an-p input{flex:0 0 auto;margin:0}
+.an-p-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.an-p-u{flex:0 0 auto;font-size:11px;color:var(--muted)}
+.an-p-flat{flex:0 0 auto;font-size:10.5px;color:#b26a00;background:#fff7e6;
+  border:1px solid #ffd591;border-radius:8px;padding:0 5px;line-height:15px}
+
+/* 右栏：分析方式 */
+.an-mode{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.an-mode-i{display:flex;align-items:flex-start;gap:8px;padding:9px 11px;cursor:pointer;
+  border:1px solid var(--line);border-radius:9px;background:#fff}
+.an-mode-i:hover{border-color:var(--primary-border)}
+.an-mode-i.on{border-color:var(--primary);background:var(--primary-soft)}
+.an-mode-i input{flex:0 0 auto;margin-top:2px}
+.an-mode-i b{display:block;font-size:12.5px}
+.an-mode-i span{display:block;margin-top:2px;font-size:11.5px;color:var(--muted);line-height:1.5}
+@media(max-width:900px){.an-mode{grid-template-columns:1fr}}
+
+/* 右栏：配置项 */
+.an-box{min-width:0}
+.an-cfg{margin-bottom:10px}
+.an-cfg-t{font-size:12px;font-weight:600;margin-bottom:5px}
+.an-cfg-b .ctrl{width:100%;max-width:420px}
+.an-chk{display:flex;flex-wrap:wrap;gap:6px}
+.an-ck{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;cursor:pointer;
+  border:1px solid var(--line);border-radius:14px;font-size:12px;background:#fff}
+.an-ck:hover{border-color:var(--primary-border)}
+.an-ck.on{border-color:var(--primary);background:var(--primary-soft)}
+.an-ck input{margin:0}
+.an-ck b{font-weight:600}
+.an-ck .muted{font-size:11px}
+
+/* 统计结果：图表之间留白 */
+.an-box .rpt-chart{margin:6px 0 2px}

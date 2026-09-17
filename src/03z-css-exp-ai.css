@@ -1,0 +1,54 @@
+/* ==================================================================
+   [03z] 实验分析 AI 弹窗样式（24z4 专用）
+   · 左栏 = 可勾选实验列表，右栏 = 问答 / 报表区
+   · 问答区复用 03-css-mod.css 的 .ai-question / .ai-answer / .ai-avatar
+   ================================================================== */
+
+.ai-two{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;min-height:420px}
+.ai-two .ai-main{display:flex;flex-direction:column;min-width:0}
+
+/* 左栏：实验勾选面板 */
+.ai-pick{border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.ai-pick-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:10px 12px;background:var(--bg);border-bottom:1px solid var(--line);font-size:13px}
+.ai-pick-hd .muted{font-size:12px}
+.ai-pick-list{flex:1;overflow:auto;max-height:420px;padding:6px}
+.ai-pick-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;
+  cursor:pointer;font-size:12.5px;line-height:1.45}
+.ai-pick-item:hover{background:var(--bg)}
+.ai-pick-item.on{background:var(--primary-soft)}
+.ai-pick-item input{flex:0 0 auto;margin:0}
+.ai-pick-item .mono{font-size:12px;color:var(--primary);flex:0 0 auto}
+.ai-pick-item .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai-pick-item .dt{flex:0 0 auto;font-size:11.5px;color:var(--muted)}
+.ai-pick-ft{display:flex;align-items:center;gap:6px;padding:6px 10px;border-top:1px solid var(--line)}
+
+/* 只读范围条目（分析范围来自总结报告，不可在此勾选） */
+.ai-pick-item.ai-ro{display:block;cursor:default}
+.ai-pick-item.ai-ro:hover{background:var(--primary-soft)}
+.ai-pick-item .no{flex:0 0 auto;font-size:11.5px;color:var(--muted)}
+.ai-pick-item .l1{display:flex;align-items:center;gap:6px}
+.ai-pick-item .l2{margin-top:2px;font-size:11.5px;color:var(--muted);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* 右栏 */
+.ai-scope{padding:9px 12px;margin-bottom:12px;border:1px dashed var(--primary-border);
+  border-radius:8px;background:var(--primary-soft);font-size:12.5px;line-height:1.6}
+.ai-preset{padding:8px 10px;margin-top:6px;border:1px solid var(--line);border-radius:7px;
+  background:#fff;cursor:pointer;font-size:12.5px;color:var(--text)}
+.ai-preset:hover{border-color:var(--primary-border);background:var(--primary-soft);color:var(--primary)}
+.ai-answer-box{flex:1;min-height:120px;margin-top:12px}
+.ai-answer-box p{margin:0 0 8px}
+
+/* 报表区 */
+.rpt-wrap{padding-bottom:6px}
+.rpt-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+.rpt-hd b{font-size:14px}
+.rpt-hd .muted{margin-left:8px;font-size:12px}
+.rpt-t{font-size:13px;font-weight:600;margin:14px 0 8px}
+
+@media(max-width:900px){
+  .ai-two{grid-template-columns:1fr}
+  .ai-pick-list{max-height:200px}
+}
