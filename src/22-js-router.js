@@ -35,7 +35,7 @@ var MENU=[
     {id:'law',name:'法规库维护',children:[
       {id:'law:clp',name:'CLP 法规库',prio:'P1'},
       {id:'law:reach',name:'REACH 法规库',prio:'P1'},
-      {id:'law:oel',name:'职业接触限值法规库',prio:'plan'},
+      {id:'law:oel',name:'职业接触限值（OEL）',prio:'P1'},
       {id:'law:trans',name:'运输法规库',prio:'plan'},
       {id:'law:cn',name:'国内危化品法规库',prio:'P1'},
       {id:'law:zdhc',name:'ZDHC MRSL',prio:'P1'}

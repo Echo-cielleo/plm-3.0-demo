@@ -1,5 +1,5 @@
 /* ==================================================================
-   [23z8] 合规管理 · 法规条目页（RoHS 限用物质）与法规库占位页（OEL / 运输）
+   [23z8] 合规管理 · 法规条目页（RoHS 限用物质）与法规库占位页（运输）
    ------------------------------------------------------------------
    需求口径（Cayla 2026-09-18）：
    · RoHS 不再与 REACH 合并（原「REACH / RoHS」维护页拆开）：
@@ -11,8 +11,10 @@
      并预留「查看豁免清单」入口（占位）
    · 中国 RoHS 为独立体系（工信部《电器电子产品有害物质限制使用管理办法》），
      是否纳入待业务确认，本页不做
-   · law:oel 职业接触限值法规库、law:trans 运输法规库：本期均为占位页，
-     页面内注明「数据源待确认、本期仅占位」；运输需体现「多运输方式」
+   · law:trans 运输法规库：本期仍为占位页，页面内注明「数据源待确认、本期仅占位」；
+     运输需体现「多运输方式」
+   · law:oel 职业接触限值（OEL）**已升级为独立维护页面**（2026-09-18 第三十轮），
+     注册移交 23z9-js-oel.js，本分片仅保留 law:trans 占位页与 lawStripHTML 工具
    ================================================================== */
 
 /* ---------- 通用：法规页信息条（与 REACH 页同一套样式 .law-strip） ----------
@@ -113,35 +115,12 @@ function rohsExempt(){
 }
 
 /* ==================================================================
-   二、职业接触限值法规库（law:oel，本期占位）
+   二、职业接触限值（OEL）已移交新分片
+   ------------------------------------------------------------------
+   law:oel 的占位页于 2026-09-18（第三十轮）升级为「四 Tab 维护页面」，
+   注册与实现全部移交 src/23z9-js-oel.js（官方来源 → 数据集版本 → 限值明细
+   → 版本对比 → 审核发布）。本分片的占位实现已删除，不留重复注册。
    ================================================================== */
-function oelRender(){
-  $('pageHost').innerHTML='<div class="sds-scope law-page">'+
-    sdsHead('oelTitle','职业接触限值法规库','工作场所化学有害因素的职业接触限值（OEL）· 用于 SDS 第 8 章「接触控制」的限值来源','')+
-    '<div class="notice warn" style="margin-bottom:14px"><div class="ni">!</div><div><b>数据源待确认、本期仅占位。</b>本页说明规划口径与字段设计，不录入实际限值数据，也不参与自动判定。</div></div>'+
-    '<div class="kpi-row">'+
-      '<div class="kpi"><span>规划字段</span><b>6</b><small>物质 / CAS / 限值类型 / 限值 / 标识 / 来源版本</small></div>'+
-      '<div class="kpi"><span>数据源</span><b style="font-size:15px">2 类（待确认）</b><small>国内 GBZ 2.1 + 欧盟 IOELV 指令</small></div>'+
-      '<div class="kpi"><span>联动功能</span><b style="font-size:15px">SDS 第 8 章</b><small>接触控制与个体防护</small></div>'+
-      '<div class="kpi"><span>当前状态</span><b style="font-size:15px;color:var(--orange)">占位 · 未接入</b><small>数据版本：规划中</small></div>'+
-    '</div>'+
-    '<div class="card" style="padding:14px 18px">'+
-      '<dl class="desc-list" style="grid-template-columns:170px 1fr;margin:0">'+
-      '<dt>法规定位</dt><dd>职业接触限值是<b>工作场所暴露限值</b>体系，与 CLP（分类标签）、REACH（注册授权限制）不同：它约束的是「作业环境中空气浓度」，不是产品中的含量。SDS 第 8 章「接触控制」的限值即取自本库。</dd>'+
-      '<dt>国内数据源（待确认）</dt><dd><b>GBZ 2.1《工作场所有害因素职业接触限值 第 1 部分：化学有害因素》</b>，限值类型含 <b>MAC</b>（最高容许浓度）、<b>PC-TWA</b>（时间加权平均容许浓度）、<b>PC-STEL</b>（短时间接触容许浓度）；是否纳入其它 GBZ 系列待确认。</dd>'+
-      '<dt>欧盟数据源（待确认）</dt><dd><b>IOELV 指令</b>（指示性职业接触限值，如 2000/39/EC、2006/15/EC、2009/161/EU 等）及后续修订；限值类型为 8 小时时间加权平均（8h TWA）与短时接触限值（STEL）。是否纳入更多指令待确认。</dd>'+
-      '<dt>规划字段</dt><dd>物质名称 / CAS / 限值类型（MAC、PC-TWA、PC-STEL、IOELV 8h TWA）/ 限值（含单位）/ 标识（皮、敏、致癌等）/ 来源版本</dd>'+
-      '<dt>维护方式</dt><dd>人工维护结构化表（与 RoHS 同一模式）；标准修订时整表更新版本，逐行记录来源标准号与版本。</dd>'+
-      '<dt>与制剂的关系</dt><dd>OEL 针对单一物质，混合物需按组分浓度换算后分别比对；本库仅提供限值，不做暴露评估计算。</dd>'+
-      '</dl>'+
-    '</div>'+
-    '<div class="card" style="padding:26px;text-align:center">'+
-      '<div style="font-size:34px;color:#b6c2d1">⌁</div>'+
-      '<div style="font-size:15px;font-weight:650;margin:8px 0 4px">职业接触限值法规库 · 规划中</div>'+
-      '<div class="muted" style="font-size:12.5px">本期仅占位，数据源与限值口径待业务确认后录入</div>'+
-    '</div>'+
-    '</div>';
-}
 
 /* ==================================================================
    三、运输法规库（law:trans，本期占位，体现多运输方式）
@@ -186,5 +165,5 @@ function transRender(){
 
 /* ---------- 页面注册 ---------- */
 regPage('law:rohs',{title:'RoHS 限用物质',crumb:['合规管理','受限物质管理','RoHS 限用物质'],render:rohsRender});
-regPage('law:oel',{title:'职业接触限值法规库',crumb:['合规管理','法规库维护','职业接触限值法规库'],render:oelRender});
+/* law:oel 已移交 23z9-js-oel.js（本分片不再注册，避免同路由重复注册相互覆盖） */
 regPage('law:trans',{title:'运输法规库',crumb:['合规管理','法规库维护','运输法规库'],render:transRender});

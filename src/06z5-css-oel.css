@@ -1,0 +1,59 @@
+/* ==================================================================
+   [23z9] 职业接触限值（OEL）法规库 · 补充样式
+   ------------------------------------------------------------------
+   · 顶部信息条复用 23z8 的 .law-strip；抽屉复用 .exp-ai-mask / .exp-ai-panel
+   · 本文件只放 OEL 页专属元素：五步流程条、变更计数条、新旧值对照、
+     校验结果卡、上传双栏、七步向导标签
+   ================================================================== */
+/* 通知块加粗保持句内 inline（覆盖 04-css-sds.css 的块级规则） */
+.oel-page .notice b{display:inline;margin-bottom:0}
+
+/* 抽屉（与 CLP / REACH 页同一套：本体复用 .exp-ai-mask / .exp-ai-panel） */
+#oelDw .modal-hd{flex:0 0 auto}
+#oelDw .modal-bd{padding:16px 20px}
+#oelDw .modal-ft{border-top:1px solid var(--line);padding:12px 20px;display:flex;gap:8px;justify-content:flex-end}
+
+/* 顶部五步维护流程条：官方来源 → 数据集版本 → 限值明细 → 版本对比 → 审核发布 */
+.oel-flow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 16px;margin-bottom:14px;
+  background:var(--bg-soft,#f7f8fa);border:1px solid var(--line);border-radius:9px}
+.oel-flow .sf{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-2,#5a6673)}
+.oel-flow .sf span{width:20px;height:20px;border-radius:50%;background:#eef2f7;color:var(--muted);
+  display:grid;place-items:center;font-size:11px;font-weight:700;flex:0 0 auto}
+.oel-flow .sf b{font-size:13px;color:var(--text)}
+.oel-flow .sf em{font-style:normal;font-size:12px;color:var(--muted)}
+.oel-flow .sf.on span{background:var(--brand);color:#fff}
+.oel-flow i{font-style:normal;color:#b6c2d1}
+
+/* 版本对比：变更类型计数条 */
+.oel-diffbar{display:flex;gap:24px;flex-wrap:wrap;padding:10px 16px;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fbfcfe}
+.oel-diffbar .dt{display:flex;flex-direction:column;gap:2px}
+.oel-diffbar .dt em{font-style:normal;font-size:11.5px;color:var(--muted);white-space:nowrap}
+.oel-diffbar .dt b{font-size:16px;font-weight:700}
+.oel-diffbar .dt b.zero{color:#c3cbd6}
+
+/* 新旧值对照 */
+.oel-old{color:var(--muted);text-decoration:line-through}
+.oel-new{color:var(--green);font-weight:600}
+.tbl td.oel-num{font-variant-numeric:tabular-nums;font-weight:600}
+
+/* 数据校验结果卡 */
+.oel-check{display:flex;flex-direction:column;gap:10px}
+.oel-check .ck{border:1px solid var(--line);border-radius:9px;padding:10px 14px;background:var(--card)}
+.oel-check .ck.done{opacity:.62;background:#fbfcfe}
+.oel-check .ck .hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.oel-check .ck .hd b{font-size:13px}
+.oel-check .ck .hd button{margin-left:auto}
+.oel-check .ck .kv{display:flex;gap:8px;font-size:12.5px;line-height:1.55;color:var(--text-2,#5a6673)}
+.oel-check .ck .kv em{font-style:normal;color:var(--muted);flex:0 0 62px}
+
+/* 上传步骤：原文附件 / 结构化数据 双栏分开保存 */
+.oel-split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
+.oel-split .sp-t{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px}
+.tag.chip{font-size:10.5px;padding:1px 6px}
+
+/* 七步向导：标签更紧凑 */
+.oel-mini .mini-step{font-size:11.5px;gap:5px}
+
+/* 官方链接展示（演示环境不跳转） */
+.oel-link{color:var(--brand);text-decoration:underline}

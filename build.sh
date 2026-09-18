@@ -31,6 +31,7 @@ cat "$SRC/06z-css-navtools.css" >> "$OUT"
 cat "$SRC/06z2-css-phys-range.css" >> "$OUT"
 cat "$SRC/06z3-css-clp.css" >> "$OUT"
 cat "$SRC/06z4-css-reach.css" >> "$OUT"
+cat "$SRC/06z5-css-oel.css" >> "$OUT"
 printf '\n</style>\n</head>\n<body>\n' >> "$OUT"
 
 # 3) HTML 骨架

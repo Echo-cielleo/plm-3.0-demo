@@ -6,7 +6,7 @@
    版本变更与影响）、各 Tab 数据版本信息条、详情抽屉、
    跳转法规统一查询（按 lawKey 过滤）、五步导入向导、
    RoHS 限用物质页（10 条全列 / 人工维护口径 / 豁免入口 / 中国 RoHS 待确认）、
-   OEL 与运输法规库占位页（多运输方式）、表述红线。"""
+   运输法规库占位页（多运输方式）、OEL 页面入口、表述红线。"""
 import os
 from playwright.sync_api import sync_playwright
 
@@ -31,7 +31,7 @@ with sync_playwright() as pw:
     law=next(x for x in comp if x['id']=='law')
     lawnames=page.evaluate("()=>MENU.find(x=>x.id==='comp').children.find(x=>x.id==='law').children.map(y=>y.name)")
     ok(law['children']==['law:clp','law:reach','law:oel','law:trans','law:cn','law:zdhc'],'法规库维护 6 个入口（CLP / REACH / OEL / 运输 / 国内危化品 / ZDHC）')
-    ok(lawnames==['CLP 法规库','REACH 法规库','职业接触限值法规库','运输法规库','国内危化品法规库','ZDHC MRSL'],'菜单命名与需求一致（REACH 法规库 / 国内危化品法规库）')
+    ok(lawnames==['CLP 法规库','REACH 法规库','职业接触限值（OEL）','运输法规库','国内危化品法规库','ZDHC MRSL'],'菜单命名与需求一致（REACH 法规库 / 职业接触限值（OEL）/ 国内危化品法规库）')
     ok('REACH / RoHS' not in ' '.join(lawnames),'菜单中不再出现「REACH / RoHS」合并命名')
     ext=next(x for x in comp if x['id']=='ext')
     ok(ext['name']=='外部参考数据' and ext['children']==['law:cl'],'C&L Inventory 移至「外部参考数据」分组')
@@ -223,13 +223,12 @@ with sync_playwright() as pw:
     ok('占位' in page.locator('#mBody').inner_text() and '附录 III' in page.locator('#mBody').inner_text(),'豁免清单入口为占位说明')
     page.evaluate('closeModal()')
 
-    print('\n=== 职业接触限值法规库（law:oel 占位） ===')
-    page.evaluate("()=>showPage('law:oel')");page.wait_for_timeout(250)
+    print('\n=== 职业接触限值（OEL）入口（深度覆盖见 smoke_oel.py） ===')
+    page.evaluate("()=>showPage('law:oel')");page.wait_for_timeout(300)
     ot=page.locator('#pageHost').inner_text()
-    ok('职业接触限值法规库' in ot and '数据源待确认、本期仅占位' in ot,'标注数据源待确认、本期仅占位')
-    ok('GBZ 2.1' in ot and 'IOELV' in ot,'列明两类数据源（GBZ 2.1 / 欧盟 IOELV 指令）')
-    ok('MAC' in ot and 'PC-TWA' in ot and 'PC-STEL' in ot,'说明国内限值类型')
-    ok('SDS 第 8 章' in ot,'写明与 SDS 第 8 章的联动')
+    ok(page.evaluate('curPage')=='law:oel','law:oel 可正常进入（路由沿用）')
+    ok('职业接触限值（OEL）' in ot and '本期仅占位' not in ot,'OEL 已升级为维护页面，不再是占位页')
+    ok('数据集版本' in ot and '限值明细' in ot,'OEL 页面已含数据集版本与限值明细')
 
     print('\n=== 运输法规库（law:trans 占位 · 多运输方式） ===')
     page.evaluate("()=>showPage('law:trans')");page.wait_for_timeout(250)
