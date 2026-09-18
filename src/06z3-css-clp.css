@@ -12,3 +12,6 @@
 #clpDw .modal-hd{flex:0 0 auto}
 #clpDw .modal-bd{padding:16px 20px}
 #clpDw .modal-ft{border-top:1px solid var(--line);padding:12px 20px;display:flex;gap:8px;justify-content:flex-end}
+/* CLP 页通知块的加粗保持句内 inline（覆盖 04-css-sds.css 的 .sds-scope .notice b 块级规则；
+   本文件在 04 之后加载，同特异性后到者胜） */
+.clp-page .notice b{display:inline;margin-bottom:0}

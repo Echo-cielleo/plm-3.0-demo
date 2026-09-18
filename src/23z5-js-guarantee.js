@@ -11,7 +11,7 @@ var GUARANTEES=[
 var GUARANTEE_ST={'已出具':'tag-green','起草中':'tag-orange','已作废':'tag-grey'};
 
 regPage('comp:guarantee',{
-  title:'保证函管理',crumb:['合规管理','<b>保证函管理</b>'],
+  title:'保证函管理',crumb:['合规管理','保证函管理'],
   render:function(){
     $('pageHost').innerHTML=
       '<div class="page-hd"><div class="t"><h1>保证函管理</h1>'+

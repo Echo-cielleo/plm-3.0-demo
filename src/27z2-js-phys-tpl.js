@@ -70,7 +70,7 @@ function physTplSetCat(cat){ physTplCat=cat; physTplRenderBody(); }
 
 /* ---------- 页面：类别模板 ---------- */
 regPage('bd:phys-tpl',{
-  title:'类别模板',crumb:['基础数据','理化性质配置','<b>类别模板</b>'],
+  title:'类别模板',crumb:['基础数据','理化性质配置','类别模板'],
   render:function(){
     var h='';
     h+='<div class="page-hd"><div class="t">'+

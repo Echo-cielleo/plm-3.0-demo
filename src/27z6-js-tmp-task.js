@@ -128,7 +128,7 @@ function taskTodos(){
 /* ---------- 4. 页面：临时任务列表 ---------- */
 regPage('proj:task', {
   title: '临时任务',
-  crumb: ['项目管理', '<b>临时任务</b>'],
+  crumb: ['项目管理', '临时任务'],
   render: function(){
     $('pageHost').innerHTML = '<div id="lpHost"></div>';
     var ac = (TMP_TASKS || []).filter(function(t){ return tmpIsMine(t) && t.status !== '已反馈'; }).length;

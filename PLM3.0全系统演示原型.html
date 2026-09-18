@@ -2112,6 +2112,9 @@ body.nav-collapsed .nav-tool-txt{display:none}
 #clpDw .modal-hd{flex:0 0 auto}
 #clpDw .modal-bd{padding:16px 20px}
 #clpDw .modal-ft{border-top:1px solid var(--line);padding:12px 20px;display:flex;gap:8px;justify-content:flex-end}
+/* CLP 页通知块的加粗保持句内 inline（覆盖 04-css-sds.css 的 .sds-scope .notice b 块级规则；
+   本文件在 04 之后加载，同特异性后到者胜） */
+.clp-page .notice b{display:inline;margin-bottom:0}
 
 </style>
 </head>
@@ -4025,7 +4028,7 @@ function matSubstToLink(m){
    9. 原料详情页
    ------------------------------------------------------------------ */
 regPage('bd:rawmat-detail',{
-  title:'原料详情',crumb:['基础数据','原料信息','<b>原料详情</b>'],
+  title:'原料详情',crumb:['基础数据','原料信息','原料详情'],
   render:function(params){
     var code=(params&&params.code)||'',m=matByCode(code);
     var host=$('pageHost');
@@ -4429,7 +4432,7 @@ function tcDetailHtml(){
 }
 
 regPage('bd:techcat',{
-  title:'关键技术分类',crumb:['基础数据','<b>关键技术分类</b>'],
+  title:'关键技术分类',crumb:['基础数据','关键技术分类'],
   render:function(){
     /* 搜索时：先展开全部命中节点（含祖先链），再渲染树 */
     if(tcState.kw){
@@ -4459,7 +4462,7 @@ function tcCollapseAll(){ tcState.exp={}; tcState.sel=''; showPage('bd:techcat')
    ================================================================== */
 var bfList=null;
 regPage('bd:formula',{
-  title:'内置计算公式',crumb:['基础数据','<b>内置计算公式</b>'],
+  title:'内置计算公式',crumb:['基础数据','内置计算公式'],
   render:function(){
     if(!bfList)bfList=BD_FORMULA.slice();
     $('pageHost').innerHTML='<div id="lpHost"></div>';
@@ -4550,7 +4553,7 @@ function tcNow(){
    ================================================================== */
 var etList=null;
 regPage('bd:exptpl',{
-  title:'实验模板',crumb:['基础数据','<b>实验模板</b>'],
+  title:'实验模板',crumb:['基础数据','实验模板'],
   render:function(){
     if(!etList)etList=EXP_TPL.slice();
     $('pageHost').innerHTML='<div id="lpHost"></div>';
@@ -7321,7 +7324,7 @@ var _impFile='';
 function dbImport(){
   _impFile='';
   var c=dbCur();
-  openModal({title:'批量导入 · '+c.title,width:560,
+  openModal({title:'批量导入 · '+c.title,width:560,cls:'sds-scope',
     body:'<div class="mini-steps"><div class="mini-step on"><span class="n">1</span>选择文件</div><div class="mini-line"></div>'
       +'<div class="mini-step"><span class="n">2</span>上传解析</div><div class="mini-line"></div>'
       +'<div class="mini-step"><span class="n">3</span>导入结果</div></div>'
@@ -7629,7 +7632,7 @@ var _lawCur=null,_lawFile='';
 function lawUpload(id){
   _lawCur=id?lawRows.filter(function(x){return x._id===id;})[0]:null;
   _lawFile='';window._lawTmp=null;
-  openModal({title:_lawCur?('上传新版本 · '+_lawCur.name):'新增法规清单',width:640,body:lawStep1Html(),footer:lawFoot1()});
+  openModal({title:_lawCur?('上传新版本 · '+_lawCur.name):'新增法规清单',width:640,cls:'sds-scope',body:lawStep1Html(),footer:lawFoot1()});
 }
 function lawFoot1(){
   return '<div class="left">第 1 步 / 共 3 步</div><button class="btn" onclick="closeModal()">取消</button>'
@@ -8166,41 +8169,41 @@ seedSdsRows();
    [23-D] 页面注册
    ================================================================== */
 regPage('sds:list',{
-  title:'SDS 文档列表',crumb:['合规管理','SDS 管理','<b>SDS 文档列表</b>'],
+  title:'SDS 文档列表',crumb:['合规管理','SDS 管理','SDS 文档列表'],
   render:function(params){ SDS_FOCUS=(params&&params.focus)||''; renderSdsList(); }
 });
 regPage('sds:wizard',{
-  title:'SDS 生成向导',crumb:['合规管理','SDS 管理','<b>SDS 生成向导</b>'],
+  title:'SDS 生成向导',crumb:['合规管理','SDS 管理','SDS 生成向导'],
   render:function(){ renderSdsWizard(); }
 });
 regPage('bd:comp',{
-  title:'组分基础信息',crumb:['基础数据','<b>组分基础信息</b>'],
+  title:'组分基础信息',crumb:['基础数据','组分基础信息'],
   render:function(){ renderDbPage('component'); }
 });
 regPage('bd:rawmat',{
-  title:'原料信息',crumb:['基础数据','<b>原料信息</b>'],
+  title:'原料信息',crumb:['基础数据','原料信息'],
   render:function(){
     renderDbPage('material','原料信息',
       '企业采购与自产原料的身份档案，含物质形态、规格型号与配方组成，是 SDS 编制与法规匹配的基础。');
   }
 });
 regPage('bd:sup-data',{
-  title:'供应商原料数据',crumb:['基础数据','<b>供应商原料数据</b>'],
+  title:'供应商原料数据',crumb:['基础数据','供应商原料数据'],
   render:function(){
     renderDbPage('measure','供应商原料数据',
       '来自第三方检测报告与供应商 SDS 的原始数据，是分类判定的最高优先级依据（实测报告 > 供应商 SDS）。');
   }
 });
 regPage('bd:comp-auto',{
-  title:'组分数据自动补全',crumb:['基础数据','<b>组分数据自动补全</b>'],
+  title:'组分数据自动补全',crumb:['基础数据','组分数据自动补全'],
   render:function(){ renderPubChem(); }
 });
 regPage('bd:ghs',{
-  title:'GHS 与受限属性',crumb:['基础数据','<b>GHS 与受限属性</b>'],
+  title:'GHS 与受限属性',crumb:['基础数据','GHS 与受限属性'],
   render:function(){ renderGhs(); }
 });
 regPage('law:zdhc',{
-  title:'ZDHC 法规库',crumb:['合规管理','法规库','<b>ZDHC</b>'],
+  title:'ZDHC 法规库',crumb:['合规管理','法规库','ZDHC'],
   render:function(){
     renderLawPage('zdhc','ZDHC 法规库',
       'ZDHC 有害化学物质零排放基金会发布的生产限用物质清单与排放限值，是皮革/纺织行业客户验厂的强制依据。',
@@ -8208,7 +8211,7 @@ regPage('law:zdhc',{
   }
 });
 regPage('law:rohs',{
-  title:'RoHS · REACH 法规库',crumb:['合规管理','法规库','<b>RoHS·REACH</b>'],
+  title:'RoHS · REACH 法规库',crumb:['合规管理','法规库','RoHS·REACH'],
   render:function(){
     renderLawPage(['reach','cn'],'RoHS · REACH 法规库',
       '欧盟 REACH / RoHS 与中国化学品法规（GB 系列）清单，覆盖限制物质、授权清单与申报要求。',
@@ -9164,7 +9167,7 @@ var GUARANTEES=[
 var GUARANTEE_ST={'已出具':'tag-green','起草中':'tag-orange','已作废':'tag-grey'};
 
 regPage('comp:guarantee',{
-  title:'保证函管理',crumb:['合规管理','<b>保证函管理</b>'],
+  title:'保证函管理',crumb:['合规管理','保证函管理'],
   render:function(){
     $('pageHost').innerHTML=
       '<div class="page-hd"><div class="t"><h1>保证函管理</h1>'+
@@ -9197,7 +9200,7 @@ regPage('comp:guarantee',{
 /* ==================================================================
    [23z6] CLP 法规库 · 统一页面（Tab 化 Annex 管理，2026-09-18）
    ------------------------------------------------------------------
-   需求口径（Cayla 2026-09-18）：
+   需求口径（王舒 2026-09-18）：
    · law:clp 由「附录 VI 清单维护页」升级为统一 CLP 页面：
      顶部法规主信息（含证据灯）+ 5 个 Tab 管理 Annex 内容
    · Tab1 Annex VI 物质统一分类（保留原有 5 条示例数据）
@@ -9249,15 +9252,15 @@ var CLP_VI_ROWS=[
 /* Tab2：Annex I 分类规则（人工审核整理成型的机器规则；不做实际计算） */
 var CLP_RULES=[
   {id:'CR-001',name:'急性毒性—口服—混合物 ATE 计算规则',cat:'急性毒性（口服）',target:'混合物',gcl:'Cat.1 ≥ 5%；Cat.2 ≥ 1% 且 < 5%；Cat.3 ≥ 0.5% 且 < 1%',add:'是',ref:'Annex I，Part 3，3.1.3.6（口服 ATE 加和公式）',ver:'R2026.2',status:'已审核',h:'H301',
-    det:{inputs:'各组分浓度 Ci（%）；各组分口服 ATEi（优先取 Annex VI Table 3 统一值；无统一值时取企业自评估值）',cond:'混合物中含 ≥ 1 个已分类急性毒性（口服）组分，且浓度触及对应类别通用限值',formula:'ATE_mix = 100 / Σ( Ci / ATEi )（Ci 为百分比浓度；ATEi 单位 mg/kg 体重）',except:'组分无可靠 ATE 时按「经口 LD50 → ATE 换算表」估算；仍无数据则不参与求和并记录数据缺口；挂有 SCL 的组分先按 SCL 阈值判断是否计入',prio:'高（1）——SCL 阈值判断优先于通用限值，通过后再进入 ATE 加和',output:'按 ATE_mix 所落区间输出 Acute Tox. 1 / 2 / 3（口服）',label:'对应 H300 / H301 / H302 + GHS06（Cat.1/2）/ GHS07（Cat.3）· 信号词：危险 / 警告',src:'Regulation (EC) No 1272/2008，Annex I，Part 3，3.1.3.6（官方合并版 PDF 第 141–143 页）'}},
+    det:{inputs:'各组分浓度 Ci（%）；各组分口服 ATEi（优先取 Annex VI Table 3 统一值；无统一值时取企业自评估值）',cond:'混合物中含 ≥ 1 个已分类急性毒性（口服）组分，且浓度触及对应类别通用限值',formula:'ATE_mix = 100 / Σ( Ci / ATEi )（Ci 为百分比浓度；ATEi 单位 mg/kg 体重）',except:'组分无可靠 ATE 时按「经口 LD50 → ATE 换算表」估算；仍无数据则不参与求和并记录数据缺口；挂有 SCL 的组分先按 SCL 阈值判断是否计入',prio:'高（1）——SCL 阈值判断优先于通用限值，通过后再进入 ATE 加和',output:'按 ATE_mix 所落区间输出 Acute Tox. 1 / 2 / 3（口服）',label:'对应 H300 / H301 / H302 + GHS06（Cat.1/2）/ GHS07（Cat.3）· 信号词：危险 / 警告',src:'Regulation (EC) No 1272/2008，Annex I，Part 3，第 3.1.3.6 条（急性毒性—混合物 ATE 计算公式）'}},
   {id:'CR-002',name:'皮肤腐蚀 / 刺激—通用浓度限值加和规则',cat:'皮肤腐蚀/刺激',target:'混合物',gcl:'Skin Corr. 1：≥ 1%；Skin Irrit. 2：≥ 10%；Eye Irrit. 2：≥ 10%',add:'是',ref:'Annex I，Part 3，3.2.3',ver:'R2026.2',status:'已审核',h:'H314',
-    det:{inputs:'各组分浓度 Ci（%）与皮肤腐蚀/刺激分类；各组分的 SCL（如有）',cond:'混合物含 ≥ 1 个 Skin Corr. / Skin Irrit. / Eye Irrit. 已分类组分',formula:'按浓度加和落档：Σ(Ci) ≥ 1%（Corr. 组分）→ Skin Corr. 1；≥ 10%（Irrit. 组分）→ Skin Irrit. 2 / Eye Irrit. 2',except:'Cat.1 内 1A/1B/1C 取最严组分；有 SCL 的组分以 SCL 替代通用限值参与求和',prio:'中（2）——腐蚀判断先于刺激判断，同浓度区间取更严类别',output:'Skin Corr. 1 / Skin Irrit. 2 / Eye Irrit. 2',label:'对应 H314 / H315 / H319 + GHS05（腐蚀）/ GHS07（刺激）· 信号词：危险 / 警告',src:'Regulation (EC) No 1272/2008，Annex I，Part 3，3.2.3（官方合并版 PDF 第 149–152 页）'}},
+    det:{inputs:'各组分浓度 Ci（%）与皮肤腐蚀/刺激分类；各组分的 SCL（如有）',cond:'混合物含 ≥ 1 个 Skin Corr. / Skin Irrit. / Eye Irrit. 已分类组分',formula:'按浓度加和落档：Σ(Ci) ≥ 1%（Corr. 组分）→ Skin Corr. 1；≥ 10%（Irrit. 组分）→ Skin Irrit. 2 / Eye Irrit. 2',except:'Cat.1 内 1A/1B/1C 取最严组分；有 SCL 的组分以 SCL 替代通用限值参与求和',prio:'中（2）——腐蚀判断先于刺激判断，同浓度区间取更严类别',output:'Skin Corr. 1 / Skin Irrit. 2 / Eye Irrit. 2',label:'对应 H314 / H315 / H319 + GHS05（腐蚀）/ GHS07（刺激）· 信号词：危险 / 警告',src:'Regulation (EC) No 1272/2008，Annex I，Part 3，第 3.2.3 条（皮肤腐蚀 / 刺激—混合物分类）'}},
   {id:'CR-003',name:'SCL（特定浓度限值）优先于通用浓度限值',cat:'全部健康 / 环境危害类别',target:'物质与混合物',gcl:'见 Annex VI Table 3 各条目 SCL 列',add:'否—逐案评估',ref:'Annex I，Part 1，1.2 + Annex VI，Table 3',ver:'R2026.2',status:'已审核',h:'H317',
-    det:{inputs:'组分对应的 Annex VI 条目及其 SCL 列（例：甲醛 Skin Sens. 1; H317: C ≥ 0.2%）',cond:'组分在 Annex VI Table 3 中挂有 SCL 时触发',formula:'混合物分类时以 SCL 替换同危害类别的通用浓度限值（GCL）参与判断',except:'SCL 高于 GCL 时按 SCL 放宽、低于 GCL 时按 SCL 收紧；同一组分多类别 SCL 分别适用',prio:'高（1）——先于一切通用限值加和规则',output:'按 SCL 门槛得到的混合物分类',label:'以组分各自 SCL 对应的 H 码与标签结果为准',src:'Regulation (EC) No 1272/2008，Annex VI，Table 3，SCL 列；Annex I 1.2（官方合并版 PDF）'}},
-  {id:'CR-004',name:'慢性水生毒性—M 因子加权求和规则',cat:'危害水生环境（慢性）',target:'混合物',gcl:'Chronic 1：Σ(Mi×Ci) ≥ 25%；Chronic 2：≥ 2.5%（缩放规则）',add:'是',ref:'Annex I，Part 4，4.1.3.1.5',ver:'R2026.2',status:'已审核',h:'H410',
-    det:{inputs:'各组分的慢性水生分类与 M 因子（Annex VI 统一 M 或企业自评估 M）',cond:'混合物含 ≥ 1 个 Aquatic Chronic 1 组分',formula:'Chronic 1：Σ(Mi × Ci) ≥ 25%；Chronic 2：Σ(10 × Mi × Ci) ≥ 25%（以 Chronic 2 限值 25% 折算）',except:'无统一 M 的 Chronic 1 组分须自行设定 M 后参与求和；未分类组分不参与但需记录',prio:'中（2）',output:'Aquatic Chronic 1 / 2',label:'对应 H410 / H411 + GHS09 · 信号词：警告',src:'Regulation (EC) No 1272/2008，Annex I，Part 4，4.1.3.1.5（官方合并版 PDF 第 337–340 页）'}},
+    det:{inputs:'组分对应的 Annex VI 条目及其 SCL 列（例：甲醛 Skin Sens. 1; H317: C ≥ 0.2%）',cond:'组分在 Annex VI Table 3 中挂有 SCL 时触发',formula:'混合物分类时以 SCL 替换同危害类别的通用浓度限值（GCL）参与判断',except:'SCL 高于 GCL 时按 SCL 放宽、低于 GCL 时按 SCL 收紧；同一组分多类别 SCL 分别适用',prio:'高（1）——先于一切通用限值加和规则',output:'按 SCL 门槛得到的混合物分类',label:'以组分各自 SCL 对应的 H 码与标签结果为准',src:'Regulation (EC) No 1272/2008，Annex VI，Table 3 SCL 列；Annex I，Part 1，第 1.2 条（分类与标签一般原则）'}},
+  {id:'CR-004',name:'慢性水生毒性—M 因子加权求和规则',cat:'危害水生环境（慢性）',target:'混合物',gcl:'Chronic 1：Σ(Mi×Ci) ≥ 25%；Chronic 2：≥ 2.5%（缩放规则）',add:'是',ref:'Annex I，Part 4，4.1.3.5（求和法）',ver:'R2026.2',status:'已审核',h:'H410',
+    det:{inputs:'各组分的慢性水生分类与 M 因子（Annex VI 统一 M 或企业自评估 M）',cond:'混合物含 ≥ 1 个 Aquatic Chronic 1 组分',formula:'Chronic 1：Σ(Mi × Ci) ≥ 25%；Chronic 2：Σ(10 × Mi × Ci) ≥ 25%（以 Chronic 2 限值 25% 折算）',except:'无统一 M 的 Chronic 1 组分须自行设定 M 后参与求和；未分类组分不参与但需记录',prio:'中（2）',output:'Aquatic Chronic 1 / 2',label:'对应 H410 / H411 + GHS09 · 信号词：警告',src:'Regulation (EC) No 1272/2008，Annex I，Part 4，第 4.1.3.5 条（危害水生环境—混合物求和法；慢性加和公式见表 4.1.4）'}},
   {id:'CR-005',name:'同一危害类别的分层与优先级原则',cat:'全部危害类别',target:'物质与混合物',gcl:'—',add:'否—逐案评估',ref:'Annex I，Part 1，1.2（分层原则）',ver:'R2026.2',status:'已审核',h:'',
-    det:{inputs:'同一健康危害路径下的多个候选分类结果',cond:'同一路径（如口服急性毒性）出现多个可选类别时',formula:'取证据支持的最严类别；上位类别覆盖下位类别（如 Carc. 1B 与 Carc. 2 并存时输出 1B）',except:'不同路径（口服/皮肤/吸入）互不覆盖，分别输出；物理危害按各 Hazard 类别独立规则执行',prio:'低（3）——在其他规则产出结果后应用',output:'每个危害路径的最终唯一分类',label:'以最终分类对应的 H 码与标签结果为准',src:'Regulation (EC) No 1272/2008，Annex I，Part 1，1.2（官方合并版 PDF 第 30–34 页）'}}
+    det:{inputs:'同一健康危害路径下的多个候选分类结果',cond:'同一路径（如口服急性毒性）出现多个可选类别时',formula:'取证据支持的最严类别；上位类别覆盖下位类别（如 Carc. 1B 与 Carc. 2 并存时输出 1B）',except:'不同路径（口服/皮肤/吸入）互不覆盖，分别输出；物理危害按各 Hazard 类别独立规则执行',prio:'低（3）——在其他规则产出结果后应用',output:'每个危害路径的最终唯一分类',label:'以最终分类对应的 H 码与标签结果为准',src:'Regulation (EC) No 1272/2008，Annex I，Part 1，第 1.2 条（分类与标签一般原则）'}}
 ];
 
 /* Tab3：Annex III/IV/V 标签字典（官方字典，按版本维护；非企业自行分类结果） */
@@ -9282,7 +9285,7 @@ var CLP_CHANGES=[
   {tp:'修改',content:'ATP 21：5 项条目分类加严（含甲醛相关 SCL 调整）',reason:'毒理学与生态毒理学证据更新',eff:'2026-09-01',by:'质管-熊倩',subs:5,recipes:'2',sds:'2'},
   {tp:'废止',content:'ATP 21：2 项旧条目被新条目替代删除',reason:'条目整合清理',eff:'2026-09-01',by:'质管-熊倩',subs:2,recipes:'0',sds:'0'},
   {tp:'新增',content:'分类规则库：新增 5 类欧盟危害类别（ED / PBT / vPvB / PMT / vPvM）判定规则',reason:'(EU) 2023/707 新危害类别实施',eff:'2026-11-01（存量物质截止）',by:'质管-熊倩',subs:'待评估',recipes:'—',sds:'—'},
-  {tp:'修改',content:'标签字典：版式规则更新（最小字号、行距 ≥ 字号 120%、P 码每标签 ≤ 6 条）',reason:'(EU) 2024/2865 CLP 大修',eff:'2026-05-20（过渡期截止）',by:'质管-熊倩',subs:'—',recipes:'全部（标签模板）',sds:'全部（改版评估）'}
+  {tp:'修改',content:'标签字典：版式规则更新（最小字号、行距 ≥ 字号 120%、P 码每标签 ≤ 6 条）',reason:'(EU) 2024/2865 CLP 大修',eff:'2026-05-20（过渡期截止）',by:'质管-熊倩',subs:'—',recipes:'—',sds:'—'}
 ];
 
 /* ---------- 2. 模块证据灯与信息条 ---------- */
@@ -9321,7 +9324,7 @@ function clpLStrip(m){
 function clpLDrawer(title,body,foot){
   var mk=$('clpDwMask'),p=$('clpDw');if(!mk||!p)return;
   p.innerHTML='<div class="modal-hd"><h3>'+esc(title)+'</h3><button class="modal-x" onclick="clpLDrawerClose()">✕</button></div>'+
-    '<div class="modal-bd sds-scope">'+body+'</div>'+
+    '<div class="modal-bd sds-scope clp-page">'+body+'</div>'+
     (foot?'<div class="modal-ft">'+foot+'</div>':'');
   mk.style.display='flex';
 }
@@ -9351,7 +9354,7 @@ function clpLTopLamp(){
 
 function clpLRender(){
   var worst=clpLTopLamp();
-  $('pageHost').innerHTML='<div class="sds-scope">'+
+  $('pageHost').innerHTML='<div class="sds-scope clp-page">'+
     sdsHead('clpTitle','CLP 法规库','法规编号 '+CLP_TOP.code+' · 适用市场：'+CLP_TOP.market+' · 当前状态：'+CLP_TOP.status,
       '<button class="btn" onclick="clpLGoChg()">查看变更摘要</button>'+
       '<button class="btn primary" onclick="clpLImport()">导入新版本</button>')+
@@ -9427,7 +9430,7 @@ function clpLFill(){
       if(ver&&r.ver!==ver)return false;
       return !kw||(r.idx+' '+r.name+' '+r.cas+' '+r.ec+' '+r.h+' '+r.cls).toLowerCase().indexOf(kw)>=0;
     });
-    clpLTable(cols=[['Index No.','idx',110],['物质名称','name',100],['CAS 号','cas',100],['EC 号','ec',100],['危害分类','cls',190],['H 码','h',130],['SCL','scl',170],['M 因子','m',120],['ATE','ate',130],['备注','notes',60],['生效版本','ver',80],['来源与条款位置','src',210]],rows,function(r){
+    clpLTable(cols=[['Index No.','idx',130],['物质名称','name',100],['CAS 号','cas',100],['EC 号','ec',100],['危害分类','cls',190],['H 码','h',130],['SCL','scl',170],['M 因子','m',120],['ATE','ate',130],['备注','notes',60],['生效版本','ver',80],['来源与条款位置','src',210]],rows,function(r){
       return '<tr><td class="mono">'+esc(r.idx)+'</td><td><b>'+esc(r.name)+'</b></td><td class="mono">'+esc(r.cas)+'</td><td class="mono">'+esc(r.ec)+'</td><td>'+esc(r.cls)+'</td><td class="mono">'+esc(r.h)+'</td><td>'+esc(r.scl)+'</td><td>'+esc(r.m)+'</td><td>'+esc(r.ate)+'</td><td>'+esc(r.notes)+'</td><td class="mono">'+esc(r.ver)+'</td><td>'+esc(r.src)+'</td>'+
         '<td class="acts"><button class="btn-link" onclick="clpLViDrawer(\''+esc(r.idx)+'\')">详情</button><button class="btn-link" onclick="clpLViToRule(\''+esc(r.idx)+'\')">分类规则</button></td></tr>';
     });
@@ -9462,11 +9465,13 @@ function clpLFill(){
       return !kw||(r.content+' '+r.reason).toLowerCase().indexOf(kw)>=0;
     });
     clpLTable([['变更类型','tp',80],['内容','content',300],['变更原因','reason',190],['生效日期','eff',140],['审核人','by',90],['影响物质数','subs',100],['影响配方数','recipes',110],['影响 SDS 数','sds',100]],rows,function(r,i){
-      return '<tr><td><span class="tag '+(r.tp==='新增'?'green':(r.tp==='修改'?'orange':'grey'))+'">'+esc(r.tp)+'</span></td><td>'+esc(r.content)+'</td><td>'+esc(r.reason)+'</td><td>'+esc(r.eff)+'</td><td>'+esc(r.by)+'</td><td>'+esc(r.subs)+'<span class="muted" style="font-size:11px"> 官方清单</span></td><td>'+esc(r.recipes)+' <span class="tag orange" style="font-size:10.5px">示例</span></td><td>'+esc(r.sds)+' <span class="tag orange" style="font-size:10.5px">示例</span></td>'+
+      return '<tr><td><span class="tag '+(r.tp==='新增'?'green':(r.tp==='修改'?'orange':'grey'))+'">'+esc(r.tp)+'</span></td><td>'+esc(r.content)+'</td><td>'+esc(r.reason)+'</td><td>'+esc(r.eff)+'</td><td>'+esc(r.by)+'</td><td>'+esc(r.subs)+(clpLIsNum(r.subs)?'<span class="muted" style="font-size:11px"> 官方清单</span>':'')+'</td><td>'+esc(r.recipes)+(clpLIsNum(r.recipes)?' <span class="tag orange" style="font-size:10.5px">示例</span>':'')+'</td><td>'+esc(r.sds)+(clpLIsNum(r.sds)?' <span class="tag orange" style="font-size:10.5px">示例</span>':'')+'</td>'+
         '<td class="acts"><button class="btn-link" onclick="clpLChgImpact('+CLP_CHANGES.indexOf(r)+')">查看影响范围</button></td></tr>';
     });
   }
 }
+/* 数字才挂标注：物质数带「官方清单」、配方 / SDS 数带「示例」；非数字（待评估 / —）一律不挂 */
+function clpLIsNum(v){return v!==''&&v!=null&&!isNaN(Number(v));}
 /* 通用表格渲染（cols: [标题,取值键,宽度] 仅用于表头；行内容由 rowHtml 生成） */
 function clpLTable(cols,rows,rowHtml){
   var host=$('clpTable');if(!host)return;
@@ -9531,7 +9536,7 @@ function clpLDrawerRuleOpen(id){
     '<dt>规则优先级</dt><dd>'+esc(d.prio)+'</dd>'+
     '<dt>输出分类</dt><dd>'+esc(d.output)+'</dd>'+
     '<dt>对应 H 码与标签结果</dt><dd>'+esc(d.label)+'</dd>'+
-    '<dt>来源章节或页码</dt><dd>'+esc(d.src)+'</dd>'+
+    '<dt>来源条款与章节</dt><dd>'+esc(d.src)+'</dd>'+
     '<dt>通用浓度限值</dt><dd>'+esc(r.gcl)+'</dd>'+
     '<dt>是否允许加和</dt><dd>'+esc(r.add)+'</dd>'+
     '<dt>审核状态</dt><dd><span class="tag '+TAG_CLS(r.status)+' dot-tag">'+esc(r.status)+'</span> · 审核人 '+esc(m.owner)+'</dd>'+
@@ -9597,10 +9602,10 @@ function clpLTabPcn(){
 /* ---------- 9. Tab5：影响范围查看（配方 / SDS 数量为示例数据） ---------- */
 function clpLChgImpact(i){
   var r=CLP_CHANGES[i];if(!r)return;
-  openModal({title:'影响范围 · '+r.tp+'：'+r.content.slice(0,24)+'…',width:780,
+  openModal({title:'影响范围 · '+r.tp+'：'+r.content.slice(0,24)+'…',width:780,cls:'sds-scope clp-page',
     body:'<div class="stat-row"><div class="stat"><b>'+esc(String(r.subs))+'</b><span>影响物质数量（官方变更清单）</span></div>'+
-      '<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">'+esc(r.recipes)+' <span class="tag orange" style="font-size:10.5px">示例</span></b><span>影响配方数量</span></div>'+
-      '<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">'+esc(r.sds)+' <span class="tag orange" style="font-size:10.5px">示例</span></b><span>影响 SDS 数量</span></div></div>'+
+      '<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">'+esc(r.recipes)+(clpLIsNum(r.recipes)?' <span class="tag orange" style="font-size:10.5px">示例</span>':'')+'</b><span>影响配方数量</span></div>'+
+      '<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">'+esc(r.sds)+(clpLIsNum(r.sds)?' <span class="tag orange" style="font-size:10.5px">示例</span>':'')+'</b><span>影响 SDS 数量</span></div></div>'+
       '<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px"><table class="tbl"><thead><tr><th style="width:130px">SDS 编号</th><th>产品名称</th><th style="width:100px">目标市场</th><th>影响项</th><th style="width:120px">建议动作</th></tr></thead><tbody>'+
       '<tr><td class="mono">SDS-2026-0102</td><td>水性聚氨酯涂饰树脂 WPU-320</td><td>欧盟 · 德国</td><td>第 2 / 3 章：组分分类变更</td><td><span class="tag red">需重新分类</span></td></tr>'+
       '<tr><td class="mono">SDS-2026-0088</td><td>皮革涂饰光亮剂 GL-9</td><td>欧盟 · 意大利</td><td>第 2 / 15 章：标签要素更新</td><td><span class="tag orange">需更新标签</span></td></tr>'+
@@ -9620,7 +9625,7 @@ function clpLMini(n){
 }
 function clpLImport(){
   _clpImp={};
-  openModal({title:'导入新版本 · CLP 法规库',width:680,body:clpLImpHtml(1),footer:clpLImpFoot(1)});
+  openModal({title:'导入新版本 · CLP 法规库',width:680,cls:'sds-scope clp-page',body:clpLImpHtml(1),footer:clpLImpFoot(1)});
 }
 function clpLImpHtml(n){
   if(n===1){
@@ -9697,7 +9702,7 @@ function clpLImpShowFile(){
   var b=$('ciNext3');if(b){b.disabled=false;b.classList.remove('disabled');}
 }
 function clpLImpImpact(){
-  openModal({title:'影响范围（示例）',width:720,
+  openModal({title:'影响范围（示例）',width:720,cls:'sds-scope clp-page',
     body:'<div class="notice warn" style="margin-bottom:12px"><div class="ni">!</div><div><b>影响配方 / SDS 数量为示例数据</b>（原型阶段），不代表系统已具备影响分析能力。</div></div>'+
       '<div class="stat-row"><div class="stat"><b>12</b><span>影响物质（官方变更清单）</span></div><div class="stat"><b>3 <span class="tag orange" style="font-size:10.5px">示例</span></b><span>影响配方</span></div><div class="stat"><b>2 <span class="tag orange" style="font-size:10.5px">示例</span></b><span>影响 SDS</span></div></div>',
     footer:'<button class="btn primary" onclick="closeModal()">关闭</button>'});
@@ -15230,11 +15235,11 @@ function demandNew(src){
   toast((src==='customer'?'客户需求':'自研需求')+'新建表单（演示环境为只读原型）','info');
 }
 regPage('req:customer',{
-  title:'客户需求',crumb:['需求管理','<b>客户需求</b>'],
+  title:'客户需求',crumb:['需求管理','客户需求'],
   render:function(){ renderDemandPage('customer'); }
 });
 regPage('req:internal',{
-  title:'自研需求',crumb:['需求管理','<b>自研需求</b>'],
+  title:'自研需求',crumb:['需求管理','自研需求'],
   render:function(){ renderDemandPage('internal'); }
 });
 
@@ -15242,7 +15247,7 @@ regPage('req:internal',{
    受限物质管理
    ================================================================== */
 regPage('subst:list',{
-  title:'受限物质管理',crumb:['合规管理','<b>受限物质管理</b>'],
+  title:'受限物质管理',crumb:['合规管理','受限物质管理'],
   render:function(){
     $('pageHost').innerHTML='<div id="lpHost"></div>';
     renderListPage({
@@ -15432,7 +15437,7 @@ function renderProjectMatrix(){
 }
 
 regPage('proj:list',{
-  title:'研发项目管理',crumb:['项目管理','<b>研发项目管理</b>'],
+  title:'研发项目管理',crumb:['项目管理','研发项目管理'],
   render:function(){
     $('pageHost').innerHTML='<div id="lpHost"></div>';
     renderProjectMatrix();
@@ -16179,7 +16184,7 @@ function projNewExp(pid){
 
 /* ---------- 应用项目管理（P4） ---------- */
 regPage('proj:app',{
-  title:'应用项目管理',crumb:['项目管理','<b>应用项目管理</b>'],
+  title:'应用项目管理',crumb:['项目管理','应用项目管理'],
   render:function(){
     $('pageHost').innerHTML='<div id="lpHost"></div>';
     renderListPage({
@@ -16638,7 +16643,7 @@ var IPRIGHTS=[
 
 /* ---------- 原料供应商管理 ---------- */
 regPage('bd:supplier',{
-  title:'原料供应商管理',crumb:['基础数据','<b>原料供应商管理</b>'],
+  title:'原料供应商管理',crumb:['基础数据','原料供应商管理'],
   render:function(){
     lp(listCfg({
       title:'原料供应商管理',unit:'供应商',
@@ -16671,7 +16676,7 @@ regPage('bd:supplier',{
 
 /* ---------- 原料库存（菜单标「暂不做」） ---------- */
 regPage('bd:inv',{
-  title:'原料库存',crumb:['基础数据','<b>原料库存</b>'],
+  title:'原料库存',crumb:['基础数据','原料库存'],
   render:function(){
     $('pageHost').innerHTML=
       '<div class="page-hd"><div class="t"><h1>原料库存</h1>'+
@@ -16717,13 +16722,13 @@ function prodListCfg(){
   });
 }
 regPage('prod:list',{
-  title:'产品基础信息',crumb:['产品管理','<b>产品基础信息</b>'],
+  title:'产品基础信息',crumb:['产品管理','产品基础信息'],
   render:function(){ lpWithCatTree(prodListCfg()); }
 });
 
 /* ---------- 送检记录 ---------- */
 regPage('qc:submit',{
-  title:'送检记录',crumb:['质量/检测管理','<b>送检记录</b>'],
+  title:'送检记录',crumb:['质量/检测管理','送检记录'],
   render:function(){
     lp(listCfg({
       title:'送检记录',unit:'送检单',
@@ -16751,7 +16756,7 @@ regPage('qc:submit',{
 
 /* ---------- 检测结果报告 ---------- */
 regPage('qc:report',{
-  title:'检测结果报告',crumb:['质量/检测管理','<b>检测结果报告</b>'],
+  title:'检测结果报告',crumb:['质量/检测管理','检测结果报告'],
   render:function(){
     lp(listCfg({
       title:'检测结果报告',unit:'检测报告',
@@ -16778,7 +16783,7 @@ regPage('qc:report',{
 
 /* ---------- 设备列表 ---------- */
 regPage('eq:list',{
-  title:'设备列表',crumb:['设备资源','<b>设备列表</b>'],
+  title:'设备列表',crumb:['设备资源','设备列表'],
   render:function(){
     lp(listCfg({
       title:'设备列表',unit:'设备',
@@ -16810,7 +16815,7 @@ regPage('eq:list',{
 
 /* ---------- 设备能力 ---------- */
 regPage('eq:cap',{
-  title:'设备能力',crumb:['设备资源','<b>设备能力</b>'],
+  title:'设备能力',crumb:['设备资源','设备能力'],
   render:function(){
     lp(listCfg({
       title:'设备能力',unit:'设备能力项',
@@ -16833,7 +16838,7 @@ regPage('eq:cap',{
 
 /* ---------- 保养维护 ---------- */
 regPage('eq:maint',{
-  title:'保养维护',crumb:['设备资源','<b>保养维护</b>'],
+  title:'保养维护',crumb:['设备资源','保养维护'],
   render:function(){
     lp(listCfg({
       title:'保养维护',unit:'维保工单',
@@ -16862,7 +16867,7 @@ regPage('eq:maint',{
 
 /* ---------- 零备件管理（低库存预警） ---------- */
 regPage('eq:spare',{
-  title:'零备件管理',crumb:['设备资源','<b>零备件管理</b>'],
+  title:'零备件管理',crumb:['设备资源','零备件管理'],
   render:function(){
     lp(listCfg({
       title:'零备件管理',unit:'零备件',
@@ -16946,19 +16951,19 @@ function renderMyDocuments(){
   }));
 }
 regPage('doc:public',{
-  title:'公共文档',crumb:['文档管理','<b>公共文档</b>'],render:renderPublicDocuments
+  title:'公共文档',crumb:['文档管理','公共文档'],render:renderPublicDocuments
 });
 regPage('doc:mine',{
-  title:'我的文档',crumb:['文档管理','<b>我的文档</b>'],render:renderMyDocuments
+  title:'我的文档',crumb:['文档管理','我的文档'],render:renderMyDocuments
 });
 /* 兼容旧的 #doc 直达地址，默认进入公共文档。 */
 regPage('doc',{
-  title:'公共文档',crumb:['文档管理','<b>公共文档</b>'],render:renderPublicDocuments
+  title:'公共文档',crumb:['文档管理','公共文档'],render:renderPublicDocuments
 });
 
 /* ---------- 知识管理 ---------- */
 regPage('ip:km',{
-  title:'知识管理',crumb:['知识产权','<b>知识管理</b>'],
+  title:'知识管理',crumb:['知识产权','知识管理'],
   render:function(){
     lp(listCfg({
       title:'知识管理',unit:'知识条目',
@@ -16986,7 +16991,7 @@ regPage('ip:km',{
 
 /* ---------- 产权管理 ---------- */
 regPage('ip:right',{
-  title:'产权管理',crumb:['知识产权','<b>产权管理</b>'],
+  title:'产权管理',crumb:['知识产权','产权管理'],
   render:function(){
     lp(listCfg({
       title:'产权管理',unit:'知识产权',
@@ -17014,7 +17019,7 @@ regPage('ip:right',{
 
 /* ---------- 出口注册管理（菜单标「规划中」） ---------- */
 regPage('export:reg',{
-  title:'出口注册管理',crumb:['合规管理','<b>出口注册管理</b>'],
+  title:'出口注册管理',crumb:['合规管理','出口注册管理'],
   render:function(){
     $('pageHost').innerHTML=
       '<div class="page-hd"><div class="t"><h1>出口注册管理</h1>'+
@@ -17442,15 +17447,15 @@ function openWeeklyDetailById(id){
 
 /* ---------------- 页面注册（覆盖 27 / 24z3 的旧实现） ---------------- */
 regPage('doc:public',{
-  title:'公共文档',crumb:['文档管理','<b>公共文档</b>'],
+  title:'公共文档',crumb:['文档管理','公共文档'],
   render:function(){ renderDocFolderPage('public'); }
 });
 regPage('doc:mine',{
-  title:'我的文档',crumb:['文档管理','<b>我的文档</b>'],
+  title:'我的文档',crumb:['文档管理','我的文档'],
   render:function(){ renderDocFolderPage('mine'); }
 });
 regPage('doc',{
-  title:'公共文档',crumb:['文档管理','<b>公共文档</b>'],
+  title:'公共文档',crumb:['文档管理','公共文档'],
   render:function(){ renderDocFolderPage('public'); }
 });
 /* ⑤（2026-09-10 领导评审）：「周报月报」菜单已删除，查看入口统一为
@@ -17600,7 +17605,7 @@ function physNextId(){
 
 /* ---------- 页面：指标库 ---------- */
 regPage('bd:phys-lib',{
-  title:'指标库',crumb:['基础数据','理化性质配置','<b>指标库</b>'],
+  title:'指标库',crumb:['基础数据','理化性质配置','指标库'],
   render:function(){
     $('pageHost').innerHTML='<div id="lpHost"></div>';
     renderListPage({
@@ -17784,7 +17789,7 @@ function physTplSetCat(cat){ physTplCat=cat; physTplRenderBody(); }
 
 /* ---------- 页面：类别模板 ---------- */
 regPage('bd:phys-tpl',{
-  title:'类别模板',crumb:['基础数据','理化性质配置','<b>类别模板</b>'],
+  title:'类别模板',crumb:['基础数据','理化性质配置','类别模板'],
   render:function(){
     var h='';
     h+='<div class="page-hd"><div class="t">'+
@@ -18084,7 +18089,7 @@ function physSrcChip(v){
    页面：产品详情 prod:detail
    ================================================================== */
 regPage('prod:detail',{
-  title:'产品详情',crumb:['产品管理','产品基础信息','<b>产品详情</b>'],
+  title:'产品详情',crumb:['产品管理','产品基础信息','产品详情'],
   render:function(params){
     var code=(params&&params.code)||'';
     var host=$('pageHost');
@@ -18516,7 +18521,7 @@ function mdSupBatches(code){
 }
 mdReg({
   pageId:'bd:supplier-detail',listId:'bd:supplier',back:'返回供应商列表',
-  title:'供应商详情',crumb:['基础数据','原料供应商管理','<b>供应商详情</b>'],
+  title:'供应商详情',crumb:['基础数据','原料供应商管理','供应商详情'],
   get:function(k){ return (typeof supByCode==='function')?supByCode(k):null; },
   hero:function(s){
     return {h1:s.name,
@@ -18644,7 +18649,7 @@ var MD_QC_LAB={
 };
 mdReg({
   pageId:'qc:submit-detail',listId:'qc:submit',back:'返回送检记录',
-  title:'送检单详情',crumb:['质量/检测管理','送检记录','<b>送检单详情</b>'],
+  title:'送检单详情',crumb:['质量/检测管理','送检记录','送检单详情'],
   get:function(k){ return SUBMITS.filter(function(r){return r.id===k;})[0]||null; },
   hero:function(s){
     return {h1:s.sample,sub:'送检单号 '+esc(s.id)+' · '+esc(s.org)+' · 送检人 '+esc(s.by)+' · '+esc(s.date)};
@@ -18699,7 +18704,7 @@ mdReg({
 });
 mdReg({
   pageId:'qc:report-detail',listId:'qc:report',back:'返回检测报告',
-  title:'检测报告详情',crumb:['质量/检测管理','检测结果报告','<b>检测报告详情</b>'],
+  title:'检测报告详情',crumb:['质量/检测管理','检测结果报告','检测报告详情'],
   get:function(k){ return QCREPORTS.filter(function(r){return r.id===k;})[0]||null; },
   hero:function(r){
     return {h1:r.sample,sub:'报告编号 '+esc(r.id)+' · '+esc(r.org)+' · 出具日期 '+esc(r.date)};
@@ -18772,7 +18777,7 @@ function mdEqSpares(code){ return EQSPARES.filter(function(s){return s['for']===
 
 mdReg({
   pageId:'eq:list-detail',listId:'eq:list',back:'返回设备列表',
-  title:'设备详情',crumb:['设备资源','设备列表','<b>设备详情</b>'],
+  title:'设备详情',crumb:['设备资源','设备列表','设备详情'],
   get:function(k){ return mdEqByCode(k); },
   hero:function(e){
     return {h1:e.name,sub:mono(e.id)+' · 型号 '+esc(e.model)+' · '+esc(e.loc)+' · 责任人 '+esc(e.owner)};
@@ -18836,7 +18841,7 @@ mdReg({
 });
 mdReg({
   pageId:'eq:cap-detail',listId:'eq:cap',back:'返回设备能力',
-  title:'设备能力详情',crumb:['设备资源','设备能力','<b>能力详情</b>'],
+  title:'设备能力详情',crumb:['设备资源','设备能力','能力详情'],
   get:function(k){
     var p=String(k||'').split('|');
     if(p.length<2)return null;
@@ -18892,7 +18897,7 @@ mdReg({
 });
 mdReg({
   pageId:'eq:maint-detail',listId:'eq:maint',back:'返回保养维护',
-  title:'维保工单详情',crumb:['设备资源','保养维护','<b>维保工单</b>'],
+  title:'维保工单详情',crumb:['设备资源','保养维护','维保工单'],
   get:function(k){ return EQMAINTS.filter(function(m){return m.id===k;})[0]||null; },
   hero:function(m){
     return {h1:m.type+' · '+m.eq,sub:'工单号 '+esc(m.id)+' · 周期 '+esc(m.cycle)+' · 负责人 '+esc(m.owner)};
@@ -18951,7 +18956,7 @@ mdReg({
 });
 mdReg({
   pageId:'eq:spare-detail',listId:'eq:spare',back:'返回零备件管理',
-  title:'零备件详情',crumb:['设备资源','零备件管理','<b>备件详情</b>'],
+  title:'零备件详情',crumb:['设备资源','零备件管理','备件详情'],
   get:function(k){ return EQSPARES.filter(function(s){return s.code===k;})[0]||null; },
   hero:function(s){
     var e=mdEqByCode(s['for']);
@@ -19032,7 +19037,7 @@ function mdDocVers(d){
 }
 mdReg({
   pageId:'doc:detail',listId:'doc:public',back:'返回列表',
-  title:'文档详情',crumb:['文档管理','<b>文档详情</b>'],
+  title:'文档详情',crumb:['文档管理','文档详情'],
   get:function(k){ return mdFindDoc(k); },
   hero:function(o){
     var r=o.r;
@@ -19135,7 +19140,7 @@ var MD_KM_ABS={
 function mdKmAbs(k){ return MD_KM_ABS[k]||MD_KM_ABS['技术综述']; }
 mdReg({
   pageId:'ip:km-detail',listId:'ip:km',back:'返回知识管理',
-  title:'知识条目详情',crumb:['知识产权','知识管理','<b>知识条目</b>'],
+  title:'知识条目详情',crumb:['知识产权','知识管理','知识条目'],
   get:function(k){ return KNOWLEDGES.filter(function(r){return r.id===k;})[0]||null; },
   hero:function(r){
     return {h1:r.title,sub:mono(r.id)+' · '+esc(r.cat)+' · 作者 '+esc(r.author)+' · '+esc(r.create)};
@@ -19188,7 +19193,7 @@ mdReg({
 });
 mdReg({
   pageId:'ip:right-detail',listId:'ip:right',back:'返回产权管理',
-  title:'知识产权详情',crumb:['知识产权','产权管理','<b>产权详情</b>'],
+  title:'知识产权详情',crumb:['知识产权','产权管理','产权详情'],
   get:function(k){ return IPRIGHTS.filter(function(r){return r.id===k;})[0]||null; },
   hero:function(r){
     return {h1:r.name,sub:mono(r.id)+' · '+esc(r.type)+' · 申请日 '+esc(r.apply)};
@@ -19263,7 +19268,7 @@ mdReg({
    ================================================================== */
 mdReg({
   pageId:'bd:ghs-detail',listId:'bd:ghs',back:'返回 GHS 与受限属性',
-  title:'物质受限属性详情',crumb:['基础数据','组分与合规','<b>物质受限属性</b>'],
+  title:'物质受限属性详情',crumb:['基础数据','组分与合规','物质受限属性'],
   get:function(k){ return GHS_ROWS.filter(function(r){return r.cas===k;})[0]||null; },
   hero:function(r){
     return {h1:r.cn,sub:'CAS '+esc(r.cas)+' · '+esc(r.ghs)};
@@ -19797,7 +19802,7 @@ function taskTodos(){
 /* ---------- 4. 页面：临时任务列表 ---------- */
 regPage('proj:task', {
   title: '临时任务',
-  crumb: ['项目管理', '<b>临时任务</b>'],
+  crumb: ['项目管理', '临时任务'],
   render: function(){
     $('pageHost').innerHTML = '<div id="lpHost"></div>';
     var ac = (TMP_TASKS || []).filter(function(t){ return tmpIsMine(t) && t.status !== '已反馈'; }).length;
@@ -20516,7 +20521,7 @@ function eqmCfg(tab){
 }
 
 regPage('eq:maint',{
-  title:'设备维护台账',crumb:['设备资源','<b>保养维护</b>'],
+  title:'设备维护台账',crumb:['设备资源','保养维护'],
   render:function(){ eqMaintRender(); }
 });
 

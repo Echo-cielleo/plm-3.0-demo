@@ -2586,7 +2586,7 @@ var _impFile='';
 function dbImport(){
   _impFile='';
   var c=dbCur();
-  openModal({title:'批量导入 · '+c.title,width:560,
+  openModal({title:'批量导入 · '+c.title,width:560,cls:'sds-scope',
     body:'<div class="mini-steps"><div class="mini-step on"><span class="n">1</span>选择文件</div><div class="mini-line"></div>'
       +'<div class="mini-step"><span class="n">2</span>上传解析</div><div class="mini-line"></div>'
       +'<div class="mini-step"><span class="n">3</span>导入结果</div></div>'
@@ -2894,7 +2894,7 @@ var _lawCur=null,_lawFile='';
 function lawUpload(id){
   _lawCur=id?lawRows.filter(function(x){return x._id===id;})[0]:null;
   _lawFile='';window._lawTmp=null;
-  openModal({title:_lawCur?('上传新版本 · '+_lawCur.name):'新增法规清单',width:640,body:lawStep1Html(),footer:lawFoot1()});
+  openModal({title:_lawCur?('上传新版本 · '+_lawCur.name):'新增法规清单',width:640,cls:'sds-scope',body:lawStep1Html(),footer:lawFoot1()});
 }
 function lawFoot1(){
   return '<div class="left">第 1 步 / 共 3 步</div><button class="btn" onclick="closeModal()">取消</button>'
@@ -3431,41 +3431,41 @@ seedSdsRows();
    [23-D] 页面注册
    ================================================================== */
 regPage('sds:list',{
-  title:'SDS 文档列表',crumb:['合规管理','SDS 管理','<b>SDS 文档列表</b>'],
+  title:'SDS 文档列表',crumb:['合规管理','SDS 管理','SDS 文档列表'],
   render:function(params){ SDS_FOCUS=(params&&params.focus)||''; renderSdsList(); }
 });
 regPage('sds:wizard',{
-  title:'SDS 生成向导',crumb:['合规管理','SDS 管理','<b>SDS 生成向导</b>'],
+  title:'SDS 生成向导',crumb:['合规管理','SDS 管理','SDS 生成向导'],
   render:function(){ renderSdsWizard(); }
 });
 regPage('bd:comp',{
-  title:'组分基础信息',crumb:['基础数据','<b>组分基础信息</b>'],
+  title:'组分基础信息',crumb:['基础数据','组分基础信息'],
   render:function(){ renderDbPage('component'); }
 });
 regPage('bd:rawmat',{
-  title:'原料信息',crumb:['基础数据','<b>原料信息</b>'],
+  title:'原料信息',crumb:['基础数据','原料信息'],
   render:function(){
     renderDbPage('material','原料信息',
       '企业采购与自产原料的身份档案，含物质形态、规格型号与配方组成，是 SDS 编制与法规匹配的基础。');
   }
 });
 regPage('bd:sup-data',{
-  title:'供应商原料数据',crumb:['基础数据','<b>供应商原料数据</b>'],
+  title:'供应商原料数据',crumb:['基础数据','供应商原料数据'],
   render:function(){
     renderDbPage('measure','供应商原料数据',
       '来自第三方检测报告与供应商 SDS 的原始数据，是分类判定的最高优先级依据（实测报告 > 供应商 SDS）。');
   }
 });
 regPage('bd:comp-auto',{
-  title:'组分数据自动补全',crumb:['基础数据','<b>组分数据自动补全</b>'],
+  title:'组分数据自动补全',crumb:['基础数据','组分数据自动补全'],
   render:function(){ renderPubChem(); }
 });
 regPage('bd:ghs',{
-  title:'GHS 与受限属性',crumb:['基础数据','<b>GHS 与受限属性</b>'],
+  title:'GHS 与受限属性',crumb:['基础数据','GHS 与受限属性'],
   render:function(){ renderGhs(); }
 });
 regPage('law:zdhc',{
-  title:'ZDHC 法规库',crumb:['合规管理','法规库','<b>ZDHC</b>'],
+  title:'ZDHC 法规库',crumb:['合规管理','法规库','ZDHC'],
   render:function(){
     renderLawPage('zdhc','ZDHC 法规库',
       'ZDHC 有害化学物质零排放基金会发布的生产限用物质清单与排放限值，是皮革/纺织行业客户验厂的强制依据。',
@@ -3473,7 +3473,7 @@ regPage('law:zdhc',{
   }
 });
 regPage('law:rohs',{
-  title:'RoHS · REACH 法规库',crumb:['合规管理','法规库','<b>RoHS·REACH</b>'],
+  title:'RoHS · REACH 法规库',crumb:['合规管理','法规库','RoHS·REACH'],
   render:function(){
     renderLawPage(['reach','cn'],'RoHS · REACH 法规库',
       '欧盟 REACH / RoHS 与中国化学品法规（GB 系列）清单，覆盖限制物质、授权清单与申报要求。',

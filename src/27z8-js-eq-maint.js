@@ -363,7 +363,7 @@ function eqmCfg(tab){
 }
 
 regPage('eq:maint',{
-  title:'设备维护台账',crumb:['设备资源','<b>保养维护</b>'],
+  title:'设备维护台账',crumb:['设备资源','保养维护'],
   render:function(){ eqMaintRender(); }
 });
 

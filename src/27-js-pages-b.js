@@ -266,7 +266,7 @@ var IPRIGHTS=[
 
 /* ---------- 原料供应商管理 ---------- */
 regPage('bd:supplier',{
-  title:'原料供应商管理',crumb:['基础数据','<b>原料供应商管理</b>'],
+  title:'原料供应商管理',crumb:['基础数据','原料供应商管理'],
   render:function(){
     lp(listCfg({
       title:'原料供应商管理',unit:'供应商',
@@ -299,7 +299,7 @@ regPage('bd:supplier',{
 
 /* ---------- 原料库存（菜单标「暂不做」） ---------- */
 regPage('bd:inv',{
-  title:'原料库存',crumb:['基础数据','<b>原料库存</b>'],
+  title:'原料库存',crumb:['基础数据','原料库存'],
   render:function(){
     $('pageHost').innerHTML=
       '<div class="page-hd"><div class="t"><h1>原料库存</h1>'+
@@ -345,13 +345,13 @@ function prodListCfg(){
   });
 }
 regPage('prod:list',{
-  title:'产品基础信息',crumb:['产品管理','<b>产品基础信息</b>'],
+  title:'产品基础信息',crumb:['产品管理','产品基础信息'],
   render:function(){ lpWithCatTree(prodListCfg()); }
 });
 
 /* ---------- 送检记录 ---------- */
 regPage('qc:submit',{
-  title:'送检记录',crumb:['质量/检测管理','<b>送检记录</b>'],
+  title:'送检记录',crumb:['质量/检测管理','送检记录'],
   render:function(){
     lp(listCfg({
       title:'送检记录',unit:'送检单',
@@ -379,7 +379,7 @@ regPage('qc:submit',{
 
 /* ---------- 检测结果报告 ---------- */
 regPage('qc:report',{
-  title:'检测结果报告',crumb:['质量/检测管理','<b>检测结果报告</b>'],
+  title:'检测结果报告',crumb:['质量/检测管理','检测结果报告'],
   render:function(){
     lp(listCfg({
       title:'检测结果报告',unit:'检测报告',
@@ -406,7 +406,7 @@ regPage('qc:report',{
 
 /* ---------- 设备列表 ---------- */
 regPage('eq:list',{
-  title:'设备列表',crumb:['设备资源','<b>设备列表</b>'],
+  title:'设备列表',crumb:['设备资源','设备列表'],
   render:function(){
     lp(listCfg({
       title:'设备列表',unit:'设备',
@@ -438,7 +438,7 @@ regPage('eq:list',{
 
 /* ---------- 设备能力 ---------- */
 regPage('eq:cap',{
-  title:'设备能力',crumb:['设备资源','<b>设备能力</b>'],
+  title:'设备能力',crumb:['设备资源','设备能力'],
   render:function(){
     lp(listCfg({
       title:'设备能力',unit:'设备能力项',
@@ -461,7 +461,7 @@ regPage('eq:cap',{
 
 /* ---------- 保养维护 ---------- */
 regPage('eq:maint',{
-  title:'保养维护',crumb:['设备资源','<b>保养维护</b>'],
+  title:'保养维护',crumb:['设备资源','保养维护'],
   render:function(){
     lp(listCfg({
       title:'保养维护',unit:'维保工单',
@@ -490,7 +490,7 @@ regPage('eq:maint',{
 
 /* ---------- 零备件管理（低库存预警） ---------- */
 regPage('eq:spare',{
-  title:'零备件管理',crumb:['设备资源','<b>零备件管理</b>'],
+  title:'零备件管理',crumb:['设备资源','零备件管理'],
   render:function(){
     lp(listCfg({
       title:'零备件管理',unit:'零备件',
@@ -574,19 +574,19 @@ function renderMyDocuments(){
   }));
 }
 regPage('doc:public',{
-  title:'公共文档',crumb:['文档管理','<b>公共文档</b>'],render:renderPublicDocuments
+  title:'公共文档',crumb:['文档管理','公共文档'],render:renderPublicDocuments
 });
 regPage('doc:mine',{
-  title:'我的文档',crumb:['文档管理','<b>我的文档</b>'],render:renderMyDocuments
+  title:'我的文档',crumb:['文档管理','我的文档'],render:renderMyDocuments
 });
 /* 兼容旧的 #doc 直达地址，默认进入公共文档。 */
 regPage('doc',{
-  title:'公共文档',crumb:['文档管理','<b>公共文档</b>'],render:renderPublicDocuments
+  title:'公共文档',crumb:['文档管理','公共文档'],render:renderPublicDocuments
 });
 
 /* ---------- 知识管理 ---------- */
 regPage('ip:km',{
-  title:'知识管理',crumb:['知识产权','<b>知识管理</b>'],
+  title:'知识管理',crumb:['知识产权','知识管理'],
   render:function(){
     lp(listCfg({
       title:'知识管理',unit:'知识条目',
@@ -614,7 +614,7 @@ regPage('ip:km',{
 
 /* ---------- 产权管理 ---------- */
 regPage('ip:right',{
-  title:'产权管理',crumb:['知识产权','<b>产权管理</b>'],
+  title:'产权管理',crumb:['知识产权','产权管理'],
   render:function(){
     lp(listCfg({
       title:'产权管理',unit:'知识产权',
@@ -642,7 +642,7 @@ regPage('ip:right',{
 
 /* ---------- 出口注册管理（菜单标「规划中」） ---------- */
 regPage('export:reg',{
-  title:'出口注册管理',crumb:['合规管理','<b>出口注册管理</b>'],
+  title:'出口注册管理',crumb:['合规管理','出口注册管理'],
   render:function(){
     $('pageHost').innerHTML=
       '<div class="page-hd"><div class="t"><h1>出口注册管理</h1>'+

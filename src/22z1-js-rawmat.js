@@ -328,7 +328,7 @@ function matSubstToLink(m){
    9. 原料详情页
    ------------------------------------------------------------------ */
 regPage('bd:rawmat-detail',{
-  title:'原料详情',crumb:['基础数据','原料信息','<b>原料详情</b>'],
+  title:'原料详情',crumb:['基础数据','原料信息','原料详情'],
   render:function(params){
     var code=(params&&params.code)||'',m=matByCode(code);
     var host=$('pageHost');

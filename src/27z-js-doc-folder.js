@@ -406,15 +406,15 @@ function openWeeklyDetailById(id){
 
 /* ---------------- 页面注册（覆盖 27 / 24z3 的旧实现） ---------------- */
 regPage('doc:public',{
-  title:'公共文档',crumb:['文档管理','<b>公共文档</b>'],
+  title:'公共文档',crumb:['文档管理','公共文档'],
   render:function(){ renderDocFolderPage('public'); }
 });
 regPage('doc:mine',{
-  title:'我的文档',crumb:['文档管理','<b>我的文档</b>'],
+  title:'我的文档',crumb:['文档管理','我的文档'],
   render:function(){ renderDocFolderPage('mine'); }
 });
 regPage('doc',{
-  title:'公共文档',crumb:['文档管理','<b>公共文档</b>'],
+  title:'公共文档',crumb:['文档管理','公共文档'],
   render:function(){ renderDocFolderPage('public'); }
 });
 /* ⑤（2026-09-10 领导评审）：「周报月报」菜单已删除，查看入口统一为

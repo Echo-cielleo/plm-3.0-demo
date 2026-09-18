@@ -203,7 +203,7 @@ function tcDetailHtml(){
 }
 
 regPage('bd:techcat',{
-  title:'关键技术分类',crumb:['基础数据','<b>关键技术分类</b>'],
+  title:'关键技术分类',crumb:['基础数据','关键技术分类'],
   render:function(){
     /* 搜索时：先展开全部命中节点（含祖先链），再渲染树 */
     if(tcState.kw){
@@ -233,7 +233,7 @@ function tcCollapseAll(){ tcState.exp={}; tcState.sel=''; showPage('bd:techcat')
    ================================================================== */
 var bfList=null;
 regPage('bd:formula',{
-  title:'内置计算公式',crumb:['基础数据','<b>内置计算公式</b>'],
+  title:'内置计算公式',crumb:['基础数据','内置计算公式'],
   render:function(){
     if(!bfList)bfList=BD_FORMULA.slice();
     $('pageHost').innerHTML='<div id="lpHost"></div>';
@@ -324,7 +324,7 @@ function tcNow(){
    ================================================================== */
 var etList=null;
 regPage('bd:exptpl',{
-  title:'实验模板',crumb:['基础数据','<b>实验模板</b>'],
+  title:'实验模板',crumb:['基础数据','实验模板'],
   render:function(){
     if(!etList)etList=EXP_TPL.slice();
     $('pageHost').innerHTML='<div id="lpHost"></div>';

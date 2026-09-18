@@ -344,11 +344,11 @@ function demandNew(src){
   toast((src==='customer'?'客户需求':'自研需求')+'新建表单（演示环境为只读原型）','info');
 }
 regPage('req:customer',{
-  title:'客户需求',crumb:['需求管理','<b>客户需求</b>'],
+  title:'客户需求',crumb:['需求管理','客户需求'],
   render:function(){ renderDemandPage('customer'); }
 });
 regPage('req:internal',{
-  title:'自研需求',crumb:['需求管理','<b>自研需求</b>'],
+  title:'自研需求',crumb:['需求管理','自研需求'],
   render:function(){ renderDemandPage('internal'); }
 });
 
@@ -356,7 +356,7 @@ regPage('req:internal',{
    受限物质管理
    ================================================================== */
 regPage('subst:list',{
-  title:'受限物质管理',crumb:['合规管理','<b>受限物质管理</b>'],
+  title:'受限物质管理',crumb:['合规管理','受限物质管理'],
   render:function(){
     $('pageHost').innerHTML='<div id="lpHost"></div>';
     renderListPage({
@@ -546,7 +546,7 @@ function renderProjectMatrix(){
 }
 
 regPage('proj:list',{
-  title:'研发项目管理',crumb:['项目管理','<b>研发项目管理</b>'],
+  title:'研发项目管理',crumb:['项目管理','研发项目管理'],
   render:function(){
     $('pageHost').innerHTML='<div id="lpHost"></div>';
     renderProjectMatrix();
@@ -1293,7 +1293,7 @@ function projNewExp(pid){
 
 /* ---------- 应用项目管理（P4） ---------- */
 regPage('proj:app',{
-  title:'应用项目管理',crumb:['项目管理','<b>应用项目管理</b>'],
+  title:'应用项目管理',crumb:['项目管理','应用项目管理'],
   render:function(){
     $('pageHost').innerHTML='<div id="lpHost"></div>';
     renderListPage({

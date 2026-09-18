@@ -162,7 +162,7 @@ function mdSupBatches(code){
 }
 mdReg({
   pageId:'bd:supplier-detail',listId:'bd:supplier',back:'返回供应商列表',
-  title:'供应商详情',crumb:['基础数据','原料供应商管理','<b>供应商详情</b>'],
+  title:'供应商详情',crumb:['基础数据','原料供应商管理','供应商详情'],
   get:function(k){ return (typeof supByCode==='function')?supByCode(k):null; },
   hero:function(s){
     return {h1:s.name,
@@ -290,7 +290,7 @@ var MD_QC_LAB={
 };
 mdReg({
   pageId:'qc:submit-detail',listId:'qc:submit',back:'返回送检记录',
-  title:'送检单详情',crumb:['质量/检测管理','送检记录','<b>送检单详情</b>'],
+  title:'送检单详情',crumb:['质量/检测管理','送检记录','送检单详情'],
   get:function(k){ return SUBMITS.filter(function(r){return r.id===k;})[0]||null; },
   hero:function(s){
     return {h1:s.sample,sub:'送检单号 '+esc(s.id)+' · '+esc(s.org)+' · 送检人 '+esc(s.by)+' · '+esc(s.date)};
@@ -345,7 +345,7 @@ mdReg({
 });
 mdReg({
   pageId:'qc:report-detail',listId:'qc:report',back:'返回检测报告',
-  title:'检测报告详情',crumb:['质量/检测管理','检测结果报告','<b>检测报告详情</b>'],
+  title:'检测报告详情',crumb:['质量/检测管理','检测结果报告','检测报告详情'],
   get:function(k){ return QCREPORTS.filter(function(r){return r.id===k;})[0]||null; },
   hero:function(r){
     return {h1:r.sample,sub:'报告编号 '+esc(r.id)+' · '+esc(r.org)+' · 出具日期 '+esc(r.date)};
@@ -418,7 +418,7 @@ function mdEqSpares(code){ return EQSPARES.filter(function(s){return s['for']===
 
 mdReg({
   pageId:'eq:list-detail',listId:'eq:list',back:'返回设备列表',
-  title:'设备详情',crumb:['设备资源','设备列表','<b>设备详情</b>'],
+  title:'设备详情',crumb:['设备资源','设备列表','设备详情'],
   get:function(k){ return mdEqByCode(k); },
   hero:function(e){
     return {h1:e.name,sub:mono(e.id)+' · 型号 '+esc(e.model)+' · '+esc(e.loc)+' · 责任人 '+esc(e.owner)};
@@ -482,7 +482,7 @@ mdReg({
 });
 mdReg({
   pageId:'eq:cap-detail',listId:'eq:cap',back:'返回设备能力',
-  title:'设备能力详情',crumb:['设备资源','设备能力','<b>能力详情</b>'],
+  title:'设备能力详情',crumb:['设备资源','设备能力','能力详情'],
   get:function(k){
     var p=String(k||'').split('|');
     if(p.length<2)return null;
@@ -538,7 +538,7 @@ mdReg({
 });
 mdReg({
   pageId:'eq:maint-detail',listId:'eq:maint',back:'返回保养维护',
-  title:'维保工单详情',crumb:['设备资源','保养维护','<b>维保工单</b>'],
+  title:'维保工单详情',crumb:['设备资源','保养维护','维保工单'],
   get:function(k){ return EQMAINTS.filter(function(m){return m.id===k;})[0]||null; },
   hero:function(m){
     return {h1:m.type+' · '+m.eq,sub:'工单号 '+esc(m.id)+' · 周期 '+esc(m.cycle)+' · 负责人 '+esc(m.owner)};
@@ -597,7 +597,7 @@ mdReg({
 });
 mdReg({
   pageId:'eq:spare-detail',listId:'eq:spare',back:'返回零备件管理',
-  title:'零备件详情',crumb:['设备资源','零备件管理','<b>备件详情</b>'],
+  title:'零备件详情',crumb:['设备资源','零备件管理','备件详情'],
   get:function(k){ return EQSPARES.filter(function(s){return s.code===k;})[0]||null; },
   hero:function(s){
     var e=mdEqByCode(s['for']);
@@ -678,7 +678,7 @@ function mdDocVers(d){
 }
 mdReg({
   pageId:'doc:detail',listId:'doc:public',back:'返回列表',
-  title:'文档详情',crumb:['文档管理','<b>文档详情</b>'],
+  title:'文档详情',crumb:['文档管理','文档详情'],
   get:function(k){ return mdFindDoc(k); },
   hero:function(o){
     var r=o.r;
@@ -781,7 +781,7 @@ var MD_KM_ABS={
 function mdKmAbs(k){ return MD_KM_ABS[k]||MD_KM_ABS['技术综述']; }
 mdReg({
   pageId:'ip:km-detail',listId:'ip:km',back:'返回知识管理',
-  title:'知识条目详情',crumb:['知识产权','知识管理','<b>知识条目</b>'],
+  title:'知识条目详情',crumb:['知识产权','知识管理','知识条目'],
   get:function(k){ return KNOWLEDGES.filter(function(r){return r.id===k;})[0]||null; },
   hero:function(r){
     return {h1:r.title,sub:mono(r.id)+' · '+esc(r.cat)+' · 作者 '+esc(r.author)+' · '+esc(r.create)};
@@ -834,7 +834,7 @@ mdReg({
 });
 mdReg({
   pageId:'ip:right-detail',listId:'ip:right',back:'返回产权管理',
-  title:'知识产权详情',crumb:['知识产权','产权管理','<b>产权详情</b>'],
+  title:'知识产权详情',crumb:['知识产权','产权管理','产权详情'],
   get:function(k){ return IPRIGHTS.filter(function(r){return r.id===k;})[0]||null; },
   hero:function(r){
     return {h1:r.name,sub:mono(r.id)+' · '+esc(r.type)+' · 申请日 '+esc(r.apply)};
@@ -909,7 +909,7 @@ mdReg({
    ================================================================== */
 mdReg({
   pageId:'bd:ghs-detail',listId:'bd:ghs',back:'返回 GHS 与受限属性',
-  title:'物质受限属性详情',crumb:['基础数据','组分与合规','<b>物质受限属性</b>'],
+  title:'物质受限属性详情',crumb:['基础数据','组分与合规','物质受限属性'],
   get:function(k){ return GHS_ROWS.filter(function(r){return r.cas===k;})[0]||null; },
   hero:function(r){
     return {h1:r.cn,sub:'CAS '+esc(r.cas)+' · '+esc(r.ghs)};

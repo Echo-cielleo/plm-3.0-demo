@@ -130,7 +130,7 @@ function physNextId(){
 
 /* ---------- 页面：指标库 ---------- */
 regPage('bd:phys-lib',{
-  title:'指标库',crumb:['基础数据','理化性质配置','<b>指标库</b>'],
+  title:'指标库',crumb:['基础数据','理化性质配置','指标库'],
   render:function(){
     $('pageHost').innerHTML='<div id="lpHost"></div>';
     renderListPage({

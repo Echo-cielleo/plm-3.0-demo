@@ -185,7 +185,7 @@ function physSrcChip(v){
    页面：产品详情 prod:detail
    ================================================================== */
 regPage('prod:detail',{
-  title:'产品详情',crumb:['产品管理','产品基础信息','<b>产品详情</b>'],
+  title:'产品详情',crumb:['产品管理','产品基础信息','产品详情'],
   render:function(params){
     var code=(params&&params.code)||'';
     var host=$('pageHost');
