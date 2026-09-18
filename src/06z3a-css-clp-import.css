@@ -1,0 +1,77 @@
+/* ==================================================================
+   [23z6a] CLP「导入新版本」五步向导 · 专用样式
+   承载分片：23z6a-js-clp-import.js（三模块：Annex VI / Annex I / Annex III·IV·V）
+   通用件（.btn / .field / .tbl / .notice / .file-row / .stat-row / .mini-steps）
+   沿用既有定义，本文件只补向导独有的容器与状态。
+   ================================================================== */
+
+/* ---------- 1. 模态外壳（900px，比通用 560px 宽） ---------- */
+#modal.clpimp .modal-bd{padding:18px 20px;max-height:66vh}
+#modal.clpimp .modal-ft{flex-wrap:wrap;row-gap:8px}
+/* 第 4 步四个统计块需要 4 列（通用 .stat-row 为 3 列） */
+#modal.clpimp .stat-row{grid-template-columns:repeat(4,1fr);gap:9px}
+#modal.clpimp .stat{padding:9px 8px}
+#modal.clpimp .stat b{font-size:17px}
+#modal.clpimp .stat span{display:block;margin-top:2px;line-height:1.45}
+
+/* ---------- 2. 五步步骤条（模板 .mini-steps 按 3–4 步设计，5 步须收紧） ---------- */
+.sds-scope .mini-steps.mini-5{gap:4px;margin-bottom:16px;flex-wrap:nowrap}
+.sds-scope .mini-steps.mini-5 .mini-step{font-size:11.5px;gap:5px;white-space:nowrap;flex:0 0 auto}
+.sds-scope .mini-steps.mini-5 .mini-step .n{width:18px;height:18px;font-size:10.5px}
+.sds-scope .mini-steps.mini-5 .mini-line{min-width:8px}
+
+/* ---------- 3. 第 4 步子 Tab（分段控件：数据校验 / 规则测试 / 版本比较） ---------- */
+.clpimp-seg{display:inline-flex;gap:2px;padding:3px;margin-bottom:13px;
+  background:#eef2f7;border-radius:8px;max-width:100%;overflow-x:auto}
+.clpimp-seg button{padding:5px 14px;border-radius:6px;font-size:12.5px;
+  color:var(--ink2,#4a5a6a);white-space:nowrap;transition:background .16s,color .16s}
+.clpimp-seg button:hover{color:var(--primary)}
+.clpimp-seg button.on{background:#fff;color:var(--primary);font-weight:650;
+  box-shadow:0 1px 3px rgba(20,45,80,.10)}
+
+/* ---------- 4. 数据校验分组卡片（阻断 / 告警 / 提示 / 通过） ---------- */
+.cip-chk{border:1px solid var(--line);border-left:3px solid #d5dee8;border-radius:8px;
+  margin-bottom:9px;background:#fff;overflow:hidden}
+.cip-chk.is-done{border-left-color:var(--green);background:#fafdf9}
+.cip-chk-hd{display:flex;align-items:center;gap:8px;padding:9px 12px;
+  background:#f8fafd;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+.cip-chk-hd b{font-size:12.8px;font-weight:650}
+.cip-chk.is-done .cip-chk-hd{background:#f4fbf6}
+.cip-chk-bd{padding:7px 12px 9px 26px;font-size:12.4px;color:var(--ink2,#4a5a6a)}
+.cip-chk-bd li{list-style:disc outside;margin:3px 0;line-height:1.62}
+.cip-chk-bd li b{color:var(--ink,#2c3a4a)}
+
+/* ---------- 5. 上传文件的元信息条（第 3 步） ---------- */
+.cip-filemeta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px 14px;margin-top:8px;padding:9px 12px;
+  background:#f7f9fc;border:1px solid var(--line);border-radius:7px}
+.cip-filemeta span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cip-filemeta em{font-style:normal;font-size:11px;color:var(--muted)}
+.cip-filemeta b{font-size:12.3px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- 6. 规则测试表中「未通过」的行 ---------- */
+.sds-scope .tbl tbody tr.cip-row-bad{background:#fff5f4}
+.sds-scope .tbl tbody tr.cip-row-bad:hover{background:#ffeceb}
+.sds-scope .tbl tbody tr.cip-row-bad td:first-child{box-shadow:inset 3px 0 0 var(--red)}
+
+/* ---------- 7. Annex V 危险象形图 · 只读展示块（Tab3 顶部） ---------- */
+.clp-picto .toolbar{padding:0;border-bottom:none}
+.picto-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.picto-item{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;
+  border:1px solid var(--line);border-radius:8px;background:#fbfcfe}
+/* 菱形占位：GHS 象形图为红框菱形图片素材，原型阶段以几何占位替代真实图片 */
+.pdia{flex:0 0 auto;width:30px;height:30px;margin:6px 7px 6px 6px;
+  border:2px solid #d4380d;border-radius:3px;background:#fff;
+  transform:rotate(45deg);display:grid;place-items:center}
+.pdia i{display:block;width:8px;height:8px;background:#d4380d;border-radius:1px}
+.picto-item>div{min-width:0;display:flex;flex-direction:column;gap:1px}
+.picto-item>div>b{font-size:12.3px;font-weight:700}
+.picto-item>div>span{font-size:12.4px}
+.picto-item>div>em{font-style:normal;font-size:11.2px;color:var(--muted);line-height:1.5}
+@media(max-width:1000px){.picto-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---------- 8. 变更前 / 变更后单元格 ----------
+   同一样式同时服务 CLP 导入向导（版本比较）与 OEL 页（版本比较 / 变更抽屉），
+   因此放在本文件全局定义，避免两处各写一份。 */
+.sds-scope .oel-old{color:var(--muted)}
+.sds-scope .oel-new{color:#0e7a3c;font-weight:600}
