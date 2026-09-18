@@ -65,7 +65,7 @@ with sync_playwright() as pw:
     ok(page.evaluate('curPage')=='law:clp','查询结果可进入对应来源库维护页')
 
     print('\n=== 分库维护 ===')
-    routes=[('law:clp','clp','CLP 附录 VI'),('law:reach','reach','REACH / RoHS'),('law:cl','cl','C&L Inventory'),('law:cn','cn','国内危化品分类'),('law:zdhc','zdhc','ZDHC MRSL')]
+    routes=[('law:reach','reach','REACH / RoHS'),('law:cl','cl','C&L Inventory'),('law:cn','cn','国内危化品分类'),('law:zdhc','zdhc','ZDHC MRSL')]
     for route,kind,title in routes:
         page.evaluate("r=>showPage(r)",route);page.wait_for_timeout(100)
         ok(title in page.locator('#pageHost').inner_text(),route+' 显示正确维护标题')
@@ -83,23 +83,11 @@ with sync_playwright() as pw:
         ok(page.locator('#lawDetailTable tbody tr').count()>0,route+' 明细子页面展示数据列表')
         page.get_by_role('button',name='返回法规库').click();page.wait_for_timeout(80)
         ok(page.evaluate('curPage')==route,route+' 明细子页面可返回对应维护页')
-    page.evaluate("showPage('law:clp')");page.wait_for_timeout(80)
-    page.get_by_role('button',name='查看详情').click();page.wait_for_timeout(80)
-    ok(all(x in page.locator('#lawDetailTable thead').inner_text() for x in ['SCL','M 因子','ATE']),'CLP 明细列表展示 SCL、M 因子与 ATE 字段')
-    page.fill('#lawDetailKw','50-00-0');page.wait_for_timeout(80)
-    ok(page.locator('#lawDetailTable tbody tr').count()==1 and '甲醛' in page.locator('#lawDetailTable tbody').inner_text(),'CLP 明细支持按 CAS 查询物质')
-    page.get_by_role('button',name='查看').click();page.wait_for_timeout(80)
-    ok('M=10' in page.locator('#mBody').inner_text() and '口服 ATE = 100 mg/kg' in page.locator('#mBody').inner_text(),'单物质弹窗展示完整 CLP 计算字段')
-    page.screenshot(path='/private/tmp/law-clp-subpage-entry.png',full_page=True)
-    page.evaluate('closeModal()');page.evaluate('lawDetailClear()')
-    page.screenshot(path='/private/tmp/law-clp-subpage.png',full_page=True)
-    page.evaluate("showPage('law:clp')");page.wait_for_timeout(100)
-    page.screenshot(path='/private/tmp/law-clp-maintenance-yellow.png',full_page=True)
-    ok(page.locator('#lawTable .ev-due').count()>0 and page.get_by_role('button',name='确认复审').count()>0,'CLP 黄灯行提供确认复审操作')
-    page.get_by_role('button',name='确认复审').first.click();page.wait_for_timeout(120)
-    ok(page.locator('#lawTable .ev-green').count()>0 and page.get_by_role('button',name='确认复审').count()==0,'确认复审后黄灯变绿')
-    ok(page.locator('#lawTable tbody tr').first.locator('td').nth(4).inner_text()==page.evaluate('todayStr()'),'确认复审记录本次复审时间')
-    page.screenshot(path='/private/tmp/law-clp-maintenance-reviewed.png',full_page=True)
+    # 2026-09-18：law:clp 升级为 CLP 法规库统一页面（23z6），此处仅验边界，细节由 smoke_clp.py 覆盖
+    page.evaluate("showPage('law:clp')");page.wait_for_timeout(200)
+    clp_txt=page.locator('#pageHost').inner_text()
+    ok('CLP 法规库' in clp_txt and page.locator('#clpTabs button').count()==5,'CLP 升级为统一页面（顶部主信息 + 5 Tab）')
+    ok('法规统一查询' not in clp_txt and page.locator('#lawTable').count()==0,'CLP 页不再使用分库维护页旧结构')
     page.evaluate("showPage('law:cn')");page.wait_for_timeout(100)
     ok(page.locator('#lawTable .ev-red').count()>0 and page.get_by_role('button',name='查看新版本 diff').count()>0,'国内法规红灯行提供新版本 diff 操作')
     page.get_by_role('button',name='查看新版本 diff').first.click();page.wait_for_timeout(100)
