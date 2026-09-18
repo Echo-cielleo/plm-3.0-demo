@@ -2,17 +2,25 @@
    [23z9] 职业接触限值（OEL）法规库 · 维护页面（2026-09-18 第三十轮）
    ------------------------------------------------------------------
    需求口径（Cayla 2026-09-18）：
-   · OEL 不是一部单独法规，而是欧盟及成员国发布的多套职业接触限值清单。
+   · OEL 不是一部单独法规，而是各市场官方发布的多套职业接触限值清单。
      用户不逐条维护散落法规，而是以「国家 / 地区的官方限值数据集版本」为单位维护：
      官方来源 → 数据集版本 → 限值明细 → 版本对比 → 审核发布
+   · 范围（2026-09-18 二次拍板）：本公司**只做欧盟与中国两个市场**，
+     故来源只维护「欧盟（EU）IOELV」与「中国 GBZ 2.1」两套，
+     其他国家级清单（德国 / 英国 / 法国 / 西班牙等）不建立；后续如需扩展再新增来源。
+   · 限值类型语义对齐（2026-09-18 二次拍板）：中国为 MAC / PC-TWA / PC-STEL，
+     欧盟为 8h TWA / STEL，类型名不同但语义只有三类。系统用「限值类型字典」把
+     原文类型名映射到统一的**语义槽位**：长期（8h TWA）/ 短期（15 min）/ 上限（任何时点）。
+     槽位只用于**按槽位筛选与对齐**，**不改数值、不改单位、不生成新数值、不判断严格性**。
+     不做数值换算归一（ppm→mg/m³ 需温度/压力/分子量假设，跨体系折算属口径搬运）。
    · 顶部：已覆盖国家/地区 · 已发布数据集数量 · 待审核版本数量 · 最近更新时间
      + 主入口「新建数据来源」「导入限值数据集」
    · 四个 Tab：① 数据来源 ② 数据集版本 ③ 限值明细 ④ 版本对比与审核
-   · 上传演示流程（7 步）：选择数据来源 → 填写版本信息 → 上传 Excel →
+   · 上传演示流程（7 步）：选择数据来源 → 填写版本信息 → 上传附件 →
      解析预览 → 数据校验 → 与上一版本比较 → 提交审核
    · 原始 PDF / 网页存档与结构化 Excel 分开保存
-   · 明确边界（页面须体现）：不自动从 PDF 识别并直接发布数据；不自动判断哪个国家
-     限值更严格；不把不同国家的限值合并成一个值；不根据投放市场自动选择 OEL；
+   · 明确边界（页面须体现）：不自动从 PDF 识别并直接发布数据；不自动判断哪套
+     限值更严格；不把两套限值合并成一个值；不根据投放市场自动选择 OEL；
      不实现真实 AI 解析与法规网站监控；「投放市场 → 有效法规版本 → SDS 第 8 节」
      的关联后续统一实现
    实现约定：本分片接管 law:oel 注册（23z8 的占位页注册已删，非覆盖关系）；
@@ -27,9 +35,25 @@ var OEL_TOP={
   title:'职业接触限值（OEL）',
   lastUpd:'2026-09-12',
   owner:'质管-熊倩',
-  note:'OEL 不是一部单独法规：欧盟与各成员国各自发布限值清单（欧盟 IOELV、德国 TRGS 900、英国 EH40、法国 ED 984、西班牙 LEP、中国 GBZ 2.1 等），限值类型、更新周期与法律效力各不相同。因此本页<b>不逐条维护散落在各法规中的条文</b>，而是以「<b>官方来源 → 数据集版本 → 限值明细 → 版本对比 → 审核发布</b>」五步为单位维护。',
-  boundary:'限值类型口径不同（中国为 <b>MAC / PC-TWA / PC-STEL</b>，欧盟与成员国为 <b>8h TWA / STEL / 峰值限制类别</b>），系统<b>不换算、不合并、不判断哪国更严格</b>；同一 CAS 在不同国家、不同版本中的记录<b>并存</b>，由业务按目标市场选用对应数据集版本。'
+  note:'OEL 不是一部单独法规：欧盟与中国各自发布限值清单（欧盟 IOELV、中国 GBZ 2.1），限值类型、更新周期与法律效力各不相同。因此本页<b>不逐条维护散落在法规中的条文</b>，而是以「<b>官方来源 → 数据集版本 → 限值明细 → 版本对比 → 审核发布</b>」五步为单位维护。',
+  boundary:'限值类型口径不同（中国为 <b>MAC / PC-TWA / PC-STEL</b>，欧盟为 <b>8h TWA / STEL</b>），系统按<b>长期 / 短期 / 上限</b>三个语义槽位对齐类型名，但<b>只对齐语义、不换算数值</b>；同一 CAS 在不同来源、不同版本中的记录<b>并存</b>，由业务按目标市场选用对应数据集版本。'
 };
+
+/* 语义槽位：把各体系自定义的限值类型名映射到统一的三个槽位
+   ⚠️ 只做语义对齐，不换算数值、不判断严格性 */
+var OEL_KINDS=[
+  {key:'LT',label:'长期',full:'长期限值',desc:'按 8 小时时间加权平均计的长期接触限值'},
+  {key:'ST',label:'短期',full:'短期限值',desc:'按 15 分钟时间加权平均计的短期接触限值'},
+  {key:'CEIL',label:'上限',full:'上限值',desc:'一个工作日内任何时间、任何工作地点均不得超过的上限值'}
+];
+var OEL_KIND_DICT=[
+  {rg:'中国',src:'GBZ 2.1-2019',type:'MAC',kind:'CEIL',note:'最高容许浓度：任何时点不得超过'},
+  {rg:'中国',src:'GBZ 2.1-2019',type:'PC-TWA',kind:'LT',note:'时间加权平均容许浓度（8 h）'},
+  {rg:'中国',src:'GBZ 2.1-2019',type:'PC-STEL',kind:'ST',note:'短时间接触容许浓度（15 min）'},
+  {rg:'欧盟（EU）',src:'IOELV 清单',type:'8h TWA',kind:'LT',note:'8 小时时间加权平均限值'},
+  {rg:'欧盟（EU）',src:'IOELV 清单',type:'STEL',kind:'ST',note:'15 分钟短时间接触限值'},
+  {rg:'欧盟（EU）',src:'IOELV 清单',type:'—',kind:'—',note:'IOELV 清单未设上限型限值'}
+];
 
 /* ---------- 2. 数据来源（Tab 1） ---------- */
 var OEL_SOURCES=[
@@ -37,32 +61,8 @@ var OEL_SOURCES=[
    list:'指示性职业接触限值清单（IOELV）',
    law:'理事会指令 98/24/EC（化学剂指令）第 3 条 + 各 IOELV 指令（2000/39/EC、2006/15/EC、2009/161/EU、2017/164/EU、2019/1831/EU、(EU) 2022/431 等）',
    link:'eur-lex.europa.eu（EUR-Lex 官方公报）',fmt:'网页 + PDF',freq:'随指令修订（不定期，通常每年 1~2 批）',
-   st:'维护中',check:'2026-08-20',due:'2026-12-31',
-   note:'IOELV 为指示性限值，成员国可制定更严格的国家限值；欧盟另对致癌物 / 致突变物 / 生殖毒性物质设约束性职业接触限值（BOEL）。'},
-  {rg:'德国',org:'联邦职业安全与健康署（BAuA）· 有害物质委员会（AGS）',
-   list:'TRGS 900 工作场所空气限值（AGW）',
-   law:'《有害物质保护条例》（GefStoffV）第 6 条 + TRGS 900 技术规则',
-   link:'baua.de（TRGS 900 全文）',fmt:'网页 + PDF',freq:'随 AGS 会议决议更新（不定期，通常每年 1~2 次）',
-   st:'维护中',check:'2026-09-05',due:'2026-11-15',
-   note:'AGW 为 8h 时间加权平均限值，短时接触不设 STEL，而以「峰值限制类别（Spitzenbegrenzung）」按 AGW 的倍数控制 15 min 均值。'},
-  {rg:'英国',org:'健康与安全执行局（HSE）',
-   list:'EH40/2005 工作场所接触限值（WEL）',
-   law:'《有害健康物质控制条例》（COSHH 2002）+ EH40/2005',
-   link:'hse.gov.uk（EH40/2005）',fmt:'PDF（可下载）',freq:'定期修订（近年约每 1~2 年一次）',
-   st:'维护中',check:'2026-07-18',due:'2026-10-31',
-   note:'WEL 原文以 ppm 表述为主，结构化整理时统一换算为 mg/m³ 并保留原文 ppm 于备注列。'},
-  {rg:'法国',org:'国家职业安全研究院（INRS）· 劳动部',
-   list:'VLEP 职业接触限值（ED 984 手册 + 劳动法典条款）',
-   law:'《劳动法典》R.4412-149 条 + 相关部令（Arrêté）',
-   link:'inrs.fr（ED 984 手册）',fmt:'PDF + 网页',freq:'随部令更新（不定期）',
-   st:'待复核',check:'2026-06-30',due:'2026-09-30',
-   note:'VLEP 分「指示性限值」与「约束性限值」两类；短期限值称 VLCT。部分物质官方标注「限值调整中」，须在备注列保留该状态。'},
-  {rg:'西班牙',org:'国家职业安全与健康研究院（INSST）',
-   list:'LEP 职业接触限值（VLA-ED / VLA-EC）',
-   law:'《职业风险预防法》31/1995 + INSST 年度 LEP 文件',
-   link:'insst.es（LEP 文档）',fmt:'PDF + Excel（官方随附限值表）',freq:'年度更新（通常每年年初）',
-   st:'维护中',check:'2026-09-08',due:'2026-12-15',
-   note:'官方同时发布 Excel 限值表，是「原文格式即结构化」的少数来源，仍须人工核对后再入库。'},
+   st:'维护中',check:'2026-09-05',due:'2026-12-31',
+   note:'IOELV 为指示性限值，成员国可制定更严格的国家限值；欧盟另对致癌物 / 致突变物 / 生殖毒性物质设约束性职业接触限值（BOEL）。本公司仅覆盖欧盟与中国两个市场，故本页只维护这两套来源，其他国家级清单暂不建立。'},
   {rg:'中国',org:'国家卫生健康委员会（起草：中国疾控中心职业卫生与中毒控制所）',
    list:'GBZ 2.1-2019《工作场所有害因素职业接触限值 第 1 部分：化学有害因素》',
    law:'《职业病防治法》+ GBZ 2.1-2019 国家职业卫生标准',
@@ -77,51 +77,32 @@ var OEL_SETS=[
    pub:'2025-12-10',eff:'2026-01-01',exp:'—',pdf:'eu_ioelv_v2026_1_oj.pdf',xls:'eu_ioelv_v2026_1.xlsx',
    cnt:168,st:'已发布',owner:'质管-熊倩',due:'2026-12-31',
    note:'含 (EU) 2022/431 新增的甲醛等条目；限值类型 8h TWA / STEL'},
-  {id:'DS-DE-2601',rg:'德国',name:'TRGS 900 工作场所空气限值（AGW）',ver:'V2026.1',
-   pub:'2026-03-15',eff:'2026-04-01',exp:'—',pdf:'trgs900_2026_1.pdf',xls:'trgs900_2026_1.xlsx',
-   cnt:1042,st:'已发布',owner:'质管-熊倩',due:'2026-11-15',
-   note:'含峰值限制类别（Spitzenbegrenzung）列，短时控制按 AGW 倍数计算'},
-  {id:'DS-UK-2501',rg:'英国',name:'HSE EH40/2005 工作场所接触限值（WEL）',ver:'2025 版',
-   pub:'2025-07-31',eff:'2025-09-01',exp:'—',pdf:'eh40_2025.pdf',xls:'eh40_2025.xlsx',
-   cnt:632,st:'已发布',owner:'质管-熊倩',due:'2026-10-31',
-   note:'原文 ppm 表述条目已按 20 ℃、101.3 kPa 换算为 mg/m³，换算口径记入备注列'},
-  {id:'DS-FR-2601',rg:'法国',name:'INRS ED 984 职业接触限值（VLEP）',ver:'V2026',
-   pub:'2026-02-20',eff:'2026-03-01',exp:'—',pdf:'inrs_ed984_2026.pdf',xls:'inrs_ed984_2026.xlsx',
-   cnt:588,st:'已发布',owner:'质管-熊倩',due:'2026-09-30',
-   note:'含 VLCT（短期限值）；部分物质官方标注「限值调整中」，状态保留在备注列'},
-  {id:'DS-ES-2601',rg:'西班牙',name:'INSST LEP 职业接触限值（VLA-ED / VLA-EC）',ver:'2026 版',
-   pub:'2026-01-15',eff:'2026-01-01',exp:'—',pdf:'insst_lep_2026.pdf',xls:'insst_lep_2026_tablas.xlsx',
-   cnt:496,st:'已发布',owner:'质管-熊倩',due:'2026-12-15',
-   note:'官方随附 Excel 限值表，可直接作为结构化数据来源（仍须人工核对）'},
   {id:'DS-CN-1901',rg:'中国',name:'GBZ 2.1-2019 化学有害因素职业接触限值',ver:'2019 版',
    pub:'2019-08-27',eff:'2020-04-01',exp:'—',pdf:'gbz2.1-2019.pdf',xls:'gbz2.1-2019_t1_t4.xlsx',
    cnt:358,st:'已发布',owner:'质管-郭工',due:'2027-06-30',
    note:'表 1 化学有害因素 358 条 + 表 4 生物监测指标；本页限值明细仅收录表 1 节选'},
-  {id:'DS-DE-2602',rg:'德国',name:'TRGS 900 工作场所空气限值（AGW）',ver:'V2026.2',
-   pub:'2026-09-10',eff:'2026-10-01',exp:'—',pdf:'trgs900_2026_2.pdf',xls:'trgs900_2026_2.xlsx',
-   cnt:1048,st:'待审核',owner:'质管-熊倩',due:'2026-11-15',
-   note:'新增 6 条物质 AGW；4 条调整数值，2 条调整峰值类别 —— 待审核，暂不作为合规依据'},
+  {id:'DS-EU-2701',rg:'欧盟（EU）',name:'EU IOELV 指示性职业接触限值清单',ver:'V2027.1',
+   pub:'2026-09-15',eff:'待定',exp:'—',pdf:'eu_ioelv_v2027_1_oj.pdf',xls:'eu_ioelv_v2027_1.xlsx',
+   cnt:172,st:'待审核',owner:'质管-熊倩',due:'2026-12-31',
+   note:'已按官方草案整理 172 条（新增乙苯、撤回 2-乙氧基乙醇等）；生效日期待官方公报确认'},
   {id:'DS-CN-2601',rg:'中国',name:'GBZ 2.1 修订版（送审稿）',ver:'2026 送审稿',
    pub:'2026-08-25',eff:'待定',exp:'—',pdf:'gbz2.1_rev_draft.pdf',xls:'gbz2.1_rev_draft_t1.xlsx',
    cnt:361,st:'待审核',owner:'质管-郭工',due:'2027-06-30',
    note:'新增 3 条化学有害因素；部分限值拟收紧（正式发布前不作为合规依据）'},
-  {id:'DS-ES-2701',rg:'西班牙',name:'INSST LEP 职业接触限值（VLA-ED / VLA-EC）',ver:'2027 版',
-   pub:'待发布',eff:'待定',exp:'—',pdf:'—',xls:'—',
-   cnt:0,st:'草稿',owner:'质管-熊倩',due:'',
-   note:'等待官方年度文件发布后录入'},
-  {id:'DS-FR-2501',rg:'法国',name:'INRS ED 984 职业接触限值（VLEP）',ver:'V2025',
-   pub:'2025-02-18',eff:'2025-03-01',exp:'2026-02-28',pdf:'inrs_ed984_2025.pdf',xls:'inrs_ed984_2025.xlsx',
-   cnt:575,st:'已失效',owner:'质管-熊倩',due:'',
-   note:'已被 V2026 替代，保留历史版本用于版本对比与追溯'},
   {id:'DS-EU-2501',rg:'欧盟（EU）',name:'EU IOELV 指示性职业接触限值清单',ver:'V2025.1',
    pub:'2024-12-05',eff:'2025-01-01',exp:'2025-12-31',pdf:'eu_ioelv_v2025_1_oj.pdf',xls:'eu_ioelv_v2025_1.xlsx',
    cnt:161,st:'已失效',owner:'质管-熊倩',due:'',
-   note:'已被 V2026.1 替代，保留历史版本用于版本对比与追溯'}
+   note:'已被 V2026.1 替代，保留历史版本用于版本对比与追溯'},
+  {id:'DS-CN-2701',rg:'中国',name:'GBZ 2.1 下一次修订',ver:'2027 版',
+   pub:'待发布',eff:'待定',exp:'—',pdf:'—',xls:'—',
+   cnt:0,st:'草稿',owner:'质管-郭工',due:'',
+   note:'等待 GBZ 2.1 修订版正式发布后录入'}
 ];
 
 /* ---------- 4. 限值明细（Tab 3）
-   同一 CAS 在多个国家 / 多个版本中并存，互不覆盖
-   限值类型：'TWA + STEL' | 'AGW + 峰值限制' | 'PC-TWA + PC-STEL' | 'MAC' ---------- */
+   同一 CAS 在多个来源 / 多个版本中并存，互不覆盖
+   限值类型：'TWA + STEL'（欧盟 IOELV）| 'PC-TWA + PC-STEL' | 'MAC'（中国 GBZ 2.1）
+   语义槽位由数值列推导：TWA → 长期、STEL → 短期、Ceiling → 上限，仅做类型对齐 ---------- */
 var OEL_LIMITS=[
   {id:'L01',set:'DS-EU-2601',setTxt:'EU·IOELV V2026.1',rg:'欧盟（EU）',cas:'108-88-3',ec:'203-625-9',name:'甲苯',
    type:'TWA + STEL',twa:'192',stel:'384',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
@@ -144,133 +125,90 @@ var OEL_LIMITS=[
    bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2026-01-01',st:'已发布',
    fn:'原文 200 / 250 ppm；皮：可经皮肤吸收'},
 
-  {id:'L06',set:'DS-DE-2601',setTxt:'DE·TRGS 900 V2026.1',rg:'德国',cas:'108-88-3',ec:'203-625-9',name:'甲苯',
-   type:'AGW + 峰值限制',twa:'190',stel:'—',ceil:'峰值类别 II',unit:'mg/m³',skin:'是',sens:'—',
-   bio:'是 · 尿中马尿酸（工作班末）',other:'—',scope:'工作场所空气 · 全行业',eff:'2026-04-01',st:'已发布',
-   fn:'AGW 190 mg/m³（原文 50 ppm）；峰值类别 II：15 min 均值 ≤ 2×AGW，每班 ≤ 4 次、间隔 ≥ 1 h'},
-  {id:'L07',set:'DS-DE-2601',setTxt:'DE·TRGS 900 V2026.1',rg:'德国',cas:'1330-20-7',ec:'215-535-7',name:'二甲苯（全部异构体）',
-   type:'AGW + 峰值限制',twa:'440',stel:'—',ceil:'峰值类别 II',unit:'mg/m³',skin:'是',sens:'—',
-   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2026-04-01',st:'已发布',
-   fn:'AGW 440 mg/m³（原文 100 ppm）；按全部异构体合计计'},
-  {id:'L08',set:'DS-DE-2601',setTxt:'DE·TRGS 900 V2026.1',rg:'德国',cas:'50-00-0',ec:'200-001-8',name:'甲醛',
-   type:'AGW + 峰值限制',twa:'0.37',stel:'—',ceil:'峰值类别 I',unit:'mg/m³',skin:'—',sens:'是',
-   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2026-04-01',st:'已发布',
-   fn:'AGW 0.37 mg/m³（原文 0.3 ppm）；峰值类别 I：15 min 均值 ≤ 1×AGW'},
-  {id:'L09',set:'DS-DE-2601',setTxt:'DE·TRGS 900 V2026.1',rg:'德国',cas:'67-64-1',ec:'200-662-2',name:'丙酮',
-   type:'AGW + 峰值限制',twa:'1200',stel:'—',ceil:'峰值类别 II',unit:'mg/m³',skin:'—',sens:'—',
-   bio:'是 · 尿中丙酮（工作班末）',other:'—',scope:'工作场所空气 · 全行业',eff:'2026-04-01',st:'已发布',
-   fn:'AGW 1200 mg/m³（原文 500 ppm）；峰值类别 II'},
-
-  {id:'L10',set:'DS-UK-2501',setTxt:'UK·EH40 2025',rg:'英国',cas:'108-88-3',ec:'203-625-9',name:'甲苯',
-   type:'TWA + STEL',twa:'191',stel:'574',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
-   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2025-09-01',st:'已发布',
-   fn:'原文 50 / 150 ppm；Sk = 可经皮肤吸收'},
-  {id:'L11',set:'DS-UK-2501',setTxt:'UK·EH40 2025',rg:'英国',cas:'1330-20-7',ec:'215-535-7',name:'二甲苯（全部异构体）',
-   type:'TWA + STEL',twa:'220',stel:'662',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
-   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2025-09-01',st:'已发布',
-   fn:'原文 50 / 150 ppm；Sk'},
-  {id:'L12',set:'DS-UK-2501',setTxt:'UK·EH40 2025',rg:'英国',cas:'67-64-1',ec:'200-662-2',name:'丙酮',
-   type:'TWA + STEL',twa:'1210',stel:'3620',ceil:'—',unit:'mg/m³',skin:'—',sens:'—',
-   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2025-09-01',st:'已发布',
-   fn:'原文 500 / 1500 ppm'},
-  {id:'L13',set:'DS-UK-2501',setTxt:'UK·EH40 2025',rg:'英国',cas:'67-56-1',ec:'200-659-6',name:'甲醇',
+  {id:'L06',set:'DS-EU-2501',setTxt:'EU·IOELV V2025.1',rg:'欧盟（EU）',cas:'108-88-3',ec:'203-625-9',name:'甲苯',
+   type:'TWA + STEL',twa:'192',stel:'384',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
+   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2025-01-01',st:'已失效',
+   fn:'原文 50 / 100 ppm；该版本已失效，保留用于版本对比与追溯（与 V2026.1 的记录并存）'},
+  {id:'L07',set:'DS-EU-2501',setTxt:'EU·IOELV V2025.1',rg:'欧盟（EU）',cas:'1330-20-7',ec:'215-535-7',name:'二甲苯（全部异构体）',
+   type:'TWA + STEL',twa:'221',stel:'442',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
+   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2025-01-01',st:'已失效',
+   fn:'原文 50 / 100 ppm；该版本已失效，保留用于版本对比与追溯'},
+  {id:'L08',set:'DS-EU-2501',setTxt:'EU·IOELV V2025.1',rg:'欧盟（EU）',cas:'67-56-1',ec:'200-659-6',name:'甲醇',
    type:'TWA + STEL',twa:'266',stel:'333',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
-   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2025-09-01',st:'已发布',
-   fn:'原文 200 / 250 ppm；Sk'},
+   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2025-01-01',st:'已失效',
+   fn:'原文 200 / 250 ppm；该版本已失效；V2027.1 草案拟下调其 8h TWA'},
 
-  {id:'L14',set:'DS-FR-2601',setTxt:'FR·ED 984 V2026',rg:'法国',cas:'108-88-3',ec:'203-625-9',name:'甲苯',
-   type:'TWA + STEL',twa:'192',stel:'384',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
-   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2026-03-01',st:'已发布',
-   fn:'原文 50 / 100 ppm；VLEP-8h 与 VLCT；皮（Peau）'},
-  {id:'L15',set:'DS-FR-2601',setTxt:'FR·ED 984 V2026',rg:'法国',cas:'1330-20-7',ec:'215-535-7',name:'二甲苯（全部异构体）',
-   type:'TWA + STEL',twa:'221',stel:'442',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
-   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2026-03-01',st:'已发布',
-   fn:'原文 50 / 100 ppm；按全部异构体合计计'},
-  {id:'L16',set:'DS-FR-2601',setTxt:'FR·ED 984 V2026',rg:'法国',cas:'67-64-1',ec:'200-662-2',name:'丙酮',
-   type:'TWA + STEL',twa:'1210',stel:'2420',ceil:'—',unit:'mg/m³',skin:'—',sens:'—',
-   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2026-03-01',st:'已发布',
-   fn:'原文 500 / 1000 ppm'},
-
-  {id:'L17',set:'DS-ES-2601',setTxt:'ES·LEP 2026',rg:'西班牙',cas:'108-88-3',ec:'203-625-9',name:'甲苯',
-   type:'TWA + STEL',twa:'192',stel:'384',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
-   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2026-01-01',st:'已发布',
-   fn:'原文 50 / 100 ppm；VLA-ED（8h）/ VLA-EC（15 min）'},
-  {id:'L18',set:'DS-ES-2601',setTxt:'ES·LEP 2026',rg:'西班牙',cas:'1330-20-7',ec:'215-535-7',name:'二甲苯（全部异构体）',
-   type:'TWA + STEL',twa:'221',stel:'442',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
-   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2026-01-01',st:'已发布',
-   fn:'原文 50 / 100 ppm；VLA-ED / VLA-EC'},
-  {id:'L19',set:'DS-ES-2601',setTxt:'ES·LEP 2026',rg:'西班牙',cas:'67-64-1',ec:'200-662-2',name:'丙酮',
-   type:'TWA + STEL',twa:'1210',stel:'2420',ceil:'—',unit:'mg/m³',skin:'—',sens:'—',
-   bio:'—',other:'—',scope:'工作场所空气 · 全行业',eff:'2026-01-01',st:'已发布',
-   fn:'原文 500 / 1000 ppm；VLA-ED / VLA-EC'},
-
-  {id:'L20',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'71-43-2',ec:'200-753-7',name:'苯',
+  {id:'L09',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'71-43-2',ec:'200-753-7',name:'苯',
    type:'PC-TWA + PC-STEL',twa:'6',stel:'10',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
    bio:'是 · 尿中苯巯基尿酸（工作班后）；尿中反-反式粘糠酸（工作班后）',other:'G1（对人致癌）',
    scope:'工作场所空气 · 全行业',eff:'2020-04-01',st:'已发布',
    fn:'GBZ 2.1-2019 表 1 第 12 项；备注：皮、G1'},
-  {id:'L21',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'108-88-3',ec:'203-625-9',name:'甲苯',
+  {id:'L10',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'108-88-3',ec:'203-625-9',name:'甲苯',
    type:'PC-TWA + PC-STEL',twa:'50',stel:'100',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
    bio:'是 · 尿中马尿酸（工作班末）',other:'—',scope:'工作场所空气 · 全行业',eff:'2020-04-01',st:'已发布',
    fn:'GBZ 2.1-2019 表 1 第 136 项；备注：皮'},
-  {id:'L22',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'1330-20-7',ec:'215-535-7',name:'二甲苯（全部异构体）',
+  {id:'L11',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'1330-20-7',ec:'215-535-7',name:'二甲苯（全部异构体）',
    type:'PC-TWA + PC-STEL',twa:'50',stel:'100',ceil:'—',unit:'mg/m³',skin:'—',sens:'—',
    bio:'是 · 尿中甲基马尿酸（工作班末）',other:'—',scope:'工作场所空气 · 全行业',eff:'2020-04-01',st:'已发布',
    fn:'GBZ 2.1-2019 表 1 第 69 项；按全部异构体计'},
-  {id:'L23',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'50-00-0',ec:'200-001-8',name:'甲醛',
+  {id:'L12',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'50-00-0',ec:'200-001-8',name:'甲醛',
    type:'MAC',twa:'—',stel:'—',ceil:'0.5',unit:'mg/m³',skin:'—',sens:'是',
    bio:'—',other:'G1（对人致癌）',scope:'工作场所空气 · 全行业',eff:'2020-04-01',st:'已发布',
    fn:'GBZ 2.1-2019 表 1 第 149 项；MAC：一个工作日内任何时间、任何工作地点均不得超过；备注：敏、G1'},
-  {id:'L24',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'67-64-1',ec:'200-662-2',name:'丙酮',
+  {id:'L13',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'67-64-1',ec:'200-662-2',name:'丙酮',
    type:'PC-TWA + PC-STEL',twa:'300',stel:'450',ceil:'—',unit:'mg/m³',skin:'—',sens:'—',
    bio:'是 · 尿中丙酮（工作班末）',other:'—',scope:'工作场所空气 · 全行业',eff:'2020-04-01',st:'已发布',
    fn:'GBZ 2.1-2019 表 1 第 21 项'},
-  {id:'L25',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'110-54-3',ec:'203-777-6',name:'正己烷',
+  {id:'L14',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'110-54-3',ec:'203-777-6',name:'正己烷',
    type:'PC-TWA + PC-STEL',twa:'100',stel:'180',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
    bio:'是 · 尿中 2,5-己二酮（工作班后）',other:'—',scope:'工作场所空气 · 全行业',eff:'2020-04-01',st:'已发布',
    fn:'GBZ 2.1-2019 表 1 第 358 项；备注：皮'},
-  {id:'L26',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'79-01-6',ec:'201-167-4',name:'三氯乙烯',
+  {id:'L15',set:'DS-CN-1901',setTxt:'CN·GBZ 2.1-2019',rg:'中国',cas:'79-01-6',ec:'201-167-4',name:'三氯乙烯',
    type:'PC-TWA + PC-STEL',twa:'30',stel:'—',ceil:'—',unit:'mg/m³',skin:'是',sens:'是',
    bio:'是 · 尿中三氯乙酸（工作周末的班末）',other:'G1（对人致癌）',scope:'工作场所空气 · 全行业',eff:'2020-04-01',st:'已发布',
-   fn:'GBZ 2.1-2019 表 1 第 251 项；未制定 PC-STEL，按 PC-TWA 的倍值控制瞬时接触；备注：皮、敏、G1'}
+   fn:'GBZ 2.1-2019 表 1 第 251 项；未制定 PC-STEL，按 PC-TWA 的倍值控制瞬时接触；备注：皮、敏、G1'},
+
+  {id:'L16',set:'DS-CN-2601',setTxt:'CN·GBZ 2.1 2026 送审稿',rg:'中国',cas:'71-43-2',ec:'200-753-7',name:'苯',
+   type:'PC-TWA + PC-STEL',twa:'3',stel:'10',ceil:'—',unit:'mg/m³',skin:'是',sens:'—',
+   bio:'是 · 尿中苯巯基尿酸（工作班后）',other:'G1（对人致癌）',scope:'工作场所空气 · 全行业',eff:'待定',st:'待审核',
+   fn:'送审稿拟将 PC-TWA 由 6 收紧为 3 mg/m³；正式发布前不作为合规依据'}
 ];
 
 /* ---------- 5. 版本对比与审核（Tab 4，演示样例数据） ---------- */
 var OEL_CMP={
-  A:{rg:'德国',title:'TRGS 900 V2026.1 → V2026.2',base:'DS-DE-2601',tgt:'DS-DE-2602',
-     st:'待审核',owner:'质管-熊倩',src:'AGS 2026 年秋季会议决议（演示样例）'},
+  A:{rg:'欧盟（EU）',title:'EU IOELV V2026.1 → V2027.1',base:'DS-EU-2601',tgt:'DS-EU-2701',
+     st:'待审核',owner:'质管-熊倩',src:'欧盟委员会 IOELV 指令修订（演示样例）'},
   B:{rg:'中国',title:'GBZ 2.1-2019 → 2026 送审稿',base:'DS-CN-1901',tgt:'DS-CN-2601',
      st:'待审核',owner:'质管-郭工',src:'国家职业卫生标准修订送审稿（演示样例）'}
 };
+/* kind = 该变更涉及的语义槽位：LT 长期 / ST 短期 / LT + ST 两者 / — 不涉及限值数值 */
 var OEL_DIFFS=[
-  {cmp:'A',tp:'数值变化',cas:'108-88-3',name:'甲苯',field:'AGW（8h）',old:'190 mg/m³',new:'180 mg/m³',
-   note:'AGW 下调 10 mg/m³；峰值类别保持 II（15 min 均值 ≤ 2×AGW）',st:'待审核'},
-  {cmp:'A',tp:'数值变化',cas:'1330-20-7',name:'二甲苯',field:'AGW（8h）',old:'440 mg/m³',new:'220 mg/m³',
-   note:'原文口径由「按异构体分别计」改为「全部异构体合计」，数值不可直接比较，须按新口径重算',st:'待审核'},
-  {cmp:'A',tp:'单位变化',cas:'67-64-1',name:'丙酮',field:'限值表述单位',old:'mg/m³（原文另附 ppm）',new:'mg/m³',
+  {cmp:'A',tp:'数值变化',kind:'LT',cas:'67-56-1',name:'甲醇',field:'8h TWA',old:'266 mg/m³',new:'250 mg/m³',
+   note:'长期限值下调 16 mg/m³；STEL 保持 333 mg/m³ 不变',st:'待审核'},
+  {cmp:'A',tp:'单位变化',kind:'—',cas:'67-64-1',name:'丙酮',field:'限值表述单位',old:'mg/m³（原文另附 ppm）',new:'mg/m³',
    note:'仅为表述口径统一（ppm → mg/m³），数值未变',st:'待审核'},
-  {cmp:'A',tp:'标记变化',cas:'67-64-1',name:'丙酮',field:'生物监测标记',old:'—',new:'尿中丙酮（工作班末）',
+  {cmp:'A',tp:'标记变化',kind:'—',cas:'67-64-1',name:'丙酮',field:'生物监测标记',old:'—',new:'尿中丙酮（工作班末）',
    note:'新增生物监测标记，同步更新至限值明细',st:'待审核'},
-  {cmp:'A',tp:'新增物质',cas:'100-41-4',name:'乙苯',field:'全部字段',old:'—',new:'AGW 87 mg/m³（峰值类别 II）',
-   note:'新增物质条目及其限值',st:'待审核'},
-  {cmp:'A',tp:'删除物质',cas:'110-80-5',name:'2-乙氧基乙醇',field:'全部字段',old:'AGW 18 mg/m³',new:'—',
-   note:'官方撤回该 AGW，改由企业自行制定限值；历史版本记录保留可追溯',st:'待审核'},
-  {cmp:'A',tp:'备注或适用范围变化',cas:'50-00-0',name:'甲醛',field:'适用范围说明',old:'原文无说明',new:'新增育龄女职工保护提示',
+  {cmp:'A',tp:'新增物质',kind:'LT + ST',cas:'100-41-4',name:'乙苯',field:'全部字段',old:'—',new:'8h TWA 87 mg/m³ / STEL 442 mg/m³',
+   note:'新增物质条目及其长期、短期限值',st:'待审核'},
+  {cmp:'A',tp:'删除物质',kind:'LT',cas:'110-80-5',name:'2-乙氧基乙醇',field:'全部字段',old:'8h TWA 18 mg/m³',new:'—',
+   note:'官方撤回该限值，改由企业自行制定；历史版本记录保留可追溯',st:'待审核'},
+  {cmp:'A',tp:'备注或适用范围变化',kind:'LT',cas:'50-00-0',name:'甲醛',field:'适用范围说明',old:'原文无说明',new:'新增育龄女职工保护提示',
    note:'限值数值未变，仅补充适用范围说明',st:'待审核'},
-  {cmp:'B',tp:'数值变化',cas:'71-43-2',name:'苯',field:'PC-TWA',old:'6 mg/m³',new:'3 mg/m³',
+  {cmp:'B',tp:'数值变化',kind:'LT',cas:'71-43-2',name:'苯',field:'PC-TWA',old:'6 mg/m³',new:'3 mg/m³',
    note:'拟收紧；PC-STEL 保持 10 mg/m³ 不变',st:'待审核'},
-  {cmp:'B',tp:'标记变化',cas:'67-66-3',name:'三氯甲烷',field:'致癌性标识',old:'—',new:'G1（对人致癌）',
+  {cmp:'B',tp:'标记变化',kind:'—',cas:'67-66-3',name:'三氯甲烷',field:'致癌性标识',old:'—',new:'G1（对人致癌）',
    note:'补充致癌性标识',st:'待审核'},
-  {cmp:'B',tp:'新增物质',cas:'—',name:'新增化学有害因素条目（物质名称以正式发布稿为准）',field:'全部字段',
+  {cmp:'B',tp:'新增物质',kind:'LT',cas:'—',name:'新增化学有害因素条目（物质名称以正式发布稿为准）',field:'全部字段',
    old:'—',new:'PC-TWA 5 mg/m³',note:'送审稿新增条目，正式发布前不作为合规依据',st:'待审核'},
-  {cmp:'B',tp:'备注或适用范围变化',cas:'110-54-3',name:'正己烷',field:'适用范围',old:'通用',new:'新增电子 / 制鞋行业清洗岗位提示',
+  {cmp:'B',tp:'备注或适用范围变化',kind:'LT',cas:'110-54-3',name:'正己烷',field:'适用范围',old:'通用',new:'新增电子 / 制鞋行业清洗岗位提示',
    note:'限值数值未变，补充行业适用提示',st:'待审核'}
 ];
 var OEL_DIFF_TYPES=['新增物质','删除物质','数值变化','单位变化','标记变化','备注或适用范围变化'];
 
 /* ---------- 6. 数据校验规则与演示结果（导入向导第 5 步） ---------- */
 var OEL_CHECK_RULES=['CAS 格式错误','物质名称缺失','数值存在但单位缺失','同一数据集内重复记录',
-  '生效日期冲突','无法识别的国家标记','与上一版本相比发生重大变化'];
+  '生效日期冲突','无法识别的物质标记','与上一版本相比发生重大变化'];
 var OEL_CHECKS=[
   {lv:'阻断',tp:'CAS 格式错误',cnt:2,eg:'第 41 行 CAS「108-88-30」（9 位，不符合 2-3-1 分段格式）',
    fix:'按 CAS 分段规则重新校验，修正后重新上传',st:'待处理'},
@@ -280,14 +218,14 @@ var OEL_CHECKS=[
    fix:'补全物质名称，或标注「以 CAS 为准」',st:'待处理'},
   {lv:'告警',tp:'数值存在但单位缺失',cnt:3,eg:'第 22 / 47 / 96 行填写了限值数值，数值单位列为空',
    fix:'补全单位（mg/m³ 或 ppm），避免换算歧义',st:'待处理'},
-  {lv:'告警',tp:'生效日期冲突',cnt:1,eg:'第 15 行生效日期 2026-03-01 早于数据集发布日期 2026-09-10',
+  {lv:'告警',tp:'生效日期冲突',cnt:1,eg:'第 15 行生效日期早于数据集发布日期（2026-03-01 / 2026-09-10）',
    fix:'核对官方生效日期，或改填「自发布之日起适用」',st:'待处理'},
-  {lv:'告警',tp:'无法识别的国家标记',cnt:1,eg:'第 71 行标记列出现「皮/皮」，无法映射到「皮」「敏」「Sk」等标准标记',
+  {lv:'告警',tp:'无法识别的物质标记',cnt:1,eg:'第 71 行标记列出现「皮/皮」，无法映射到「皮」「敏」等标准标记',
    fix:'按标记字典映射，未识别标记进入人工确认队列',st:'待处理'},
-  {lv:'提示',tp:'与上一版本相比发生重大变化',cnt:2,eg:'第 33 行 AGW 变化幅度 > 50%（440 → 220 mg/m³）',
+  {lv:'提示',tp:'与上一版本相比发生重大变化',cnt:2,eg:'第 33 行 PC-TWA 变化幅度 ≥ 50%（6 → 3 mg/m³）',
    fix:'变化幅度超阈值仅提示不阻断，须在版本对比中确认是否口径变化',st:'待处理'}
 ];
-var OEL_CHECK_PASS=['必填列完整性（CAS / 物质名称 / 限值）校验通过','限值类型与数值单位映射校验通过'];
+var OEL_CHECK_PASS=['必填列完整性（CAS / 物质名称 / 限值）校验通过','限值数值与单位映射校验通过','限值类型可映射到「长期 / 短期 / 上限」语义槽位'];
 
 /* ---------- 7. 通用工具 ---------- */
 function oelLamp(due){
@@ -343,12 +281,33 @@ var OEL_TABS=[
   {key:'lim',label:'限值明细'},
   {key:'cmp',label:'版本对比与审核'}
 ];
-var OEL_LIM_TYPES=['TWA + STEL','AGW + 峰值限制','PC-TWA + PC-STEL','MAC'];
+var OEL_LIM_TYPES=['TWA + STEL','PC-TWA + PC-STEL','MAC'];
+function oelKindLabel(k){for(var i=0;i<OEL_KINDS.length;i++){if(OEL_KINDS[i].key===k)return OEL_KINDS[i];}return null;}
+function oelKinds(r){
+  var a=[];
+  if(r.twa&&r.twa!=='—')a.push('LT');
+  if(r.stel&&r.stel!=='—')a.push('ST');
+  if(r.ceil&&r.ceil!=='—')a.push('CEIL');
+  return a;
+}
+function oelKindTag(k){
+  var kk=oelKindLabel(k);if(!kk)return '<span class="muted">—</span>';
+  var cls=k==='LT'?'blue':(k==='ST'?'orange':'red');
+  return '<span class="tag '+cls+'">'+esc(kk.label)+'</span>';
+}
+function oelKindChips(r){
+  var a=oelKinds(r);
+  return a.length?a.map(function(k){return oelKindTag(k);}).join(' '):'<span class="muted">—</span>';
+}
+function oelKindText(txt){
+  if(!txt||txt==='—')return '<span class="muted">—</span>';
+  return txt.split(' + ').map(function(k){return oelKindTag(k);}).join(' ');
+}
 var _oelTab='src';
 var _oelF={
   src:{kw:'',rg:''},
   set:{kw:'',rg:'',st:''},
-  lim:{kw:'',rg:'',set:'',type:''},
+  lim:{kw:'',rg:'',set:'',type:'',kind:''},
   cmp:{cmp:'A'}
 };
 var _oelP={src:1,set:1,lim:1,cmp:1};
@@ -368,7 +327,7 @@ function oelRender(){
       '<div class="kpi"><span>最近更新时间</span><b style="font-size:19px">'+esc(OEL_TOP.lastUpd)+'</b><small>维护责任人 '+esc(OEL_TOP.owner)+'</small></div>'+
     '</div>'+
     '<div class="oel-flow">'+
-      '<div class="sf on"><span>1</span><b>官方来源</b><em>欧盟 / 各成员国官方清单</em></div>'+
+      '<div class="sf on"><span>1</span><b>官方来源</b><em>欧盟 / 中国官方清单</em></div>'+
       '<i>→</i>'+
       '<div class="sf"><span>2</span><b>数据集版本</b><em>整份清单为一个版本</em></div>'+
       '<i>→</i>'+
@@ -381,7 +340,7 @@ function oelRender(){
     '<div class="notice info" style="margin-bottom:12px"><div class="ni">i</div><div>'+OEL_TOP.note+'</div></div>'+
     '<div id="oelTabs" style="margin-bottom:12px"></div>'+
     '<div id="oelTabBody"></div>'+
-    '<div class="notice grey" style="margin-top:14px"><div class="ni">§</div><div><b>本页边界（本期不实现）：</b>系统不自动从 PDF 中识别并直接发布数据；不自动判断哪个国家的限值更严格；不把不同国家的限值合并成一个值；不根据投放市场自动选择 OEL；不实现真实 AI 解析与法规网站监控。'+OEL_TOP.boundary+'「投放市场 → 有效法规版本 → SDS 第 8 节」的关联<b>后续统一实现</b>，本页只负责把限值数据按来源与版本维护清楚。</div></div>'+
+    '<div class="notice grey" style="margin-top:14px"><div class="ni">§</div><div><b>本页边界（本期不实现）：</b>系统不自动从 PDF 中识别并直接发布数据；不自动判断哪套清单的限值更严格；不把两套市场的限值合并成一个值；不根据投放市场自动选择 OEL；不实现真实 AI 解析与法规网站监控。'+OEL_TOP.boundary+'「投放市场 → 有效法规版本 → SDS 第 8 节」的关联<b>后续统一实现</b>，本页只负责把限值数据按来源与版本维护清楚。</div></div>'+
     '</div>';
   $('oelTabs').appendChild(tabs(OEL_TABS,_oelTab,function(k){_oelTab=k;oelRenderTab();}));
   oelRenderTab();
@@ -413,7 +372,7 @@ function oelRenderTab(){
       '<div class="grow"></div><span id="oelCnt" class="muted" style="font-size:12.5px"></span></div>'+
       '<div class="tbl-wrap"><table class="tbl" id="oelTable" style="min-width:1500px"></table></div>'+
       '<div class="pager" id="oelPager"></div></div>'+
-      '<div class="notice grey" style="margin-top:12px"><div class="ni">§</div><div><b>原文格式决定维护方式：</b>原文为 <b>Excel</b> 的来源（如西班牙 INSST）可直接作为结构化数据来源；原文为 <b>PDF / 网页</b> 的来源须由法规专员整理为结构化表后再导入。<b>本次不实现真实的 PDF / 网页解析</b>。每一套清单单独建立来源记录，欧盟与各成员国分别维护，不合并为一条。</div></div>';
+      '<div class="notice grey" style="margin-top:12px"><div class="ni">§</div><div><b>原文格式决定维护方式：</b>本页两套来源的原文均为 <b>PDF / 网页</b>（欧盟 IOELV 见 EUR-Lex 公报、中国 GBZ 2.1 为标准全文），须由法规专员整理为结构化表后再导入；<b>本次不实现真实的 PDF / 网页解析</b>。每一套清单单独建立来源记录，欧盟与中国分别维护，不合并为一条。</div></div>';
   }else if(_oelTab==='set'){
     var f2=_oelF.set;
     h+='<div class="card"><div class="toolbar" style="flex-wrap:wrap">'+
@@ -438,17 +397,20 @@ function oelRenderTab(){
         OEL_SETS.map(function(s){return '<option value="'+esc(s.id)+'"'+(f3.set===s.id?' selected':'')+'>'+esc(s.rg+'·'+s.ver)+'</option>';}).join('')+'</select>'+
       '<select class="ctrl" id="oelLimType" style="width:180px" onchange="oelFill()"><option value="">全部限值类型</option>'+
         OEL_LIM_TYPES.map(function(x){return '<option'+(f3.type===x?' selected':'')+'>'+x+'</option>';}).join('')+'</select>'+
+      '<select class="ctrl" id="oelLimKind" style="width:170px" onchange="oelFill()"><option value="">全部语义槽位</option>'+
+        OEL_KINDS.map(function(k){return '<option value="'+k.key+'"'+(f3.kind===k.key?' selected':'')+'>'+esc(k.label)+'（'+esc(k.full)+'）</option>';}).join('')+'</select>'+
+      '<button class="btn" onclick="oelKindDrawer()">限值类型字典</button>'+
       '<div class="grow"></div><span id="oelCnt" class="muted" style="font-size:12.5px"></span></div>'+
-      '<div class="tbl-wrap"><table class="tbl" id="oelTable" style="min-width:2000px"></table></div>'+
+      '<div class="tbl-wrap"><table class="tbl" id="oelTable" style="min-width:2140px"></table></div>'+
       '<div class="pager" id="oelPager"></div></div>'+
-      '<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div><b>同一 CAS 在不同国家、不同版本中的记录必须同时存在，不能互相覆盖。</b>系统<b>不合并、不排序、不判断</b>哪国限值更严格，也不把多国限值折算成一个值；每条记录都带所属数据集版本与生效日期，可追溯到官方来源。</div></div>'+
-      '<div class="notice grey" style="margin-top:10px"><div class="ni">§</div><div><b>限值类型口径不同，比对前须先确认口径：</b>中国为 <b>MAC</b>（任何时间不得超过）/ <b>PC-TWA</b>（8h 时间加权平均）/ <b>PC-STEL</b>（15 min 短时间接触）；欧盟与成员国为 <b>8h TWA / STEL</b>，德国 TRGS 900 短时控制不设 STEL，而以<b>峰值限制类别</b>（AGW 的倍数）控制 15 min 均值。</div></div>';
+      '<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div><b>同一 CAS 在不同来源、不同版本中的记录必须同时存在，不能互相覆盖。</b>系统<b>不合并、不排序、不判断</b>哪套限值更严格，也不把两套限值折算成一个值；每条记录都带所属数据集版本与生效日期，可追溯到官方来源。</div></div>'+
+      '<div class="notice grey" style="margin-top:10px"><div class="ni">§</div><div><b>限值类型口径不同，比对前须先确认口径：</b>中国为 <b>MAC</b>（任何时点不得超过）/ <b>PC-TWA</b>（8h 时间加权平均）/ <b>PC-STEL</b>（15 min 短时间接触）；欧盟 IOELV 为 <b>8h TWA / STEL</b>。系统把两套类型名映射到<b>长期 / 短期 / 上限</b>三个<b>语义槽位</b>（见「限值类型字典」），仅用于按槽位筛选与对齐，<b>只对齐语义、不换算数值</b>。</div></div>';
   }else{
     var f4=_oelF.cmp,c=OEL_CMP[f4.cmp]||OEL_CMP.A;
     var rows=OEL_DIFFS.filter(function(r){return r.cmp===f4.cmp;});
     var cnts={};
     OEL_DIFF_TYPES.forEach(function(t){cnts[t]=rows.filter(function(r){return r.tp===t;}).length;});
-    h+='<div class="notice warn" style="margin-bottom:12px"><div class="ni">!</div><div><b>本 Tab 的对比结果为演示样例数据：</b>对比基准版本文本与目标版本（德国 V2026.2 / 中国送审稿）为构造的演示数据，不是真实发布的官方版本；正式版中，对比结果在导入数据集时由系统自动生成。'+
+    h+='<div class="notice warn" style="margin-bottom:12px"><div class="ni">!</div><div><b>本 Tab 的对比结果为演示样例数据：</b>对比基准版本与目标版本（欧盟 IOELV V2026.1 → V2027.1 / 中国 GBZ 2.1-2019 → 2026 送审稿）为构造的演示数据，不是真实发布的官方版本；正式版中，对比结果在导入数据集时由系统自动生成。'+
       '法规版本变化<b>不自动生效</b>，必须经法规专员审核后发布。</div></div>'+
       '<div class="law-strip">'+
       '<span class="it"><em>对比会话</em><b>'+esc(c.title)+'</b></span>'+
@@ -467,7 +429,7 @@ function oelRenderTab(){
       '<div class="oel-diffbar">'+OEL_DIFF_TYPES.map(function(t){
         return '<span class="dt"><em>'+esc(t)+'</em><b'+(cnts[t]?'':' class="zero"')+'>'+cnts[t]+'</b></span>';
       }).join('')+'</div>'+
-      '<div class="tbl-wrap"><table class="tbl" id="oelTable" style="min-width:1500px"></table></div>'+
+      '<div class="tbl-wrap"><table class="tbl" id="oelTable" style="min-width:1660px"></table></div>'+
       '<div class="pager" id="oelPager"></div></div>'+
       '<div class="card" style="padding:14px 18px;margin-top:12px"><div class="toolbar" style="flex-wrap:wrap;gap:10px">'+
       '<b style="font-size:13.5px">审核结论（针对 '+esc(c.title)+'）</b>'+
@@ -549,22 +511,24 @@ function oelFill(){
         '</td></tr>';
     },270);
   }else if(_oelTab==='lim'){
-    var kw3=($('oelLimKw').value||'').trim().toLowerCase(),rg3=$('oelLimRg').value,set3=$('oelLimSet').value,ty3=$('oelLimType').value;
-    _oelF.lim={kw:$('oelLimKw').value,rg:rg3,set:set3,type:ty3};
+    var kw3=($('oelLimKw').value||'').trim().toLowerCase(),rg3=$('oelLimRg').value,set3=$('oelLimSet').value,ty3=$('oelLimType').value,kd3=$('oelLimKind').value;
+    _oelF.lim={kw:$('oelLimKw').value,rg:rg3,set:set3,type:ty3,kind:kd3};
     var rows3=OEL_LIMITS.filter(function(r){
       if(rg3&&r.rg!==rg3)return false;
       if(set3&&r.set!==set3)return false;
       if(ty3&&r.type!==ty3)return false;
+      if(kd3&&oelKinds(r).indexOf(kd3)<0)return false;
       return !kw3||(r.cas+' '+r.ec+' '+r.name+' '+r.fn+' '+r.scope).toLowerCase().indexOf(kw3)>=0;
     });
     oelTable([['所属数据集版本',190],['国家 / 地区',110],['CAS 号',110],['EC 号',110],['物质名称',200],
-      ['限值类型',150],['长期限值 TWA',120],['短期限值 STEL',120],['峰值 / Ceiling',130],['数值单位',100],
+      ['限值类型',150],['语义槽位',130],['长期限值 TWA',120],['短期限值 STEL',120],['峰值 / Ceiling',130],['数值单位',100],
       ['皮肤标记',90],['致敏标记',90],['生物监测标记',260],['其他官方标记',150],['适用范围',200],
       ['原文备注或脚注',340],['生效日期',110],['数据状态',100]],rows3,function(r){
       return '<tr class="row-click" onclick="oelLimDrawer(\''+esc(r.id)+'\')">'+
         '<td class="mono">'+esc(r.setTxt)+'</td><td>'+esc(r.rg)+'</td>'+
         '<td class="mono">'+esc(r.cas)+'</td><td class="mono">'+esc(r.ec)+'</td>'+
         '<td><b>'+esc(r.name)+'</b></td><td><span class="tag grey">'+esc(r.type)+'</span></td>'+
+        '<td>'+oelKindChips(r)+'</td>'+
         '<td'+(r.twa==='—'?'':' class="oel-num"')+'>'+oelVal(r.twa)+'</td>'+
         '<td'+(r.stel==='—'?'':' class="oel-num"')+'>'+oelVal(r.stel)+'</td>'+
         '<td'+(r.ceil==='—'?'':' class="oel-num"')+'>'+oelVal(r.ceil)+'</td>'+
@@ -584,12 +548,13 @@ function oelFill(){
       if(_oelCmpTp&&r.tp!==_oelCmpTp)return false;
       return true;
     });
-    oelTable([['变更类型',150],['CAS 号',110],['物质名称',240],['变更字段',170],['变更前',220],['变更后',240],
+    oelTable([['变更类型',150],['CAS 号',110],['物质名称',240],['变更字段',170],['语义槽位',130],['变更前',220],['变更后',240],
       ['变化说明',420],['数据状态',100]],rows4,function(r,i){
       var cls=r.tp==='新增物质'?'green':(r.tp==='删除物质'?'red':(r.tp==='数值变化'?'orange':'blue'));
       return '<tr class="row-click" onclick="oelCmpDetailAt(\''+r.cmp+'\','+OEL_DIFFS.indexOf(r)+')">'+
         '<td><span class="tag '+cls+'">'+esc(r.tp)+'</span></td><td class="mono">'+esc(r.cas)+'</td>'+
         '<td><b>'+esc(r.name)+'</b></td><td>'+esc(r.field)+'</td>'+
+        '<td>'+oelKindText(r.kind)+'</td>'+
         '<td class="oel-old">'+oelVal(r.old)+'</td><td class="oel-new">'+oelVal(r.new)+'</td>'+
         '<td>'+esc(r.note)+'</td><td><span class="tag orange dot-tag">'+esc(r.st)+'</span></td>'+
         '<td class="acts"><button class="btn-link" onclick="event.stopPropagation();oelCmpDetailAt(\''+r.cmp+'\','+OEL_DIFFS.indexOf(r)+')">查看变更详情</button></td></tr>';
@@ -639,11 +604,11 @@ function oelSrcCheck(i){
 function oelSrcNew(){
   openModal({title:'新建数据来源',width:680,cls:'sds-scope law-page oel-page',
     body:'<div class="form-grid">'+
-      '<div class="field"><label class="req">国家 / 地区</label><input class="ctrl" id="oelNsRg" placeholder="例如：荷兰 / 日本"></div>'+
-      '<div class="field"><label class="req">发布机构</label><input class="ctrl" id="oelNsOrg" placeholder="例如：社会事务与就业部（SZW）"></div>'+
-      '<div class="field"><label class="req">官方清单名称</label><input class="ctrl" id="oelNsList" placeholder="例如：Wettelijke grenswaarden（法定限值）"></div>'+
-      '<div class="field"><label>法律依据</label><input class="ctrl" id="oelNsLaw" placeholder="例如：Arbeidsomstandighedenbesluit"></div>'+
-      '<div class="field"><label>官方链接</label><input class="ctrl" id="oelNsLink" placeholder="例如：rijksoverheid.nl"></div>'+
+      '<div class="field"><label class="req">国家 / 地区</label><input class="ctrl" id="oelNsRg" placeholder="例如：其他目标市场"></div>'+
+      '<div class="field"><label class="req">发布机构</label><input class="ctrl" id="oelNsOrg" placeholder="例如：该国职业安全主管机构"></div>'+
+      '<div class="field"><label class="req">官方清单名称</label><input class="ctrl" id="oelNsList" placeholder="例如：该国职业接触限值清单"></div>'+
+      '<div class="field"><label>法律依据</label><input class="ctrl" id="oelNsLaw" placeholder="例如：该国职业安全卫生法规"></div>'+
+      '<div class="field"><label>官方链接</label><input class="ctrl" id="oelNsLink" placeholder="例如：官方公报 / 标准发布平台"></div>'+
       '<div class="field"><label class="req">原文格式</label><select class="ctrl" id="oelNsFmt"><option>网页</option><option>PDF</option><option>Excel</option><option>网页 + PDF</option><option>PDF + Excel（官方随附限值表）</option></select></div>'+
       '<div class="field"><label class="req">更新频率</label><input class="ctrl" id="oelNsFreq" placeholder="例如：随部长令修订（不定期）"></div>'+
       '<div class="field"><label class="req">维护状态</label><select class="ctrl" id="oelNsSt"><option>维护中</option><option>待复核</option><option>已暂停</option></select></div>'+
@@ -718,7 +683,33 @@ function oelSetReject(id){
   toast('已退回修改（演示）：'+s.rg+' '+s.ver+'，状态回到草稿','warn');
 }
 
-/* ---------- 12. Tab3 限值明细：详情抽屉（含同 CAS 多国对照） ---------- */
+/* ---------- 11b. 限值类型字典 · 语义槽位对齐（只对齐语义，不换算数值） ---------- */
+function oelKindAlign(r){
+  var a=oelKinds(r);
+  if(!a.length)return '<span class="muted">本行无数值型限值，未映射到语义槽位。</span>';
+  var dict=OEL_KIND_DICT.filter(function(d){return d.rg===r.rg&&d.kind!=='—';});
+  var parts=a.map(function(k){
+    var hit=null;
+    for(var i=0;i<dict.length;i++){if(dict[i].kind===k){hit=dict[i];break;}}
+    return oelKindLabel(k).label+'（'+(hit?hit.type:'—')+'）';
+  });
+  return '本行映射到 '+parts.join(' · ')+'；槽位只用于<b>类型对齐与筛选</b>，系统<b>不换算数值、不判断哪套更严格</b>。';
+}
+function oelKindDrawer(){
+  oelDrawer('限值类型字典 · 语义槽位对齐',
+    '<div class="notice info" style="margin-bottom:12px"><div class="ni">i</div><div>本字典把各体系自定义的<b>限值类型名</b>映射到统一的三个<b>语义槽位</b>（长期 / 短期 / 上限），用于按槽位筛选与对齐。<b>只对齐语义：不改数值、不改单位、不生成新数值、不判断严格性。</b></div></div>'+
+    '<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px"><table class="tbl"><thead><tr>'+
+    '<th style="width:110px">国家 / 地区</th><th style="width:150px">来源清单</th><th style="width:140px">原文限值类型</th>'+
+    '<th style="width:110px">语义槽位</th><th>说明</th></tr></thead><tbody>'+
+    OEL_KIND_DICT.map(function(d){
+      return '<tr><td><b>'+esc(d.rg)+'</b></td><td>'+esc(d.src)+'</td><td><span class="tag grey">'+esc(d.type)+'</span></td>'+
+        '<td>'+(d.kind==='—'?'<span class="muted">—</span>':oelKindTag(d.kind))+'</td><td>'+esc(d.note)+'</td></tr>';
+    }).join('')+'</tbody></table></div>'+
+    '<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div><b>为什么不做数值归一：</b>把 ppm 换算 mg/m³ 需要温度 / 压力 / 分子量假设，把中国 MAC 与欧盟 STEL 折算成同一个数，更是两套法律体系之间的口径搬运——<b>演示原型不做，正式产品也须由业务口径决定</b>。</div></div>',
+    '<button class="btn" onclick="oelDrawerClose()">关闭</button>');
+}
+
+/* ---------- 12. Tab3 限值明细：详情抽屉（含同 CAS 跨来源 / 版本对照） ---------- */
 function oelLimDrawer(id){
   var r=OEL_LIMITS.filter(function(x){return x.id===id;})[0];if(!r)return;
   var others=OEL_LIMITS.filter(function(x){return x.cas===(r.cas)&&x.id!==r.id;});
@@ -736,6 +727,8 @@ function oelLimDrawer(id){
     '<dl class="desc-list" style="grid-template-columns:130px 1fr 130px 1fr">'+
     '<dt>CAS 号</dt><dd class="mono">'+esc(r.cas)+'</dd><dt>EC 号</dt><dd class="mono">'+esc(r.ec)+'</dd>'+
     '<dt>物质名称</dt><dd>'+esc(r.name)+'</dd><dt>限值类型</dt><dd>'+esc(r.type)+'</dd>'+
+    '<dt>语义槽位</dt><dd>'+oelKindChips(r)+'</dd>'+
+    '<dt>槽位对齐说明</dt><dd style="grid-column:span 3">'+oelKindAlign(r)+'</dd>'+
     '<dt>长期限值 TWA</dt><dd>'+(r.twa==='—'?'<span class="muted">—</span>':'<b>'+esc(r.twa)+'</b> '+esc(r.unit))+'</dd>'+
     '<dt>短期限值 STEL</dt><dd>'+(r.stel==='—'?'<span class="muted">—</span>':'<b>'+esc(r.stel)+'</b> '+esc(r.unit))+'</dd>'+
     '<dt>峰值 / Ceiling</dt><dd>'+(r.ceil==='—'?'<span class="muted">—</span>':esc(r.ceil))+'</dd>'+
@@ -748,18 +741,20 @@ function oelLimDrawer(id){
     '<dt>原文备注或脚注</dt><dd style="grid-column:span 3">'+esc(r.fn)+'</dd>'+
     '<dt>生效日期</dt><dd>'+esc(r.eff)+'</dd><dt>数据状态</dt><dd><span class="tag '+oelSetCls(r.st)+' dot-tag">'+esc(r.st)+'</span></dd>'+
     '</dl>'+
-    (others.length?'<div style="font-size:12.5px;font-weight:650;margin:14px 0 7px">同一 CAS 在其它国家 / 版本的记录（'+others.length+' 条，并存不覆盖）</div>'+
+    (others.length?'<div style="font-size:12.5px;font-weight:650;margin:14px 0 7px">同一 CAS 在其它来源 / 版本的记录（'+others.length+' 条，并存不覆盖）</div>'+
       '<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px"><table class="tbl"><thead><tr>'+
       '<th style="width:190px">数据集版本</th><th style="width:100px">国家 / 地区</th><th style="width:150px">限值类型</th>'+
+      '<th style="width:130px">语义槽位</th>'+
       '<th style="width:110px">TWA / PC-TWA</th><th style="width:110px">STEL / PC-STEL</th><th style="width:120px">峰值 / Ceiling</th>'+
       '<th style="width:90px">单位</th><th style="width:110px">生效日期</th></tr></thead><tbody>'+
       others.map(function(o){
         return '<tr><td class="mono">'+esc(o.setTxt)+'</td><td>'+esc(o.rg)+'</td><td><span class="tag grey">'+esc(o.type)+'</span></td>'+
+          '<td>'+oelKindChips(o)+'</td>'+
           '<td class="oel-num">'+oelVal(o.twa)+'</td><td class="oel-num">'+oelVal(o.stel)+'</td><td'+((o.ceil==='—')?'':' class="oel-num"')+'>'+oelVal(o.ceil)+'</td>'+
           '<td>'+esc(o.unit)+'</td><td>'+esc(o.eff)+'</td></tr>';
       }).join('')+'</tbody></table></div>'+
-      '<div class="notice grey" style="margin-top:12px"><div class="ni">§</div><div>系统<b>不合并、不排序、不判断</b>上述限值哪条更严格，也不做单位换算后的比较：限值类型口径不同（MAC / PC-TWA / PC-STEL 与 8h TWA / STEL / 峰值类别），须由业务按目标市场选用对应数据集版本。</div></div>'
-      :'<div class="notice grey" style="margin-top:12px"><div class="ni">§</div><div>本页暂无该 CAS 在其它国家 / 版本的记录。</div></div>'),
+      '<div class="notice grey" style="margin-top:12px"><div class="ni">§</div><div>系统<b>不合并、不排序、不判断</b>上述限值哪条更严格，也不做单位换算后的比较：限值类型口径不同（MAC / PC-TWA / PC-STEL 与 8h TWA / STEL），须由业务按目标市场选用对应数据集版本。上表「语义槽位」列只做类型名对齐，可供按槽位比对，但<b>不代表可以直接比数值</b>。</div></div>'
+      :'<div class="notice grey" style="margin-top:12px"><div class="ni">§</div><div>本页暂无该 CAS 在其它来源 / 版本的记录。</div></div>'),
     '<button class="btn" onclick="oelDrawerClose()">关闭</button>'+
     '<button class="btn primary" onclick="oelDrawerClose();oelToLim(\''+esc(r.set)+'\')">查看该数据集全部明细 →</button>');
 }
@@ -785,6 +780,7 @@ function oelCmpDetail(idx){
     '<dt>CAS 号</dt><dd class="mono">'+esc(r.cas)+'</dd>'+
     '<dt>物质名称</dt><dd>'+esc(r.name)+'</dd>'+
     '<dt>变更字段</dt><dd>'+esc(r.field)+'</dd>'+
+    '<dt>语义槽位</dt><dd>'+oelKindText(r.kind)+'</dd>'+
     '<dt>变更前</dt><dd class="oel-old">'+oelVal(r.old)+'</dd>'+
     '<dt>变更后</dt><dd class="oel-new">'+oelVal(r.new)+'</dd>'+
     '<dt>变化说明</dt><dd>'+esc(r.note)+'</dd>'+
@@ -850,7 +846,7 @@ function oelImpHtml(n){
       '<div class="field"><label class="req">生效日期</label><input class="ctrl" type="date" id="oiEff" value="'+esc(_oelImp.eff||'2026-10-01')+'"></div>'+
       '<div class="field"><label>失效日期</label><input class="ctrl" type="date" id="oiExp" value="'+esc(_oelImp.exp||'')+'"></div>'+
       '<div class="field"><label class="req">维护人</label><input class="ctrl" id="oiOwner" value="'+esc(OEL_TOP.owner)+'"></div>'+
-      '<div class="field span2"><label>版本说明</label><input class="ctrl" id="oiNote" placeholder="例如：新增 6 条物质 AGW；4 条调整数值"></div></div>'+
+      '<div class="field span2"><label>版本说明</label><input class="ctrl" id="oiNote" placeholder="例如：新增 6 条物质 8h TWA；4 条调整数值"></div></div>'+
       '<div class="notice grey" style="margin-top:4px"><div class="ni">§</div><div>一个版本对应官方<b>一次发布的全量清单</b>，因此版本号与发布日期必须来自官方文件本身，不能按内部整理时间填写。</div></div>';
   }
   if(n===3){
@@ -872,21 +868,21 @@ function oelImpHtml(n){
   if(n===4){
     return oelMini(4)+
       '<div class="stat-row">'+
-      '<div class="stat"><b>1048</b><span>识别数据行数</span></div>'+
-      '<div class="stat"><b>17</b><span>识别列数</span></div>'+
+      '<div class="stat"><b>172</b><span>识别数据行数</span></div>'+
+      '<div class="stat"><b>16</b><span>识别列数</span></div>'+
       '<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">9</b><span>待人工确认行</span></div>'+
       '<div class="stat"><b>0</b><span>无法识别列</span></div></div>'+
       '<div style="font-size:12.5px;font-weight:650;margin:6px 0 7px">解析结果预览（前 5 行，与限值明细字段自动映射）</div>'+
       '<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px;max-height:240px;overflow:auto"><table class="tbl"><thead><tr>'+
-      '<th style="width:110px">CAS 号</th><th style="width:160px">物质名称</th><th style="width:120px">限值类型</th>'+
-      '<th style="width:110px">TWA</th><th style="width:110px">STEL</th><th style="width:120px">峰值类别</th><th style="width:90px">单位</th></tr></thead><tbody>'+
-      '<tr><td class="mono">108-88-3</td><td>甲苯</td><td>TWA + STEL</td><td class="oel-num">180</td><td class="oel-num">—</td><td>II</td><td>mg/m³</td></tr>'+
-      '<tr><td class="mono">1330-20-7</td><td>二甲苯（全部异构体）</td><td>TWA + STEL</td><td class="oel-num">220</td><td class="oel-num">—</td><td>II</td><td>mg/m³</td></tr>'+
-      '<tr><td class="mono">67-64-1</td><td>丙酮</td><td>TWA + STEL</td><td class="oel-num">1200</td><td class="oel-num">—</td><td>II</td><td>mg/m³</td></tr>'+
-      '<tr><td class="mono">50-00-0</td><td>甲醛</td><td>TWA + STEL</td><td class="oel-num">0.37</td><td class="oel-num">—</td><td>I</td><td>mg/m³</td></tr>'+
-      '<tr><td class="mono">100-41-4</td><td>乙苯</td><td>TWA + STEL</td><td class="oel-num">87</td><td class="oel-num">—</td><td>II</td><td>mg/m³</td></tr>'+
+      '<th style="width:110px">CAS 号</th><th style="width:160px">物质名称</th><th style="width:130px">限值类型</th>'+
+      '<th style="width:110px">8h TWA</th><th style="width:110px">STEL</th><th style="width:120px">语义槽位</th><th style="width:90px">单位</th></tr></thead><tbody>'+
+      '<tr><td class="mono">108-88-3</td><td>甲苯</td><td>TWA + STEL</td><td class="oel-num">192</td><td class="oel-num">384</td><td>'+oelKindTag('LT')+' '+oelKindTag('ST')+'</td><td>mg/m³</td></tr>'+
+      '<tr><td class="mono">1330-20-7</td><td>二甲苯（全部异构体）</td><td>TWA + STEL</td><td class="oel-num">221</td><td class="oel-num">442</td><td>'+oelKindTag('LT')+' '+oelKindTag('ST')+'</td><td>mg/m³</td></tr>'+
+      '<tr><td class="mono">67-64-1</td><td>丙酮</td><td>TWA + STEL</td><td class="oel-num">1210</td><td class="oel-num">2420</td><td>'+oelKindTag('LT')+' '+oelKindTag('ST')+'</td><td>mg/m³</td></tr>'+
+      '<tr><td class="mono">50-00-0</td><td>甲醛</td><td>TWA + STEL</td><td class="oel-num">0.37</td><td class="oel-num">0.74</td><td>'+oelKindTag('LT')+' '+oelKindTag('ST')+'</td><td>mg/m³</td></tr>'+
+      '<tr><td class="mono">100-41-4</td><td>乙苯</td><td>TWA + STEL</td><td class="oel-num">87</td><td class="oel-num">442</td><td>'+oelKindTag('LT')+' '+oelKindTag('ST')+'</td><td>mg/m³</td></tr>'+
       '</tbody></table></div>'+
-      '<div class="notice info" style="margin-top:12px"><div class="ni">i</div><div>解析仅完成<b>列映射与格式读取</b>，不判断数据是否正确。下一步将执行 7 类数据校验，校验结果必须在页面上逐条确认。</div></div>';
+      '<div class="notice info" style="margin-top:12px"><div class="ni">i</div><div>解析仅完成<b>列映射、格式读取与语义槽位对齐</b>，不判断数据是否正确。下一步将执行 7 类数据校验，校验结果必须在页面上逐条确认。</div></div>';
   }
   if(n===5){
     var blockN=OEL_CHECKS.filter(function(c){return c.lv==='阻断';}).reduce(function(a,c){return a+c.cnt;},0);
@@ -920,22 +916,22 @@ function oelImpHtml(n){
     return oelMini(6)+
       '<div class="stat-row">'+
       '<div class="stat" style="border-color:var(--green-b);background:var(--green-bg)"><b style="color:var(--green)">1</b><span>新增物质</span></div>'+
-      '<div class="stat"><b>0</b><span>删除物质</span></div>'+
-      '<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">2</b><span>TWA / STEL / 峰值变化</span></div>'+
+      '<div class="stat"><b>1</b><span>删除物质</span></div>'+
+      '<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">1</b><span>长期 / 短期限值变化</span></div>'+
       '<div class="stat"><b>1</b><span>单位 / 口径变化</span></div>'+
       '<div class="stat"><b>1</b><span>标记变化</span></div>'+
       '<div class="stat"><b>1</b><span>备注 / 适用范围变化</span></div></div>'+
-      '<div style="font-size:12.5px;font-weight:650;margin:6px 0 7px">与上一版本（'+esc(oelSetName(_oelImp.baseSet||'DS-DE-2601'))+'）比较（节选）</div>'+
+      '<div style="font-size:12.5px;font-weight:650;margin:6px 0 7px">与上一版本（'+esc(oelSetName(_oelImp.baseSet||'DS-EU-2601'))+'）比较（节选）</div>'+
       '<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px;max-height:200px;overflow:auto"><table class="tbl"><thead><tr>'+
       '<th style="width:90px">变更</th><th style="width:110px">CAS 号</th><th style="width:140px">物质名称</th>'+
-      '<th style="width:150px">变更前</th><th style="width:150px">变更后</th><th>说明</th></tr></thead><tbody>'+
-      '<tr><td><span class="tag green">新增</span></td><td class="mono">100-41-4</td><td>乙苯</td><td class="oel-old">—</td><td class="oel-new">AGW 87 mg/m³</td><td>新增物质条目</td></tr>'+
-      '<tr><td><span class="tag orange">数值</span></td><td class="mono">108-88-3</td><td>甲苯</td><td class="oel-old">190 mg/m³</td><td class="oel-new">180 mg/m³</td><td>AGW 下调</td></tr>'+
-      '<tr><td><span class="tag orange">数值</span></td><td class="mono">1330-20-7</td><td>二甲苯</td><td class="oel-old">440 mg/m³</td><td class="oel-new">220 mg/m³</td><td>口径改为全部异构体合计</td></tr>'+
-      '<tr><td><span class="tag blue">单位</span></td><td class="mono">67-64-1</td><td>丙酮</td><td class="oel-old">mg/m³（附 ppm）</td><td class="oel-new">mg/m³</td><td>仅表述口径统一</td></tr>'+
-      '<tr><td><span class="tag blue">标记</span></td><td class="mono">67-64-1</td><td>丙酮</td><td class="oel-old">—</td><td class="oel-new">生物监测标记</td><td>新增标记</td></tr>'+
+      '<th style="width:130px">语义槽位</th><th style="width:150px">变更前</th><th style="width:150px">变更后</th><th>说明</th></tr></thead><tbody>'+
+      '<tr><td><span class="tag green">新增</span></td><td class="mono">100-41-4</td><td>乙苯</td><td>'+oelKindTag('LT')+' '+oelKindTag('ST')+'</td><td class="oel-old">—</td><td class="oel-new">8h TWA 87 / STEL 442 mg/m³</td><td>新增物质条目及其长短期限值</td></tr>'+
+      '<tr><td><span class="tag orange">数值</span></td><td class="mono">67-56-1</td><td>甲醇</td><td>'+oelKindTag('LT')+'</td><td class="oel-old">266 mg/m³</td><td class="oel-new">250 mg/m³</td><td>8h TWA 下调</td></tr>'+
+      '<tr><td><span class="tag red">删除</span></td><td class="mono">110-80-5</td><td>2-乙氧基乙醇</td><td>'+oelKindTag('LT')+'</td><td class="oel-old">8h TWA 18 mg/m³</td><td class="oel-new">—</td><td>官方撤回该限值</td></tr>'+
+      '<tr><td><span class="tag blue">单位</span></td><td class="mono">67-64-1</td><td>丙酮</td><td><span class="muted">—</span></td><td class="oel-old">mg/m³（附 ppm）</td><td class="oel-new">mg/m³</td><td>仅表述口径统一</td></tr>'+
+      '<tr><td><span class="tag blue">标记</span></td><td class="mono">67-64-1</td><td>丙酮</td><td><span class="muted">—</span></td><td class="oel-old">—</td><td class="oel-new">生物监测标记</td><td>新增标记</td></tr>'+
       '</tbody></table></div>'+
-      '<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div><b>对比结果仅为提示：</b>系统不判断变化是「更严格」还是「更宽松」，也不自动判断受影响范围；<b>数值口径变化（如二甲苯改为全部异构体合计）不可直接按数值比较</b>，须在「版本对比与审核」中人工确认。</div></div>';
+      '<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div><b>对比结果仅为提示：</b>系统不判断变化是「更严格」还是「更宽松」，也不自动判断受影响范围；<b>数值口径变化不可直接按数值比较</b>，「语义槽位」列只用于把两边对齐到同一槽位，不代表可以直接比数值，须在「版本对比与审核」中人工确认。</div></div>';
   }
   return oelMini(7)+
     '<div class="notice grey" style="margin-bottom:12px"><div class="ni">§</div><div>提交后数据集状态为「<b>待审核</b>」，须在「版本对比与审核」中完成审核并发布，才会成为可用的合规依据。</div></div>'+
@@ -946,9 +942,9 @@ function oelImpHtml(n){
     '<dt>发布日期 / 生效日期</dt><dd>'+esc(_oelImp.pub||'—')+' / '+esc(_oelImp.eff||'—')+'</dd>'+
     '<dt>原文附件</dt><dd class="mono">'+esc(_oelImp.pdf||'—')+'</dd>'+
     '<dt>结构化附件</dt><dd class="mono">'+esc(_oelImp.xls||'—')+'</dd>'+
-    '<dt>解析数据条数</dt><dd>1048 条（演示）</dd>'+
+    '<dt>解析数据条数</dt><dd>172 条（演示）</dd>'+
     '<dt>校验结果</dt><dd>阻断 '+OEL_CHECKS.filter(function(c){return c.lv==='阻断';}).reduce(function(a,c){return a+c.cnt;},0)+' · 告警 '+OEL_CHECKS.filter(function(c){return c.lv==='告警';}).reduce(function(a,c){return a+c.cnt;},0)+' · 提示 '+OEL_CHECKS.filter(function(c){return c.lv==='提示';}).reduce(function(a,c){return a+c.cnt;},0)+'（已逐条留痕）</dd>'+
-    '<dt>对比基准</dt><dd>'+esc(oelSetName(_oelImp.baseSet||'DS-DE-2601'))+'</dd>'+
+    '<dt>对比基准</dt><dd>'+esc(oelSetName(_oelImp.baseSet||'DS-EU-2601'))+'</dd>'+
     '</dl>'+
     '<div class="form-grid one" style="margin-top:12px">'+
     '<div class="field"><label class="req">提交人 / 审核人</label><input class="ctrl" id="oiSubmitter" value="'+esc(OEL_TOP.owner)+'"></div>'+
@@ -980,7 +976,7 @@ function oelImpNext(n){
       _oelImp.exp=($('oiExp')&&$('oiExp').value)||'';
       _oelImp.owner=($('oiOwner')&&$('oiOwner').value.trim())||OEL_TOP.owner;
       _oelImp.note=($('oiNote')&&$('oiNote').value.trim())||'由「导入限值数据集」向导建立（演示）';
-      _oelImp.baseSet=((OEL_SOURCES[_oelImp.srcIdx]||{}).rg==='中国')?'DS-CN-1901':'DS-DE-2601';
+      _oelImp.baseSet=((OEL_SOURCES[_oelImp.srcIdx]||{}).rg==='中国')?'DS-CN-1901':'DS-EU-2601';
     }
     if(n===4&&!_oelImp.xls){toast('请先上传结构化数据文件（或使用示例文件）','warn');return;}
   }
@@ -994,7 +990,7 @@ function oelImpPick(el,kind){
   oelImpShowFile(kind);
 }
 function oelImpPickDemo(kind){
-  _oelImp[kind]=kind==='pdf'?(((OEL_SOURCES[_oelImp.srcIdx||0]||{}).rg==='中国')?'gbz2.1_rev_draft.pdf':'trgs900_2026_3.pdf'):'trgs900_2026_3.xlsx';
+  _oelImp[kind]=kind==='pdf'?(((OEL_SOURCES[_oelImp.srcIdx||0]||{}).rg==='中国')?'gbz2.1_rev_draft.pdf':'eu_ioelv_v2027_1_oj.pdf'):(((OEL_SOURCES[_oelImp.srcIdx||0]||{}).rg==='中国')?'gbz2.1_rev_draft_t1.xlsx':'eu_ioelv_v2027_1.xlsx');
   oelImpShowFile(kind);
 }
 function oelImpShowFile(kind){
@@ -1018,7 +1014,7 @@ function oelImpSubmit(){
   OEL_SETS.unshift({
     id:sid,rg:(OEL_SOURCES[_oelImp.srcIdx]||{}).rg||'—',name:_oelImp.name||'新建数据集',ver:_oelImp.ver||'V2026.3',
     pub:_oelImp.pub||'2026-09-18',eff:_oelImp.eff||'2026-10-01',exp:_oelImp.exp||'—',
-    pdf:_oelImp.pdf||'—',xls:_oelImp.xls||'—',cnt:1048,st:'待审核',
+    pdf:_oelImp.pdf||'—',xls:_oelImp.xls||'—',cnt:172,st:'待审核',
     owner:($('oiSubmitter')&&$('oiSubmitter').value.trim())||OEL_TOP.owner,due:'',
     note:(_oelImp.note||'')+'（经 7 步导入向导提交，待审核）'
   });
