@@ -232,7 +232,7 @@ function renderLawDetail(params){
 regPage('law:query',{title:'法规统一查询',crumb:['合规管理','法规统一查询'],render:renderLawQuery});
 regPage('law:detail',{title:'法规物质明细',crumb:function(){var r=lawDetailCurrent();return ['合规管理','法规库维护',r?r.name:'物质明细'];},render:renderLawDetail});
 function regLawMaintenance(route,type,title,desc,note){regPage(route,{title:title,crumb:['合规管理','法规库维护',title],render:function(){renderLawPage(type,title,desc,note);}});}
-regLawMaintenance('law:clp','clp','CLP 附录 VI','维护欧盟统一分类、SCL、ATE、M 因子及 ATP 版本链；官方 ATP 包由法规专员下载后导入。','law-clp');
+/* law:clp 已升级为 CLP 法规库统一页面（2026-09-18），注册移交 23z6-js-clp.js */
 regLawMaintenance('law:reach','reach','REACH / RoHS','维护 REACH 限制、授权、SVHC 候选清单及 RoHS 限用物质版本。','law-reach');
 regLawMaintenance('law:cl','cl','C&L Inventory','维护 ECHA 分类与标签清单的批量分类申报数据。','law-cl');
 regLawMaintenance('law:cn','cn','国内危化品分类','维护应急管理部危险化学品目录、分类信息表及相关国家标准。','law-cn');

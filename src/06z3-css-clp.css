@@ -1,0 +1,14 @@
+/* ==================================================================
+   [23z6] CLP 法规库 · 模块信息条与抽屉补充样式
+   抽屉本体复用 .exp-ai-mask / .exp-ai-panel（03-css-mod.css 既有）
+   ================================================================== */
+.clp-strip{display:flex;align-items:center;gap:26px;flex-wrap:wrap;padding:10px 16px;margin-bottom:12px;
+  background:var(--bg-soft,#f7f8fa);border:1px solid var(--line);border-radius:9px}
+.clp-strip .it{display:flex;flex-direction:column;gap:3px;min-width:0}
+.clp-strip .it em{font-style:normal;font-size:11px;color:var(--muted);white-space:nowrap}
+.clp-strip .it b{font-size:13px;font-weight:600;white-space:nowrap}
+.clp-strip .it.src{margin-left:auto}
+.clp-strip .it.src b{max-width:340px;overflow:hidden;text-overflow:ellipsis}
+#clpDw .modal-hd{flex:0 0 auto}
+#clpDw .modal-bd{padding:16px 20px}
+#clpDw .modal-ft{border-top:1px solid var(--line);padding:12px 20px;display:flex;gap:8px;justify-content:flex-end}

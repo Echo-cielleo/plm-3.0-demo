@@ -29,6 +29,7 @@ cat "$SRC/05z-css-weekly.css" >> "$OUT"
 cat "$SRC/05z2-css-catalog.css" >> "$OUT"
 cat "$SRC/06z-css-navtools.css" >> "$OUT"
 cat "$SRC/06z2-css-phys-range.css" >> "$OUT"
+cat "$SRC/06z3-css-clp.css" >> "$OUT"
 printf '\n</style>\n</head>\n<body>\n' >> "$OUT"
 
 # 3) HTML 骨架

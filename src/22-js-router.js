@@ -31,7 +31,7 @@ var MENU=[
     ]},
     {id:'law:query',name:'法规统一查询',prio:'P1'},
     {id:'law',name:'法规库维护',children:[
-      {id:'law:clp',name:'CLP 附录 VI',prio:'P1'},
+      {id:'law:clp',name:'CLP 法规库',prio:'P1'},
       {id:'law:reach',name:'REACH / RoHS',prio:'P1'},
       {id:'law:cl',name:'C&L Inventory',prio:'P1'},
       {id:'law:cn',name:'国内危化品分类',prio:'P1'},
