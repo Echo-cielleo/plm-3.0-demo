@@ -1,0 +1,44 @@
+/* ==================================================================
+   [23z7 / 23z8] 法规页（REACH / RoHS / OEL / 运输）补充样式
+   ------------------------------------------------------------------
+   · .law-strip 为法规页共用的模块信息条（CLP 页的同类样式在
+     06z3-css-clp.css 的 .clp-strip，两者各自独立、互不覆盖）
+   · #rchDw 复用 .exp-ai-mask / .exp-ai-panel 现有抽屉样式
+   ================================================================== */
+.law-strip{display:flex;align-items:center;gap:26px;flex-wrap:wrap;padding:10px 16px;margin-bottom:12px;
+  background:var(--bg-soft,#f7f8fa);border:1px solid var(--line);border-radius:9px}
+.law-strip .it{display:flex;flex-direction:column;gap:3px;min-width:0}
+.law-strip .it em{font-style:normal;font-size:11px;color:var(--muted);white-space:nowrap}
+.law-strip .it b{font-size:13px;font-weight:600;white-space:nowrap}
+.law-strip .it.src{margin-left:auto}
+.law-strip .it.src b{max-width:340px;overflow:hidden;text-overflow:ellipsis}
+#rchDw .modal-hd{flex:0 0 auto}
+#rchDw .modal-bd{padding:16px 20px}
+#rchDw .modal-ft{border-top:1px solid var(--line);padding:12px 20px;display:flex;gap:8px;justify-content:flex-end}
+/* 法规页通知块的加粗保持句内 inline（覆盖 04-css-sds.css 的 .sds-scope .notice b 块级规则；
+   本文件在 04 之后加载，同特异性后到者胜） */
+.law-page .notice b{display:inline;margin-bottom:0}
+
+/* 行可点击（点击条目打开详情抽屉） */
+.tbl tbody tr.row-click{cursor:pointer}
+.tbl tbody tr.row-click:hover{background:var(--bg-soft,#f7f8fa)}
+
+/* PBT / vPvB 判定规则卡片 */
+.rch-rules{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px 14px}
+.rch-rule{border:1px solid var(--line);border-radius:9px;padding:12px 14px;cursor:pointer;
+  transition:border-color .15s,box-shadow .15s;background:var(--card)}
+.rch-rule:hover{border-color:var(--primary-border,#99c2f0);box-shadow:var(--shadow,none)}
+.rch-rule .hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.rch-rule .hd b{font-size:13.5px}
+.rch-rule .kv{display:flex;gap:8px;font-size:12.5px;line-height:1.55;margin-bottom:4px}
+.rch-rule .kv em{font-style:normal;color:var(--muted);flex:0 0 62px}
+.rch-rule .ft{display:flex;align-items:center;gap:10px;margin-top:8px;padding-top:8px;
+  border-top:1px dashed var(--line);font-size:11.5px;color:var(--muted)}
+.rch-rule .ft .tag{margin-left:auto}
+
+/* 运输方式卡片 */
+.law-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px 16px}
+.law-card{border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:var(--card)}
+.law-card .hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.law-card .hd b{font-size:13px}
+.law-card .bd{font-size:12.5px;line-height:1.6;color:var(--text-2,#5a6673)}

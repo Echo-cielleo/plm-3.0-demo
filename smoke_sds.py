@@ -14,7 +14,7 @@ PAGES = [
     ('bd:comp-auto', 'PubChem',          'bd_comp_auto'),
     ('bd:ghs',       'GHS 与受限属性',   'bd_ghs'),
     ('law:zdhc',     'ZDHC',             'law_zdhc'),
-    ('law:rohs',     'RoHS',             'law_rohs'),
+    ('law:rohs',     'RoHS 限用物质',    'law_rohs'),
 ]
 errors = []
 
@@ -100,7 +100,7 @@ with sync_playwright() as p:
         page.screenshot(path=str(SS / ('_ss_%s.png' % ss)))
 
     print('\n--- 法规库 3 步上传 modal ---')
-    page.evaluate('showPage("law:rohs")'); page.wait_for_timeout(300)
+    page.evaluate('showPage("law:cn")'); page.wait_for_timeout(300)
     page.evaluate('lawUpload(null)'); page.wait_for_timeout(250)
     print('  第 1 步 mini-steps=%d（期望 3）' % page.locator('#modal .mini-step').count())
     page.evaluate("""() => {
@@ -118,7 +118,7 @@ with sync_playwright() as p:
     print('  入库后法规条数=%d（期望 14，含新增 C&L / 国内危化品库）' % page.evaluate('lawRows.length'))
 
     print('\n--- 影响分析 ---')
-    page.evaluate('showPage("law:rohs")'); page.wait_for_timeout(300)
+    page.evaluate('showPage("law:cn")'); page.wait_for_timeout(300)
     page.evaluate('lawImpact(lawRows[0]._id)'); page.wait_for_timeout(300)
     mh = page.locator('#modal').inner_html()
     print('  影响分析弹窗: %s / 受影响 SDS %d 行' % ('影响分析' in mh, page.locator('#modal tbody tr').count()))

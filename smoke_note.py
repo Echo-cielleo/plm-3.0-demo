@@ -3,7 +3,9 @@ from playwright.sync_api import sync_playwright
 F="/Users/dowell/Desktop/code/workbuddy/PLM/PLM3.0全系统演示原型.html"
 errs=[]
 # law:zdhc 由 23y regLawMaintenance 重新注册，说明按钮 key 为 law-zdhc-maint
-PAGES=[("law:zdhc","ZDHC MRSL","law-zdhc-maint"),("law:rohs","RoHS · REACH 法规库","law-rohs"),("subst:list","受限物质管理","subst")]
+# 2026-09-18：law:rohs 已改为「受限物质管理 · RoHS 限用物质」新页面（无说明面板），
+# 此处改用同为分库维护页的 law:cn（说明 key law-cn）
+PAGES=[("law:zdhc","ZDHC MRSL","law-zdhc-maint"),("law:cn","国内危化品法规库","law-cn"),("subst:list","受限物质管理","subst")]
 def st(pg,key):
     return pg.evaluate("""(k)=>{
       var b=document.getElementById('nb-'+k), p=document.getElementById('np-'+k);

@@ -51,7 +51,12 @@ var LAW_QUERY_ROWS=[
   {id:'Q012',cas:'64-17-5',name:'乙醇',ec:'200-578-6',source:'国内危化品分类',sourceType:'cn',region:'中国',dataType:'危化品分类',result:'目录命中',value:'易燃液体 类别2',version:'2025 增补版',status:'已生效',lawKey:'cn-danger'},
   {id:'Q013',cas:'108-88-3',name:'甲苯',ec:'203-625-9',source:'REACH Annex XVII',sourceType:'reach',region:'欧盟',dataType:'限制',result:'限制条目命中',value:'消费品与专业用途限制',version:'V2026.2',status:'已生效',lawKey:'xvii'},
   {id:'Q014',cas:'108-88-3',name:'甲苯',ec:'203-625-9',source:'ZDHC MRSL',sourceType:'zdhc',region:'行业标准',dataType:'制造限用',result:'MRSL 命中',value:'溶剂类物质限值适用',version:'V3.1',status:'已生效',lawKey:'zdhc-mrsl'},
-  {id:'Q015',cas:'108-88-3',name:'甲苯',ec:'203-625-9',source:'国内危化品分类',sourceType:'cn',region:'中国',dataType:'危化品分类',result:'目录命中',value:'易燃液体 / 生殖毒性',version:'2025 增补版',status:'已生效',lawKey:'cn-danger'}
+  {id:'Q015',cas:'108-88-3',name:'甲苯',ec:'203-625-9',source:'国内危化品分类',sourceType:'cn',region:'中国',dataType:'危化品分类',result:'目录命中',value:'易燃液体 / 生殖毒性',version:'2025 增补版',status:'已生效',lawKey:'cn-danger'},
+  /* 2026-09-18 补充：REACH 法规库各 Tab 跳转统一查询时需要按法规类别（lawKey）过滤，
+     预先补 Annex XIV 授权与 Annex XVII 六价铬两条线的示例命中记录 */
+  {id:'Q016',cas:'117-81-7',name:'邻苯二甲酸二(2-乙基己基)酯 DEHP',ec:'204-211-0',source:'REACH Annex XIV',sourceType:'reach',region:'欧盟',dataType:'授权',result:'列入授权清单',value:'日落日期 2015-02-21（未经授权不得投放市场）',version:'V2026.1',status:'已生效',lawKey:'xiv'},
+  {id:'Q017',cas:'7758-97-6',name:'铬酸铅',ec:'231-846-0',source:'REACH Annex XIV',sourceType:'reach',region:'欧盟',dataType:'授权',result:'列入授权清单',value:'最迟申请日期 2017-05-21 / 日落日期 2019-05-04',version:'V2026.1',status:'已生效',lawKey:'xiv'},
+  {id:'Q018',cas:'18540-29-9',name:'六价铬化合物 Cr(VI)',ec:'240-881-5',source:'REACH Annex XVII',sourceType:'reach',region:'欧盟',dataType:'限制',result:'Entry 47 命中',value:'与皮肤接触的皮革制品：Cr(VI) < 3 mg/kg',version:'V2026.2',status:'已生效',lawKey:'xvii'}
 ];
 var LAW_LIBRARY_META={
   clp:{cycle:'随 ATP 发布复审',maintain:'ECHA ATP 包人工导入'},
@@ -97,9 +102,23 @@ function lawEvidence(r,isQuery){
 }
 function lawEvidenceLamp(r,isQuery){var e=lawEvidence(r,isQuery);return '<span class="ev ev-'+e.lv+'" title="'+esc(e.tip)+'"><i></i>'+e.label+'</span>';}
 function lawMaintenanceRoute(v){return {clp:'law:clp',reach:'law:reach',cl:'law:cl',cn:'law:cn',zdhc:'law:zdhc'}[v]||'law:reach';}
+/* 法规类别（lawKey）筛选：REACH 法规库各 Tab 跳转动统一查询时按类别预置过滤。
+   OEL 与运输法规库本期为占位页，不进入本筛选。 */
+var LAW_KIND_OPTS=[
+  ['clp6','CLP 附录 VI'],
+  ['svhc','SVHC 候选清单'],
+  ['xiv','Annex XIV 授权清单'],
+  ['xvii','Annex XVII 限制清单'],
+  ['cl-inventory','C&L Inventory'],
+  ['cn-danger','国内危化品'],
+  ['zdhc-mrsl','ZDHC MRSL']
+];
+function lawKindText(k){var o=LAW_KIND_OPTS.filter(function(x){return x[0]===k;})[0];return o?o[1]:k;}
 function lawQueryRows(){
   var kw=($('lqKw').value||'').trim().toLowerCase(),src=$('lqSource').value,type=$('lqType').value,region=$('lqRegion').value,status=$('lqStatus').value;
+  var lkEl=$('lqLaw'),lk=lkEl?lkEl.value:'';
   return LAW_QUERY_ROWS.filter(function(r){
+    if(lk&&r.lawKey!==lk)return false;
     if(src&&r.sourceType!==src)return false;if(type&&r.dataType!==type)return false;if(region&&r.region!==region)return false;if(status&&r.status!==status)return false;
     return !kw||(r.cas+' '+r.name+' '+r.ec+' '+r.source+' '+r.result+' '+r.value).toLowerCase().indexOf(kw)>=0;
   });
@@ -114,7 +133,7 @@ function lawQueryRender(){
   $('lqTable').innerHTML='<thead><tr><th style="width:110px">CAS 号</th><th style="width:130px">物质名称</th><th style="width:105px">EC 号</th><th style="width:150px">法规来源</th><th style="width:95px">证据灯</th><th style="width:110px">复审到期</th><th style="width:90px">地区</th><th style="width:110px">数据类型</th><th style="width:130px">管控结论</th><th>分类 / 限值 / 条件</th><th style="width:105px">版本</th><th style="width:130px">操作</th></tr></thead><tbody>'+
     (rows.length?rows.map(function(r){var cls={clp:'purple',reach:'blue',cl:'grey',cn:'orange',zdhc:'green'}[r.sourceType]||'grey';var ev=lawEvidence(r,true);return '<tr class="'+(ev.lv==='red'?'row-red':(ev.lv==='due'?'row-due':''))+'"><td class="mono">'+esc(r.cas)+'</td><td><b>'+esc(r.name)+'</b></td><td class="mono">'+esc(r.ec)+'</td><td><span class="tag '+cls+'">'+esc(r.source)+'</span></td><td>'+lawEvidenceLamp(r,true)+'</td><td>'+esc(r.reviewDue)+'</td><td>'+esc(r.region)+'</td><td>'+esc(r.dataType)+'</td><td>'+esc(r.result)+'</td><td>'+esc(r.value)+'</td><td class="mono">'+esc(r.version)+'</td><td><button class="btn-link" onclick="lawQueryView(\''+r.id+'\')">查看</button><button class="btn-link" onclick="showPage(\''+lawMaintenanceRoute(r.sourceType)+'\')">来源库</button></td></tr>';}).join(''):'<tr><td colspan="12" class="tbl-empty"><span class="big">⌕</span>没有匹配的法规记录</td></tr>')+'</tbody>';
 }
-function lawQueryClear(){['lqKw','lqSource','lqType','lqRegion','lqStatus'].forEach(function(id){$(id).value='';});lawQueryRender();}
+function lawQueryClear(){['lqKw','lqLaw','lqSource','lqType','lqRegion','lqStatus'].forEach(function(id){var el=$(id);if(el)el.value='';});lawQueryRender();}
 function lawQueryView(id){
   var r=LAW_QUERY_ROWS.find(function(x){return x.id===id;});if(!r)return;
   var law=lawRows.find(function(x){return x.key===r.lawKey;});
@@ -122,9 +141,11 @@ function lawQueryView(id){
   openModal({title:'法规命中详情 · '+r.name,width:700,body:'<dl class="desc-list" style="grid-template-columns:120px 1fr 120px 1fr">'+
     '<dt>物质名称</dt><dd>'+esc(r.name)+'</dd><dt>CAS 号</dt><dd class="mono">'+esc(r.cas)+'</dd><dt>EC 号</dt><dd class="mono">'+esc(r.ec)+'</dd><dt>法规来源</dt><dd>'+esc(r.source)+'</dd><dt>监管地区</dt><dd>'+esc(r.region)+'</dd><dt>数据类型</dt><dd>'+esc(r.dataType)+'</dd><dt>管控结论</dt><dd>'+esc(r.result)+'</dd><dt>当前版本</dt><dd>'+esc(r.version)+'</dd><dt>复审到期</dt><dd>'+esc(r.reviewDue)+'</dd><dt>证据状态</dt><dd>'+lawEvidenceLamp(r,true)+'</dd><dt>分类 / 限值 / 条件</dt><dd style="grid-column:span 3">'+esc(r.value)+'</dd><dt>维护状态</dt><dd><span class="tag '+TAG_CLS(r.status)+' dot-tag">'+esc(r.status)+'</span></dd><dt>最近维护</dt><dd>'+esc(law?law.upd:'—')+'</dd><dt>人工验证人</dt><dd>'+esc(law?law.verifier:'—')+'</dd></dl>'+clp+'<div class="notice grey" style="margin-top:14px"><div class="ni">§</div><div>查询页证据灯只读；上传新版本、版本 diff 与确认复审请进入来源法规库维护页。</div></div>',footer:'<button class="btn" onclick="closeModal();showPage(\''+lawMaintenanceRoute(r.sourceType)+'\')">打开来源库</button><button class="btn primary" onclick="closeModal()">关闭</button>'});
 }
-function renderLawQuery(){
+function renderLawQuery(params){
+  /* params.lawKey：由 REACH 法规库各 Tab 跳转带入，预置「法规类别」筛选 */
+  var preset=((params||{}).lawKey)||'';
   $('pageHost').innerHTML='<div class="sds-scope">'+sdsHead('','法规统一查询','按 CAS、物质名称或 EC 号一次检索全部法规库，无需预先判断数据来自哪个法规来源。','<button class="btn" onclick="toast(\'查询结果已导出（演示）\',\'ok\')">导出结果</button>','','law-query')+
-    '<div class="notice info" style="margin-bottom:14px"><div class="ni">i</div><div><b>统一查询、分库维护：</b>本页证据灯只读；上传新版本、版本 diff 与确认复审仍在各法规库维护页完成。</div></div><div class="kpi-row" id="lqKpi"></div><div class="card"><div class="toolbar" style="flex-wrap:wrap"><div class="search" style="width:280px"><i class="si">⌕</i><input id="lqKw" placeholder="CAS / 物质名称 / EC 号" oninput="lawQueryRender()"></div><select class="ctrl" id="lqSource" style="width:160px" onchange="lawQueryRender()"><option value="">全部法规来源</option><option value="clp">CLP 附录 VI</option><option value="reach">REACH / RoHS</option><option value="cl">C&amp;L Inventory</option><option value="cn">国内危化品分类</option><option value="zdhc">ZDHC MRSL</option></select><select class="ctrl" id="lqType" style="width:150px" onchange="lawQueryRender()"><option value="">全部数据类型</option><option>统一分类</option><option>限制</option><option>高关注物质</option><option>企业申报分类</option><option>危化品分类</option><option>制造限用</option></select><select class="ctrl" id="lqRegion" style="width:120px" onchange="lawQueryRender()"><option value="">全部地区</option><option>欧盟</option><option>中国</option><option>行业标准</option></select><select class="ctrl" id="lqStatus" style="width:120px" onchange="lawQueryRender()"><option value="">全部状态</option><option>已生效</option><option>待复核</option></select><button class="btn sm" onclick="lawQueryClear()">重置</button><div class="grow"></div><span id="lqCount" class="muted"></span></div><div class="tbl-wrap"><table class="tbl" id="lqTable" style="min-width:1700px"></table></div></div></div>';
+    '<div class="notice info" style="margin-bottom:14px"><div class="ni">i</div><div><b>统一查询、分库维护：</b>本页证据灯只读；上传新版本、版本 diff 与确认复审仍在各法规库维护页完成。</div></div><div class="kpi-row" id="lqKpi"></div><div class="card"><div class="toolbar" style="flex-wrap:wrap"><div class="search" style="width:250px"><i class="si">⌕</i><input id="lqKw" placeholder="CAS / 物质名称 / EC 号" oninput="lawQueryRender()"></div><select class="ctrl" id="lqLaw" style="width:175px" onchange="lawQueryRender()"><option value="">全部法规类别</option>'+LAW_KIND_OPTS.map(function(o){return '<option value="'+o[0]+'"'+(preset===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select><select class="ctrl" id="lqSource" style="width:150px" onchange="lawQueryRender()"><option value="">全部法规来源</option><option value="clp">CLP 附录 VI</option><option value="reach">REACH</option><option value="cl">C&amp;L Inventory</option><option value="cn">国内危化品分类</option><option value="zdhc">ZDHC MRSL</option></select><select class="ctrl" id="lqType" style="width:150px" onchange="lawQueryRender()"><option value="">全部数据类型</option><option>统一分类</option><option>限制</option><option>授权</option><option>高关注物质</option><option>企业申报分类</option><option>危化品分类</option><option>制造限用</option></select><select class="ctrl" id="lqRegion" style="width:120px" onchange="lawQueryRender()"><option value="">全部地区</option><option>欧盟</option><option>中国</option><option>行业标准</option></select><select class="ctrl" id="lqStatus" style="width:120px" onchange="lawQueryRender()"><option value="">全部状态</option><option>已生效</option><option>待复核</option></select><button class="btn sm" onclick="lawQueryClear()">重置</button><div class="grow"></div><span id="lqCount" class="muted"></span></div><div class="tbl-wrap"><table class="tbl" id="lqTable" style="min-width:1700px"></table></div></div></div>';
   lawQueryRender();
 }
 
@@ -233,7 +254,7 @@ regPage('law:query',{title:'法规统一查询',crumb:['合规管理','法规统
 regPage('law:detail',{title:'法规物质明细',crumb:function(){var r=lawDetailCurrent();return ['合规管理','法规库维护',r?r.name:'物质明细'];},render:renderLawDetail});
 function regLawMaintenance(route,type,title,desc,note){regPage(route,{title:title,crumb:['合规管理','法规库维护',title],render:function(){renderLawPage(type,title,desc,note);}});}
 /* law:clp 已升级为 CLP 法规库统一页面（2026-09-18），注册移交 23z6-js-clp.js */
-regLawMaintenance('law:reach','reach','REACH / RoHS','维护 REACH 限制、授权、SVHC 候选清单及 RoHS 限用物质版本。','law-reach');
+/* law:reach 已升级为 REACH 法规库统一页面（2026-09-18），注册移交 23z7-js-reach.js */
 regLawMaintenance('law:cl','cl','C&L Inventory','维护 ECHA 分类与标签清单的批量分类申报数据。','law-cl');
-regLawMaintenance('law:cn','cn','国内危化品分类','维护应急管理部危险化学品目录、分类信息表及相关国家标准。','law-cn');
+regLawMaintenance('law:cn','cn','国内危化品法规库','维护应急管理部危险化学品目录、分类信息表及相关国家标准。','law-cn');
 regLawMaintenance('law:zdhc','zdhc','ZDHC MRSL','维护 ZDHC MRSL、废水排放限值与输入流清单。','law-zdhc-maint');

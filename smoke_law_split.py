@@ -35,16 +35,21 @@ with sync_playwright() as pw:
     law=next(x for x in comp if x['id']=='law')
     ok(next(x for x in comp if x['id']=='law:query')['name']=='法规统一查询','合规管理包含独立统一查询入口')
     ok(law['name']=='法规库维护','维护入口统一命名为法规库维护')
-    ok(law['children']==['law:clp','law:reach','law:cl','law:cn','law:zdhc'],'五个法规库分别进入维护页面')
+    ok(law['children']==['law:clp','law:reach','law:oel','law:trans','law:cn','law:zdhc'],'法规库维护含 6 个入口（CLP / REACH / OEL / 运输 / 国内危化品 / ZDHC）')
+    ext=next(x for x in comp if x['id']=='ext')
+    ok(ext['name']=='外部参考数据' and ext['children']==['law:cl'],'C&L Inventory 移入「外部参考数据」独立分组')
+    subst=next(x for x in comp if x['id']=='subst')
+    ok(subst['name']=='受限物质管理' and subst['children']==['subst:list','law:rohs'],'受限物质管理改分组，RoHS 限用物质独立成页')
 
     print('\n=== 法规统一查询 ===')
     page.evaluate("showPage('law:query')");page.wait_for_timeout(250)
     text=page.locator('#pageHost').inner_text()
     ok('法规统一查询' in text and '统一查询、分库维护' in text,'页面清楚说明查询与维护的分工')
-    ok(page.locator('#lqTable tbody tr').count()==15,'默认跨库展示 15 条法规命中记录')
+    ok(page.locator('#lqTable tbody tr').count()==18,'默认跨库展示 18 条法规命中记录')
     ok(page.locator('#lqSource option').count()==6,'来源筛选包含全部及 5 类法规库')
+    ok(page.locator('#lqLaw option').count()==8,'法规类别筛选包含全部及 7 类法规清单')
     lamps=page.locator('#lqTable .ev')
-    ok(lamps.count()==15 and page.locator('#lqTable .ev-green').count()>0 and page.locator('#lqTable .ev-due').count()>0 and page.locator('#lqTable .ev-red').count()>0,'查询结果同时展示绿、黄、红三色只读证据灯')
+    ok(lamps.count()==18 and page.locator('#lqTable .ev-green').count()>0 and page.locator('#lqTable .ev-due').count()>0 and page.locator('#lqTable .ev-red').count()>0,'查询结果同时展示绿、黄、红三色只读证据灯')
     ok('需改版' in page.locator('#lqKpi').inner_text(),'KPI 展示红灯需改版统计')
     ok(page.locator('#lqTable').get_by_role('button',name='确认复审').count()==0 and page.locator('#lqTable').get_by_role('button',name='查看新版本 diff').count()==0,'查询页证据灯只读且无维护操作')
     page.fill('#lqKw','50-00-0');page.wait_for_timeout(100)
@@ -65,7 +70,7 @@ with sync_playwright() as pw:
     ok(page.evaluate('curPage')=='law:clp','查询结果可进入对应来源库维护页')
 
     print('\n=== 分库维护 ===')
-    routes=[('law:reach','reach','REACH / RoHS'),('law:cl','cl','C&L Inventory'),('law:cn','cn','国内危化品分类'),('law:zdhc','zdhc','ZDHC MRSL')]
+    routes=[('law:cl','cl','C&L Inventory'),('law:cn','cn','国内危化品法规库'),('law:zdhc','zdhc','ZDHC MRSL')]
     for route,kind,title in routes:
         page.evaluate("r=>showPage(r)",route);page.wait_for_timeout(100)
         ok(title in page.locator('#pageHost').inner_text(),route+' 显示正确维护标题')
@@ -94,7 +99,16 @@ with sync_playwright() as pw:
     ok('当前引用版本' in page.locator('#mBody').inner_text() and '来源库最新版本' in page.locator('#mBody').inner_text(),'版本 diff 弹窗对比当前与最新版本')
     page.screenshot(path='/private/tmp/law-cn-version-diff.png',full_page=True)
     page.evaluate('closeModal()')
-    page.evaluate("showPage('law:reach')");page.wait_for_timeout(100)
+    # 2026-09-18：law:reach 升级为 REACH 法规库统一页面（23z7），此处仅验边界，细节由 smoke_reach.py 覆盖
+    page.evaluate("showPage('law:reach')");page.wait_for_timeout(200)
+    reach_txt=page.locator('#pageHost').inner_text()
+    ok('REACH 法规库' in reach_txt and page.locator('#rchTabs button').count()==6,'law:reach 升级为统一页面（顶部主信息 + 6 Tab）')
+    ok(page.locator('#lawTable').count()==0 and '法规统一查询' not in reach_txt,'REACH 页不再使用分库维护页旧结构')
+    # 2026-09-18：law:rohs 由「受限物质管理 · RoHS 限用物质」接管（23z8），原隐藏旧页注册已删
+    page.evaluate("showPage('law:rohs')");page.wait_for_timeout(200)
+    rohs_txt=page.locator('#pageHost').inner_text()
+    ok('RoHS 限用物质' in rohs_txt and page.locator('#rohsTable tbody tr').count()==10,'RoHS 限用物质页直接列全 10 条受限物质')
+    page.evaluate("showPage('law:zdhc')");page.wait_for_timeout(100)
     page.get_by_role('button',name='＋ 新增法规清单').click();page.wait_for_timeout(100)
     ok('上传官方渠道下载的法规清单文件' in page.locator('#mBody').inner_text(),'维护页保留分库上传导入流程')
     page.evaluate('closeModal()')

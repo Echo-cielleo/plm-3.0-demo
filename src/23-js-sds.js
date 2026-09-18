@@ -3472,11 +3472,5 @@ regPage('law:zdhc',{
       'law-zdhc');
   }
 });
-regPage('law:rohs',{
-  title:'RoHS · REACH 法规库',crumb:['合规管理','法规库','RoHS·REACH'],
-  render:function(){
-    renderLawPage(['reach','cn'],'RoHS · REACH 法规库',
-      '欧盟 REACH / RoHS 与中国化学品法规（GB 系列）清单，覆盖限制物质、授权清单与申报要求。',
-      'law-rohs');
-  }
-});
+/* law:rohs（RoHS · REACH 法规库，已被法库维护页取代的隐藏旧页）于 2026-09-18
+   由「受限物质管理 · RoHS 限用物质」新页面接管，注册移交 23z8-js-law-misc.js */

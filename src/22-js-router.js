@@ -30,14 +30,25 @@ var MENU=[
       {id:'sds:wizard',name:'SDS 生成向导',prio:'P1'}
     ]},
     {id:'law:query',name:'法规统一查询',prio:'P1'},
+    /* 法规库维护：CLP / REACH 已升级为统一页面（23z6 / 23z7）；
+       OEL 与运输为后续模块静态占位（23z8），不进入统一查询来源筛选 */
     {id:'law',name:'法规库维护',children:[
       {id:'law:clp',name:'CLP 法规库',prio:'P1'},
-      {id:'law:reach',name:'REACH / RoHS',prio:'P1'},
-      {id:'law:cl',name:'C&L Inventory',prio:'P1'},
-      {id:'law:cn',name:'国内危化品分类',prio:'P1'},
+      {id:'law:reach',name:'REACH 法规库',prio:'P1'},
+      {id:'law:oel',name:'职业接触限值法规库',prio:'plan'},
+      {id:'law:trans',name:'运输法规库',prio:'plan'},
+      {id:'law:cn',name:'国内危化品法规库',prio:'P1'},
       {id:'law:zdhc',name:'ZDHC MRSL',prio:'P1'}
     ]},
-    {id:'subst:list',name:'受限物质管理',prio:'P1'},
+    /* 外部参考数据：不属法规，ECHA 企业申报汇总，独立维护 */
+    {id:'ext',name:'外部参考数据',icon:'database',children:[
+      {id:'law:cl',name:'C&L Inventory',prio:'P1'}
+    ]},
+    /* 受限物质管理改为分组：RoHS 限用物质从「REACH / RoHS」拆出独立成页（23z8） */
+    {id:'subst',name:'受限物质管理',icon:'shield',children:[
+      {id:'subst:list',name:'受限物质清单',prio:'P1'},
+      {id:'law:rohs',name:'RoHS 限用物质',prio:'P1'}
+    ]},
     {id:'export:reg',name:'出口注册管理',prio:'plan'},
     {id:'comp:guarantee',name:'保证函管理',prio:'plan'}
   ]},
