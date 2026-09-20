@@ -634,7 +634,7 @@ function rchChgImpact(i){
 }
 
 /* ---------- 11. 导入新版本 · 静态演示向导（与 CLP 页同一套五步） ---------- */
-var _rchImp={};
+var _rchImp={step:1};
 function rchMini(n){
   var t=['登记来源文件','创建新版本','上传结构化数据','查看变更','审核发布'];
   return '<div class="mini-steps">'+t.map(function(x,i){
@@ -642,9 +642,18 @@ function rchMini(n){
     return '<div class="mini-step '+cls+'"><span class="n">'+(i+1<n?'✓':(i+1))+'</span>'+x+'</div>'+(i<4?'<div class="mini-line '+(i+1<n?'fin':'')+'"></div>':'');
   }).join('')+'</div>';
 }
+/* ⚠️ 全站只有一个模态宿主 #modal，向导内的「影响范围」属二级弹窗，打开时会覆写向导本体。
+   故二级弹窗的关闭按钮统一回到本函数重建向导当前步，避免「点一次影响范围，向导就没了」的演示级事故。
+   （与 CLP 页 23z6a 的 clpImpRestore() 同一套做法） */
+function rchImpRestore(){
+  var n=_rchImp.step||1;
+  openModal({title:'导入新版本 · REACH 法规库',width:680,cls:'sds-scope law-page',
+    body:rchImpHtml(n),footer:rchImpFoot(n)});
+  if(n===3&&_rchImp.file)rchImpShowFile();
+}
 function rchImport(){
-  _rchImp={};
-  openModal({title:'导入新版本 · REACH 法规库',width:680,cls:'sds-scope law-page',body:rchImpHtml(1),footer:rchImpFoot(1)});
+  _rchImp={step:1};
+  rchImpRestore();
 }
 function rchImpHtml(n){
   if(n===1){
@@ -710,6 +719,7 @@ function rchImpNext(n){
     if(n===3){_rchImp.ver=$('riVer').value.trim()||'V2026.3';_rchImp.eff=$('riEff').value||'2027-01-15';_rchImp.cut=$('riCut').value;}
     if(n===4&&!_rchImp.file){toast('请先上传结构化数据文件（或使用示例文件）','warn');return;}
   }
+  _rchImp.step=n;
   $('mBody').innerHTML=rchImpHtml(n);
   $('mFoot').innerHTML=rchImpFoot(n);
   if(n===3&&_rchImp.file)rchImpShowFile();
@@ -725,7 +735,7 @@ function rchImpImpact(){
   openModal({title:'影响范围（示例）',width:720,cls:'sds-scope law-page',
     body:'<div class="notice warn" style="margin-bottom:12px"><div class="ni">!</div><div><b>影响配方 / SDS 数量为示例数据</b>（原型阶段），不代表系统已具备影响分析能力。</div></div>'+
       '<div class="stat-row"><div class="stat"><b>5</b><span>影响物质（官方变更清单）</span></div><div class="stat"><b>2 <span class="tag orange" style="font-size:10.5px">示例</span></b><span>影响配方</span></div><div class="stat"><b>2 <span class="tag orange" style="font-size:10.5px">示例</span></b><span>影响 SDS</span></div></div>',
-    footer:'<button class="btn primary" onclick="closeModal()">关闭</button>'});
+    footer:'<button class="btn primary" onclick="rchImpRestore()">返回向导</button>'});
 }
 function rchImpPublish(){
   if(!$('riOk').checked){toast('请先勾选人工核对确认项','warn');return;}
