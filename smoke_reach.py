@@ -40,6 +40,8 @@ with sync_playwright() as pw:
     ok(lawnames[-1]=='ZDHC MRSL','ZDHC MRSL 本期维持现状（仍在法规库维护下）')
     page.evaluate("showPage('law:reach')");page.wait_for_timeout(400)
     ok(page.evaluate('curPage')=='law:reach','law:reach 可正常进入（沿用既有路由）')
+    wide_rows=page.evaluate("()=>['更新频率','影响功能'].map(function(label){var ds=[].slice.call(document.querySelectorAll('#pageHost .desc-list dt'));var d=ds.filter(function(x){return x.textContent.trim()===label;})[0];return d&&d.style.gridColumn;})")
+    ok(wide_rows==['1','1'],'REACH 信息栏两组宽字段均从第 1 列起独占整行，避免网格错位')
 
     print('\n=== 顶部法规主信息 ===')
     text=page.locator('#pageHost').inner_text()

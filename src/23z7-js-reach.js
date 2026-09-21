@@ -291,8 +291,8 @@ function rchRender(){
         '<dt>审核人</dt><dd>'+esc(REACH_TOP.auditor)+'</dd>'+
         '<dt>数据截止日期</dt><dd>'+esc(REACH_TOP.cutoff)+'<span class="muted">（本次导入官方来源文件日期）</span></dd>'+
         '<dt>维护责任人</dt><dd>'+esc(REACH_TOP.owner)+'</dd>'+
-        '<dt>更新频率</dt><dd style="grid-column:span 3">'+esc(REACH_TOP.cycle)+'</dd>'+
-        '<dt>影响功能</dt><dd style="grid-column:span 3">'+REACH_TOP.funcs.map(function(f){return '<span class="tag blue">'+esc(f)+'</span>';}).join(' ')+'</dd>'+
+        '<dt style="grid-column:1">更新频率</dt><dd style="grid-column:span 3">'+esc(REACH_TOP.cycle)+'</dd>'+
+        '<dt style="grid-column:1">影响功能</dt><dd style="grid-column:span 3">'+REACH_TOP.funcs.map(function(f){return '<span class="tag blue">'+esc(f)+'</span>';}).join(' ')+'</dd>'+
       '</dl>'+
       '<div class="notice info" style="margin:12px 0 0"><div class="ni">i</div><div>'+esc(REACH_TOP.note)+'</div></div>'+
       '<div class="notice grey" style="margin:10px 0 0"><div class="ni">§</div><div>'+REACH_TOP.scope+'</div></div>'+
