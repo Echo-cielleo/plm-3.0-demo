@@ -36,6 +36,10 @@ with sync_playwright() as pw:
     ok(next(x for x in comp if x['id']=='law:query')['name']=='法规统一查询','合规管理包含独立统一查询入口')
     ok(law['name']=='法规库维护','维护入口统一命名为法规库维护')
     ok(law['children']==['law:clp','law:reach','law:oel','law:trans','law:cn','law:zdhc'],'法规库维护含 6 个入口（CLP / REACH / OEL / 运输 / 国内危化品 / ZDHC）')
+    sds_src=open('src/23-js-sds.js',encoding='utf-8').read()
+    law_query_src=open('src/23y-js-law-query.js',encoding='utf-8').read()
+    ok("regPage('law:zdhc'" not in sds_src and law_query_src.count("regLawMaintenance('law:zdhc'")==1,
+       'ZDHC 仅由 23y 法规维护页注册一次（无旧 SDS 页面重复注册）')
     ext=next(x for x in comp if x['id']=='ext')
     ok(ext['name']=='外部参考数据' and ext['children']==['law:cl'],'C&L Inventory 移入「外部参考数据」独立分组')
     subst=next(x for x in comp if x['id']=='subst')

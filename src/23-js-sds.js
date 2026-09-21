@@ -3461,13 +3461,6 @@ regPage('bd:ghs',{
   title:'GHS 与受限属性',crumb:['基础数据','GHS 与受限属性'],
   render:function(){ renderGhs(); }
 });
-regPage('law:zdhc',{
-  title:'ZDHC 法规库',crumb:['合规管理','法规库','ZDHC'],
-  render:function(){
-    renderLawPage('zdhc','ZDHC 法规库',
-      'ZDHC 有害化学物质零排放基金会发布的生产限用物质清单与排放限值，是皮革/纺织行业客户验厂的强制依据。',
-      'law-zdhc');
-  }
-});
+/* law:zdhc 由 23y-js-law-query.js 的 regLawMaintenance 统一注册，避免旧分库页重复注册。 */
 /* law:rohs（RoHS · REACH 法规库，已被法库维护页取代的隐藏旧页）于 2026-09-18
    由「受限物质管理 · RoHS 限用物质」新页面接管，注册移交 23z8-js-law-misc.js */
