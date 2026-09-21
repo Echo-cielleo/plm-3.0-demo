@@ -154,8 +154,11 @@ function wzCheck(n){
     return{ok:true};
   }
   if(n===4){
-    var pend=(wz.classItems||[]).filter(function(c){return c.status==='pending';}).length;
-    if(pend>0)return{ok:false,msg:'仍有 '+pend+' 项分类结论待人工判定，请先处理'};
+    var pend=(wz.classItems||[]).filter(function(c){return c.status==='pending';});
+    var judge=pend.filter(function(c){return c.need!=='confirm';}).length;
+    var conf=pend.filter(function(c){return c.need==='confirm';}).length;
+    if(judge>0)return{ok:false,msg:'仍有 '+judge+' 项缺算式/缺输入的结论待人工判断'+(conf?'（另有 '+conf+' 项系统建议待确认）':'')+'，请先处理'};
+    if(conf>0)return{ok:false,msg:'仍有 '+conf+' 项系统建议待人工确认，可点「采纳全部系统建议」或逐条确认'};
     return{ok:true};
   }
   return{ok:true};
@@ -709,49 +712,183 @@ function wzMissCount(){
   Object.keys(wz.collect).forEach(function(c){wz.collect[c].forEach(function(i){if(i.miss)n++;});});
   return n;
 }
+/* 第 3 步辅助：证据引用（每条数据的依据来源，便于人工核对） */
+var EVID_META={
+  lab:{f:'内部检测报告',n:'JL-2026-'},
+  sup:{f:'供应商 SDS 原件',n:'SDS-'},
+  reg:{f:'本机法规库 / 组分基础数据',n:'REG-'},
+  pub:{f:'PubChem 公开数据',n:'PUB-'},
+  man:{f:'人工补充登记',n:'MAN-'}
+};
+/* 第 3 步辅助：多来源冲突示例（演示用，定义在数据层而非渲染层） */
+var CONFLICT_MOCK=[
+  {cas:'111-76-2',k:'急性毒性 LD50',a:['LD50 1480 mg/kg（大鼠经口）','sup'],b:['LD50 1200 mg/kg（大鼠经口）','pub'],
+   note:'两份来源数值不一致 → 按优先级采用供应商 SDS（1480 mg/kg），PubChem 值仅供参考，需人工复核'},
+  {cas:'79-10-7',k:'职业接触限值 OEL',a:['未提供 OEL','sup'],b:['2 ppm（建议值，非法规限值）','pub'],
+   note:'辅助来源为「建议值」而非法规限值 → 不得作为第 8 章暴露控制依据，需人工按官方来源补录'}
+];
+function wzEvidence(cas,src){
+  var srcKey=cas.replace(/[^0-9]/g,'').slice(0,4)||'0000';
+  var m=EVID_META[src]||EVID_META.pub;
+  return m.f+' · '+m.n+srcKey;
+}
+/* 第 3 步辅助：会导致危害类别算不动的数据（从组分基础数据推导，不写死） */
+function wzBlockers(){
+  var out=[];
+  wz.formula.forEach(function(f){
+    var p=COMP_CLP[f.cas]||{},h=p.haz||{};
+    if(h.acuteOral&&(p.ateState!=='known'||!(p.ateO>0)))
+      out.push({cas:f.cas,name:f.name||p.name||f.cas,k:'急性毒性 LD50 / ATE',v:'缺少可用 ATE',
+        eff:'急性毒性（经口）无法执行 ATE 加和，该项转人工判定'});
+    if(h.aquaticChronic&&p.aqState==='unknown')
+      out.push({cas:f.cas,name:f.name||p.name||f.cas,k:'水生毒性数据',v:'缺少可用 M 因子 / 急性毒性数据',
+        eff:'危害水生环境（长期）无法执行 M 因子加权，该项结论可能不完整'});
+  });
+  return out;
+}
+function wzToggleAll(){
+  var box=$('wzAllData'),btn=$('wzAllBtn');
+  if(!box)return;
+  var on=box.style.display!=='none';
+  box.style.display=on?'none':'';
+  if(btn)btn.textContent=on?'查看全部汇集数据 ▾':'收起全部汇集数据 ▴';
+}
 function renderStep3(){
   if(!wz.collected)wzCollectData();
   var total=0,miss=wzMissCount(),bySrc={lab:0,sup:0,reg:0,pub:0,man:0};
   Object.keys(wz.collect).forEach(function(c){wz.collect[c].forEach(function(i){total++;if(!i.miss)bySrc[i.src]++;});});
   var pct=total?Math.round((total-miss)/total*100):0;
+  /* 低可信度：仅由 PubChem 辅助来源提供，不能单独作为合规依据 */
+  var pubOnly=[];
+  Object.keys(wz.collect).forEach(function(c){
+    wz.collect[c].forEach(function(i){if(!i.miss&&i.src==='pub')pubOnly.push({cas:c,k:i.k,v:i.v});});
+  });
+  var missList=[];
+  Object.keys(wz.collect).forEach(function(c){
+    wz.collect[c].forEach(function(i){if(i.miss)missList.push({cas:c,k:i.k});});
+  });
+  var blockers=wzBlockers();
+  var conflicts=CONFLICT_MOCK.filter(function(x){
+    return wz.formula.some(function(f){return f.cas===x.cas;});
+  });
+  var pending=miss+pubOnly.length+conflicts.length+blockers.length;
 
-  var cards=wz.formula.map(function(f){
+  function casName(cas){
+    var f=wz.formula.filter(function(x){return x.cas===cas;})[0];
+    return (f&&f.name)||(COMP_CLP[cas]||{}).name||cas;
+  }
+  function row(cols,cls){
+    return '<tr'+(cls?' class="'+cls+'"':'')+'>'+cols.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';
+  }
+  function kpi(label,val,sub,color){
+    return '<div class="kpi"><span>'+label+'</span><b'+(color?' style="color:'+color+'"':'')+'>'+val+'</b><small>'+sub+'</small></div>';
+  }
+  /* ---------- 区块 1：缺失数据 ---------- */
+  var missHtml=missList.length
+    ? '<div class="tbl-wrap"><table class="tbl mini"><thead><tr>'
+      +'<th style="width:150px">组分</th><th style="width:170px">数据项</th><th>当前值</th>'
+      +'<th style="width:110px">状态</th><th style="width:96px">操作</th></tr></thead><tbody>'
+      +missList.map(function(m){
+        var idx=DATA_ITEMS.indexOf(m.k);
+        return row([esc(casName(m.cas))+'<br><small class="muted">CAS '+esc(m.cas)+'</small>',
+          kTerm(m.k),'<span style="color:var(--red)">未获取到数据</span>',
+          '<span class="tag orange dot-tag">待补充</span>',
+          '<button class="btn sm" onclick="fillData(\''+m.cas+'\','+idx+')">补充</button>']);
+      }).join('')
+      +'</tbody></table></div>'
+    : '<div class="notice ok" style="margin-bottom:10px"><div class="ni">✓</div><div>无缺失数据项。</div></div>';
+  /* ---------- 区块 2：仅辅助来源 ---------- */
+  var pubHtml=pubOnly.length
+    ? '<div class="tbl-wrap"><table class="tbl mini"><thead><tr>'
+      +'<th style="width:150px">组分</th><th style="width:170px">数据项</th><th>当前值</th>'
+      +'<th style="width:120px">来源类型</th><th style="width:190px">依据</th><th style="width:96px">操作</th></tr></thead><tbody>'
+      +pubOnly.map(function(p){
+        var idx=DATA_ITEMS.indexOf(p.k);
+        return row([esc(casName(p.cas)),kTerm(p.k),esc(p.v),
+          '<span class="tag grey">PubChem 辅助</span>',
+          '<span class="muted">'+esc(wzEvidence(p.cas,'pub'))+'</span>',
+          '<button class="btn sm" onclick="fillData(\''+p.cas+'\','+idx+')">核对</button>']);
+      }).join('')
+      +'</tbody></table></div>'
+      +'<div class="src-note"><span class="tag grey">提示</span>辅助来源仅可用于交叉核对，不能作为第 2 / 11 章的合规依据；存在更高优先级来源时不得采用。</div>'
+    : '<div class="notice ok" style="margin-bottom:10px"><div class="ni">✓</div><div>没有仅依赖辅助来源的数据项。</div></div>';
+  /* ---------- 区块 3：多来源冲突 ---------- */
+  var confHtml=conflicts.length
+    ? '<div class="tbl-wrap"><table class="tbl mini"><thead><tr>'
+      +'<th style="width:150px">组分</th><th style="width:170px">数据项</th><th>来源 A（采用）</th><th>来源 B（未采用）</th><th style="width:96px">操作</th></tr></thead><tbody>'
+      +conflicts.map(function(x){
+        var idx=DATA_ITEMS.indexOf(x.k);
+        return row([esc(casName(x.cas)),kTerm(x.k),
+          '<b>'+esc(x.a[0])+'</b><br><span class="tag '+SRC_META[x.a[1]].cls+'">'+SRC_META[x.a[1]].t+'</span>',
+          esc(x.b[0])+'<br><span class="tag '+SRC_META[x.b[1]].cls+'">'+SRC_META[x.b[1]].t+'</span>',
+          '<button class="btn sm" onclick="fillData(\''+x.cas+'\','+idx+')">复核</button>'])
+          +'<tr><td><small class="muted">处理口径</small></td><td colspan="4" style="color:var(--ink2)">'+esc(x.note)+'</td></tr>';
+      }).join('')
+      +'</tbody></table></div>'
+    : '<div class="notice ok" style="margin-bottom:10px"><div class="ni">✓</div><div>未发现多来源冲突。</div></div>';
+  /* ---------- 区块 4：影响分类计算 ---------- */
+  var blkHtml=blockers.length
+    ? '<div class="tbl-wrap"><table class="tbl mini"><thead><tr>'
+      +'<th style="width:150px">组分</th><th style="width:170px">缺失数据项</th><th>当前情况</th>'
+      +'<th>影响的危害类别</th><th style="width:96px">操作</th></tr></thead><tbody>'
+      +blockers.map(function(b){
+        var idx=DATA_ITEMS.indexOf(b.k);
+        return row([esc(b.name),kTerm(b.k),'<span style="color:var(--orange)">'+esc(b.v)+'</span>',
+          esc(b.eff),'<button class="btn sm" onclick="fillData(\''+b.cas+'\','+idx+')">补充</button>']);
+      }).join('')
+      +'</tbody></table></div>'
+      +'<div class="src-note"><span class="tag orange">说明</span>这类缺失不会由系统臆测填值 —— 对应危害类别在第 4 步会落到「待人工判断」。</div>'
+    : '<div class="notice ok" style="margin-bottom:10px"><div class="ni">✓</div><div>所有危害类别所需的参数均已具备，可直接进行分类计算。</div></div>';
+  /* ---------- 全部汇总数据（默认收起） ---------- */
+  var allCards=wz.formula.map(function(f){
     var items=wz.collect[f.cas]||[];
     var rows=items.map(function(it,idx){
       var meta=SRC_META[it.src];
       return '<div class="dl-row"><span class="k">'+kTerm(it.k)+'</span>'
-        +'<span class="v'+(it.miss?' miss':'')+'">'+(it.miss?'待补充':esc(it.v)+(it.ref?' <small style="color:var(--muted)">('+esc(it.ref)+')</small>':''))+'</span>'
+        +'<span class="v'+(it.miss?' miss':'')+'">'+(it.miss?'待补充':esc(it.v))+'</span>'
+        +'<span class="muted" style="font-size:11.5px">'+esc(wzEvidence(f.cas,it.src))+'</span>'
         +(it.miss
           ? '<button class="btn sm" onclick="fillData(\''+f.cas+'\','+idx+')">补充</button>'
           : '<span class="tag '+meta.cls+'">'+meta.t+'</span><button class="btn-link" style="margin-left:2px" onclick="fillData(\''+f.cas+'\','+idx+')">修改</button>')
         +'</div>';
     }).join('');
-    var hasPub=items.some(function(i){return i.src==='pub'&&!i.miss;});
     var mn=items.filter(function(i){return i.miss;}).length;
     return '<div class="comp-card"><div class="comp-hd"><b>'+esc(f.name)+'</b><span class="cas">CAS '+esc(f.cas)+'</span>'
       +(f.secret?'<span class="tag purple">保密组分</span>':'')
       +'<span class="right"><button class="btn sm '+(mn?'warn':'')+'" onclick="fillBatch(\''+f.cas+'\')">▤ 批量补充'+(mn?'（'+mn+'）':'')+'</button>'
       +(mn?'':'<span class="tag green dot-tag">数据齐套</span>')+'</span></div>'
-      +'<div class="dl">'+rows+'</div>'
-      +(hasPub?'<div class="src-note"><span class="tag grey">PubChem</span>辅助来源，不可作为最终合规依据</div>':'')
-      +'</div>';
+      +'<div class="dl">'+rows+'</div></div>';
   }).join('');
 
-  wzGuide('<div class="notice info"><div class="ni">i</div><div><b>第 3 步 · 系统汇集受控数据</b>系统按数据优先级取数：<b style="display:inline">实测报告 &gt; 供应商 SDS &gt; 法规库数据 &gt; PubChem 辅助资料</b>（前两类通过 CAS 号自动查询汇集）。高优先级来源存在时不会被低优先级覆盖；缺失项不会由系统编造。<br><span style="color:var(--ink2)">人工补充规则：哪些项可填「无数据」、哪些必须实测，点击「补充 / 修改」时展示填写指引；名词带虚线下划线者可悬停查看解释。</span></div></div>');
+  wzGuide('<div class="notice info"><div class="ni">i</div><div><b>第 3 步 · 数据准备检查</b>'
+    +'系统按数据优先级取数：<b style="display:inline">实测报告 &gt; 供应商 SDS &gt; 法规库数据 &gt; PubChem 辅助资料</b>。'
+    +'高优先级来源存在时不会被低优先级静默覆盖；缺失数据不会由系统编造。'
+    +'<br>此处<b style="display:inline">默认只显示需要处理的项目</b>（缺失 / 仅辅助来源 / 多来源冲突 / 会导致危害类别算不动），完整数据在下方「查看全部汇集数据」中展开。</div></div>');
+
   $('wzBody').innerHTML=
     '<div class="kpi-row">'
-      +'<div class="kpi"><span>组分数量</span><b>'+wz.formula.length+'</b><small>来自冻结配方快照</small></div>'
-      +'<div class="kpi"><span>数据项完整度</span><b style="color:'+(miss?'var(--orange)':'var(--green)')+'">'+pct+'%</b><div class="bar '+(miss?'':'green')+'"><i style="width:'+pct+'%"></i></div></div>'
-      +'<div class="kpi"><span>实测/供应商来源</span><b style="color:var(--green)">'+(bySrc.lab+bySrc.sup+bySrc.man)+'</b><small>可作为合规依据</small></div>'
-      +'<div class="kpi"><span>PubChem 辅助项</span><b>'+bySrc.pub+'</b><small>仅供参考核对</small></div>'
-      +'<div class="kpi"><span>待补充</span><b style="color:'+(miss?'var(--red)':'var(--green)')+'">'+miss+'</b><small>'+(miss?'需人工补充后继续':'已全部补齐')+'</small></div>'
+      +kpi('配方组分数量',wz.formula.length,'来自冻结配方快照')
+      +kpi('已自动获取数据项',total-miss,'共 '+total+' 项')
+      +kpi('待补充项',miss,miss?'需人工补充':'已全部补齐',miss?'var(--orange)':'var(--green)')
+      +kpi('待确认 / 低可信度项',pubOnly.length+conflicts.length,'仅辅助来源 '+pubOnly.length+' · 来源冲突 '+conflicts.length,(pubOnly.length+conflicts.length)?'var(--orange)':'')
+      +kpi('是否满足分类计算条件',blockers.length?'不满足':'满足',blockers.length?(blockers.length+' 项参数缺失'):'所需参数齐全',blockers.length?'var(--red)':'var(--green)')
     +'</div>'
-    +'<div class="card"><div class="card-hd"><h3>组分数据汇集结果</h3><span class="sub">按组分维度展示，标签颜色代表数据来源优先级</span>'
+    +'<div class="card"><div class="card-hd"><h3>数据准备检查 · 异常优先</h3>'
+      +'<span class="sub">默认只展示需要处理的项目，共 '+pending+' 项</span>'
       +'<div class="right">'
         +'<button class="btn sm" onclick="supSdsImport()">⬆ 导入供应商 SDS</button>'
         +'<button class="btn sm" onclick="reCollect()">重新汇集</button>'
       +'</div></div>'
-      +'<div class="card-bd"><div class="comp-grid">'+cards+'</div></div></div>';
+      +'<div class="card-bd">'
+        +'<div class="sub-hd">① 缺失数据<span class="tag '+(missList.length?'red':'green')+'">'+missList.length+' 项</span></div>'+missHtml
+        +'<div class="sub-hd">② 仅辅助来源的数据<span class="tag '+(pubOnly.length?'orange':'green')+'">'+pubOnly.length+' 项</span></div>'+pubHtml
+        +'<div class="sub-hd">③ 多来源冲突<span class="tag '+(conflicts.length?'orange':'green')+'">'+conflicts.length+' 项</span></div>'+confHtml
+        +'<div class="sub-hd">④ 会导致危害类别无法计算的数据<span class="tag '+(blockers.length?'red':'green')+'">'+blockers.length+' 项</span></div>'+blkHtml
+      +'</div></div>'
+    +'<div class="card"><div class="card-hd"><h3>全部汇集数据</h3>'
+      +'<span class="sub">按组分维度展示，标签颜色代表数据来源优先级</span>'
+      +'<div class="right"><button class="btn sm" id="wzAllBtn" onclick="wzToggleAll()">查看全部汇集数据 ▾</button></div></div>'
+      +'<div class="card-bd"><div id="wzAllData" style="display:none"><div class="comp-grid">'+allCards+'</div></div></div></div>';
 }
 function reCollect(){
   wz.collected=false;wz.collect={};
@@ -1422,39 +1559,39 @@ function buildClassItems(){
   wz.classPack=run.pack;
   return [
     /* B6：2024/2865 新增危害类别，结论须在 2.3 / 11.2 / 12.6 三处声明 */
-    {id:'ed',name:'内分泌干扰（ED）',result:'不分类',code:'无 ED 组分，或含量低于 0.1%',status:'auto',
-      rule:'CLP (EU) 2024/2865 新增危害类别 · 通用浓度限值 Cat.1/Cat.2 ≥ 0.1%',
-      input:'甲醛 0.35%（未列入 ED 清单）；丙烯酸、乙二醇单丁醚、聚氨酯预聚体均无 ED 认定',
-      formula:'Σ(ED Cat.1/2 组分) = 0% ＜ 0.1% → 不分类；结论仍须在 2.3 / 11.2 / 12.6 三处声明',
-      src:[['reg','ECHA ED 评估清单'],['reg','CLP Annex VI（2024/2865）']],
+    {id:'ed',name:'内分泌干扰（ED）',result:'—',code:'待人工判断',status:'pending',need:'judge',
+      rule:'CLP (EU) 2024/2865 新增危害类别 · Annex I Part 5 · 判定方法 CLP-M-ED-PBT 尚未由研发实现',
+      input:'组分基础数据未维护 ED 认定字段，本次汇集结果中也没有可引用的 ED 评估清单数据 —— 系统缺少判定输入',
+      formula:'判定方法未上线且无输入数据 → 不计算；不得默认输出「不分类」，须由法规人员核对 ED 评估清单后人工给出结论',
+      src:[['reg','CLP Annex I Part 5（2024/2865）']],
       opts:[
-        {o:'ED 类别 1（已知/推定内分泌干扰）',d:'Σ(ED Cat.1 组分) ≥ 0.1% → 判 ED Cat.1，需 EUH380 声明',hit:'当前无 ED Cat.1 组分'},
-        {o:'ED 类别 2（疑似内分泌干扰）',d:'Σ(ED Cat.2 组分) ≥ 0.1% → 判 ED Cat.2，需 EUH381 声明',hit:'当前无 ED Cat.2 组分'},
-        {o:'不分类（无需分类）',d:'无 ED 组分超限；但 2.3 / 11.2 / 12.6 的声明不可省略',hit:'✓ 系统建议'}]},
-    {id:'pmt',name:'PMT / vPvM（持久·迁移·毒性）',result:'不分类',code:'无 PMT / vPvM 组分',status:'auto',
+        {o:'ED 类别 1（已知/推定内分泌干扰）',d:'Σ(ED Cat.1 组分) ≥ 0.1% → 判 ED Cat.1，需 EUH380 声明',hit:'需人工核对 ED 评估清单'},
+        {o:'ED 类别 2（疑似内分泌干扰）',d:'Σ(ED Cat.2 组分) ≥ 0.1% → 判 ED Cat.2，需 EUH381 声明',hit:'需人工核对 ED 评估清单'},
+        {o:'不分类（无需分类）',d:'人工核对后确认无 ED 组分超限；2.3 / 11.2 / 12.6 的声明仍不可省略',hit:'需人工核对后再确认'}]},
+    {id:'pmt',name:'PMT / vPvM（持久·迁移·毒性）',result:'—',code:'待人工判断',status:'pending',need:'judge',
       rule:'CLP (EU) 2024/2865 新增危害类别 · 通用浓度限值 ≥ 0.1%',
-      input:'聚氨酯预聚体 38.65%：聚合物，无 PBT/vPvB 或 PMT/vPvM 认定；其余组分均无持久性认定',
-      formula:'Σ(PMT/vPvM 组分) = 0% ＜ 0.1% → 不分类；聚合物需另评估游离单体残留',
+      input:'组分基础数据未维护 P / B / T / M 判定要素，本次汇集结果中无可引用的持久性认定数据 —— 系统缺少判定输入',
+      formula:'判定方法未上线且无输入数据 → 不计算；需人工按 Annex XIII / Annex I Part 5 要素评估（含聚合物游离单体残留）后给出结论',
       src:[['reg','CLP Annex XIII 判据'],['reg','CLP Annex VI（2024/2865）']],
       opts:[
-        {o:'PMT / vPvM 类别 1',d:'含 PMT 或 vPvM 组分 ≥ 0.1% → 判 PMT/vPvM，需 EUH450/EUH451 声明',hit:'当前无相关认定组分'},
-        {o:'不分类（无需分类）',d:'无 PMT / vPvM 组分超限',hit:'✓ 系统建议'}]},
+        {o:'PMT / vPvM 类别 1',d:'含 PMT 或 vPvM 组分 ≥ 0.1% → 判 PMT/vPvM，需 EUH450/EUH451 声明',hit:'需人工评估 Annex XIII 要素'},
+        {o:'不分类（无需分类）',d:'人工评估后确认无符合 PMT / vPvM 要素的组分',hit:'需人工评估后再确认'}]},
     byId.acuteOral,
     byId.skin,
     byId.sens,
     byId.eye,
-    {id:'stot',name:'特异性靶器官毒性（一次接触）',result:'类别 3（呼吸道刺激）',code:'H335 可能引起呼吸道刺激',status:'auto',
-      rule:'CLP 附件 I 3.8.3.4.5 · 通用浓度限值 20%',
+    {id:'stot',name:'特异性靶器官毒性（一次接触）',result:'类别 3（呼吸道刺激）',code:'H335 可能引起呼吸道刺激',status:'pending',need:'confirm',
+      rule:'CLP 附件 I 3.8.3.4.5 · 通用浓度限值 20% · STOT 加和方法尚未接入规则引擎，以下为按从严实践给出的建议值',
       input:'甲醛 0.35%（STOT SE 3）、丙烯酸 2.50%（STOT SE 3）、乙二醇单丁醚 8.50%（STOT SE 3）',
-      formula:'Σ(Ci STOT SE 3) = 11.35% ≥ 20%? 否 → 系统按成员国从严实践保留 Cat.3 建议，需人工复核',
+      formula:'Σ(Ci STOT SE 3) = 11.35% ≥ 20%? 否 → 未达 Cat.3 阈值；系统按成员国从严实践保留 Cat.3 建议值，须人工确认或改判',
       src:[['reg','CLP Annex VI'],['pub','PubChem 辅助核对']],
       opts:[
-        {o:'类别 3（呼吸道刺激）',d:'Σ(STOT SE 3 组分) ≥ 20% → 判 Cat.3',hit:'当前 11.35% ＜ 20%，系统按从严实践保留建议'},
+        {o:'类别 3（呼吸道刺激）',d:'Σ(STOT SE 3 组分) ≥ 20% → 判 Cat.3',hit:'当前 11.35% ＜ 20%，仅为从严实践建议，需人工确认'},
         {o:'不分类（无需分类）',d:'Σ(STOT SE 3 组分) ＜ 20% 且无刺激性证据',hit:'未达限值，可据实改判'}]},
-    {id:'carc',name:'致癌性',result:'类别 1B',code:'H350 可能致癌',status:'auto',
-      rule:'CLP 附件 I 3.6.3.1 · 通用浓度限值 Cat.1B ≥ 0.1%',
+    {id:'carc',name:'致癌性',result:'类别 1B',code:'H350 可能致癌',status:'pending',need:'confirm',
+      rule:'CLP 附件 I 3.6.3.1 · 通用浓度限值 Cat.1B ≥ 0.1% · 致癌性加和方法尚未接入规则引擎，以下为依据统一分类给出的建议值',
       input:'甲醛 0.35%（Carc. 1B，CLP Annex VI Index 605-001-00-5）',
-      formula:'C(甲醛) = 0.35% ≥ 0.1% → 混合物判定为 Carc. 1B',
+      formula:'C(甲醛) = 0.35% ≥ 0.1% → 建议判定为 Carc. 1B；因加和方法未接入引擎，须人工确认后方可写入 SDS',
       src:[['reg','CLP Annex VI 统一分类'],['reg','SVHC 候选清单']],
       opts:[
         {o:'类别 1A / 1B',d:'Σ(致癌 Cat.1A/1B 组分) ≥ 0.1% → 判 Cat.1（按最强组分）',hit:'甲醛 0.35% ≥ 0.1% ✓ 系统建议'},
@@ -1568,8 +1705,10 @@ function renderStep4(){
   var lb=labelParts();
 
   var evs=items.map(function(c,i){
-    var st=c.status==='pending'?'<span class="tag orange dot-tag">待人工判定</span>'
-      :(c.status==='manual'?'<span class="tag blue dot-tag">已人工调整</span>':'<span class="tag green dot-tag">系统自动判定</span>');
+    var st=c.status==='pending'
+      ?(c.need==='confirm'?'<span class="tag blue dot-tag">待人工确认</span>':'<span class="tag orange dot-tag">待人工判断</span>')
+      :(c.status==='manual'?'<span class="tag blue dot-tag">已人工调整</span>'
+        :(c.status==='confirmed'?'<span class="tag green dot-tag">已采纳系统建议</span>':'<span class="tag green dot-tag">系统自动判定</span>'));
     var srcs=c.src.map(function(s){return '<span class="tag '+SRC_META[s[0]].cls+'">'+s[1]+'</span>';}).join(' ');
     return '<div class="ev-card" id="evc'+i+'"><div class="ev-hd">'
       +'<b>'+c.name+'</b>'
@@ -1577,8 +1716,9 @@ function renderStep4(){
       +'<span style="font-size:12.3px;color:var(--muted)">'+esc(c.code)+'</span>'
       +'<span class="right">'+st+(c.status==='pending'
         ?'<button class="btn sm warn" onclick="adjClass('+i+')">⚠ 人工判定</button>'
-        :'<button class="btn sm" onclick="adjClass('+i+')">手动调整</button>')+'</span></div>'
-      +'<div class="ev-bd">'
+        :'<button class="btn sm" onclick="adjClass('+i+')">手动调整</button>')
+        +'<button class="btn sm" id="evbtn'+i+'" onclick="evToggle('+i+')">查看计算依据 ▾</button></span></div>'
+      +'<div class="ev-bd" id="evbd'+i+'" style="display:none">'
         +(c.packId?'<div class="ev-f"><span class="k">规则包调用</span><span class="v"><b class="mono">'+esc(c.packId)+'</b><br><span class="tag blue">'+esc(c.ruleIds.join(' / '))+'</span> <span class="tag grey">'+esc(c.method)+'</span></span></div>':'')
         +'<div class="ev-f"><span class="k">计算规则版本</span><span class="v">'+c.rule+'</span></div>'
         +'<div class="ev-f"><span class="k">数据来源</span><span class="v">'+srcs+'</span></div>'
@@ -1605,9 +1745,12 @@ function renderStep4(){
     +'<div class="concl" style="margin-bottom:16px">'
       +'<div class="ghs-box"><h4>混合物 '+term('GHS')+' 危险分类结论</h4><div class="hz-list">'
         +items.filter(function(c){return c.status!=='pending';}).map(function(c){
-          return '<div class="hz-item"><span class="code">'+c.code.split(' ')[0]+'</span><span>'+esc(c.name)+' · <b>'+esc(c.result)+'</b></span><span style="margin-left:auto" class="tag '+(c.status==='manual'?'blue':'green')+'">'+(c.status==='manual'?'人工':'自动')+'</span></div>';
+          return '<div class="hz-item"><span class="code">'+c.code.split(' ')[0]+'</span><span>'+esc(c.name)+' · <b>'+esc(c.result)+'</b></span><span style="margin-left:auto" class="tag '+(c.status==='manual'?'blue':'green')+'">'+(c.status==='manual'?'人工改判':(c.status==='confirmed'?'人工采纳':'自动'))+'</span></div>';
         }).join('')
-        +pend.map(function(c){return '<div class="hz-item" style="background:var(--orange-bg);border-color:var(--orange-b)"><span class="code" style="color:var(--orange)">?</span><span>'+esc(c.name)+'</span><span style="margin-left:auto" class="tag orange dot-tag">待人工判定</span></div>';}).join('')
+        +pend.map(function(c){var conf=c.need==='confirm';
+          return '<div class="hz-item" style="background:'+(conf?'var(--blue-bg)':'var(--orange-bg)')+';border-color:'+(conf?'var(--blue-b)':'var(--orange-b)')+'">'
+            +'<span class="code" style="color:'+(conf?'var(--blue)':'var(--orange)')+'">?</span><span>'+esc(c.name)+'</span>'
+            +'<span style="margin-left:auto" class="tag '+(conf?'blue':'orange')+' dot-tag">'+(conf?'待人工确认':'待人工判断')+'</span></div>';}).join('')
       +'</div></div>'
       +'<div class="ghs-box"><h4>标签要素<span class="tag green" style="margin-left:7px">由分类结论自动推导</span></h4>'
         +'<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px"><div><div style="font-size:11.5px;color:var(--muted);margin-bottom:5px">'+term('警示词')+'</div>'
@@ -1630,8 +1773,13 @@ function renderStep4(){
     +euhCard()
     +'<div class="card"><div class="card-hd"><h3>分类证据追溯</h3>'
       +'<span class="sub">共 '+items.length+' 条分类结论 · 逐条可审计</span>'
+      +(pend.filter(function(c){return c.need==='confirm';}).length
+        ? '<button class="btn sm primary" onclick="adoptAllSug()" title="仅采纳有建议值的待确认项；缺算式/缺输入的结论仍须逐条判断">✓ 采纳全部系统建议</button> '
+        : '')
       +(pend.length
-        ? '<span class="tag orange dot-tag" style="cursor:pointer" title="由 EHS / 法规人员判定后方可生成草案 · 点击跳转到第一个待判定项" onclick="jumpPend()">'+pend.length+' 项待人工判定 ›</span>'
+        ? '<span class="tag orange dot-tag" style="cursor:pointer" title="由 EHS / 法规人员判定后方可生成草案 · 点击跳转到第一个待判定项" onclick="jumpPend()">'
+            +pend.length+' 项待人工处理（'+pend.filter(function(c){return c.need==='confirm';}).length+' 确认 / '
+            +pend.filter(function(c){return c.need!=='confirm';}).length+' 判断）›</span>'
         : '<span class="tag green dot-tag">全部已判定</span>')
       +'</div>'
       +'<div class="card-bd">'+evs+'</div></div>';
@@ -1648,7 +1796,32 @@ function jumpPend(){
   el.style.outlineOffset='3px';
   setTimeout(function(){el.style.outline='';el.style.outlineOffset='';},1800);
 }
+/* 展开/收起某条分类结论的计算依据（规则编号、方法编号属审计信息，默认收起） */
+function evToggle(i){
+  var bd=$('evbd'+i),btn=$('evbtn'+i);
+  if(!bd)return;
+  var on=bd.style.display!=='none';
+  bd.style.display=on?'none':'';
+  if(btn)btn.textContent=on?'查看计算依据 ▾':'收起计算依据 ▴';
+}
 var CLASS_OPTS=['类别 1','类别 1A','类别 1B','类别 2','类别 2A','类别 3','类别 4','不分类（无需分类）'];
+/* 一键采纳全部「系统建议 · 待人工确认」项：仅用于有建议值的条款；
+   need==='judge'（缺算式或缺输入）的项没有建议值，必须逐条人工判断，不在此列。
+   采纳后状态流转为 confirmed —— 既区别于「系统自动判定 auto」，也区别于「已改判 manual」，
+   审计时可还原「人是否真的看过这条建议」。 */
+function adoptAllSug(){
+  var n=0,cnt=0;
+  (wz.classItems||[]).forEach(function(c){
+    if(c.status!=='pending'||c.need!=='confirm')return;
+    if(!c.result||c.result==='—')return;
+    c.status='confirmed';c.note='已采纳系统建议，未改判';c.noteAt=nowStr();
+    if(c.code&&c.code.indexOf('H')===0)cnt++;
+    n++;
+  });
+  if(!n){toast('当前没有可采纳的系统建议项','warn');return;}
+  renderStep4();wzUpdateFoot();
+  toast('已采纳 '+n+' 项系统建议，'+cnt+' 条 H 短语写入标签要素','ok');
+}
 function adjClass(i){
   var c=wz.classItems[i];
   var opts=c.opts||CLASS_OPTS.map(function(o){return {o:o,d:'参见 '+c.rule,hit:''};});

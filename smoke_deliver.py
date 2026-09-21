@@ -54,6 +54,14 @@ with sync_playwright() as pw:
     # ============ 步骤 4：G1 标签元素 ============
     print("\n=== G1 · 标签要素由分类结论自动推导 ===")
     ok("由分类结论自动推导" in pg.inner_text("#wzBody"), "标签要素框标注自动推导")
+    # 致癌性已降级为「系统建议·待人工确认」：未确认前不得进标签要素（不得冒充自动结论）
+    lb0 = pg.evaluate("()=>labelParts()")
+    ok("GHS08（健康危害）" not in lb0["pics"] and lb0["sig"] == "warning",
+       "致癌性未确认前 H350 不进标签要素，信号词仍为 warning（不冒充自动结论）")
+    pg.evaluate("""()=>{wz.classItems.forEach(function(c){
+        if(c.id==='carc'&&c.need==='confirm'){c.status='confirmed';c.note='已采纳系统建议，未改判';c.noteAt=nowStr();}
+      });renderStep4();}""")
+    pg.wait_for_timeout(600)
     lb = pg.evaluate("()=>labelParts()")
     print("     象形图：", lb["pics"], "信号词：", lb["sig"], "P 语句", len(lb["ps"]), "条")
     ok("GHS07（感叹号）" in lb["pics"], "H315/H317/H319 推出 GHS07 感叹号")
@@ -235,14 +243,29 @@ with sync_playwright() as pw:
        "EUH 标题带悬停术语，且卡片内说明框已移除")
 
     print("\n=== UI 归一 · 待判定提示挪到小标题旁 ===")
-    pend_n = pg.evaluate("()=>wz.classItems.filter(function(c){return c.status==='pending';}).length")
-    ok(pend_n == 2, "当前有 %d 项待人工判定" % pend_n)
+    st = pg.evaluate("""()=>({
+        pend:wz.classItems.filter(function(c){return c.status==='pending';}).length,
+        judge:wz.classItems.filter(function(c){return c.status==='pending'&&c.need!=='confirm';}).length,
+        conf:wz.classItems.filter(function(c){return c.status==='pending'&&c.need==='confirm';}).length,
+        badJudge:wz.classItems.filter(function(c){return c.status==='pending'&&c.need!=='confirm'&&c.result&&c.result!=='—';}).length,
+        badConf:wz.classItems.filter(function(c){return c.status==='pending'&&c.need==='confirm'
+                  &&(!c.result||c.result==='—'||c.code.indexOf('H')!==0);}).length})""")
+    print("     待处理 %d 项（判断 %d / 确认 %d）" % (st['pend'], st['judge'], st['conf']))
+    ok(st['badJudge'] == 0, "待人工判断项不预置结论（系统不得替用户拍板）")
+    ok(st['badConf'] == 0, "待人工确认项必须同时给出建议值与 H 短语")
+    want = "%d 项待人工处理（%d 确认 / %d 判断）" % (st['pend'], st['conf'], st['judge'])
     ok(pg.evaluate("""()=>{
         var h=[].slice.call(document.querySelectorAll('#wzBody h3'));
         for(var i=0;i<h.length;i++){if(h[i].textContent.indexOf('分类证据追溯')>=0){
-            return h[i].parentNode.textContent.indexOf('项待人工判定')>=0;}}
+            return h[i].parentNode.textContent.indexOf(WANT)>=0;}}
+        return false;}""".replace("WANT", repr(want))),
+       "标题旁标签与实际口径一致：%s" % want)
+    ok(pg.evaluate("""()=>{
+        var h=[].slice.call(document.querySelectorAll('#wzBody h3'));
+        for(var i=0;i<h.length;i++){if(h[i].textContent.indexOf('分类证据追溯')>=0){
+            return /采纳全部系统建议/.test(h[i].parentNode.textContent);}}
         return false;}"""),
-       "「N 项待人工判定」标签在「分类证据追溯」标题旁")
+       "存在待确认项时提供「采纳全部系统建议」入口")
     ok(pg.evaluate("()=>!!document.getElementById('evc0')"), "证据卡片带 id（供跳转高亮）")
     pg.evaluate("jumpPend()"); pg.wait_for_timeout(600)
     ok(pg.evaluate("""()=>{
@@ -254,7 +277,7 @@ with sync_playwright() as pw:
     pg.evaluate("wzGo(2)"); pg.wait_for_timeout(700)
     ok("第 2 步 · 输入配方" in pg.inner_text("#wzGuide"), "第 2 步说明移至导航下")
     pg.evaluate("wzGo(3)"); pg.wait_for_timeout(700)
-    ok("第 3 步 · 系统汇集受控数据" in pg.inner_text("#wzGuide"), "第 3 步说明移至导航下")
+    ok("第 3 步 · 数据准备检查" in pg.inner_text("#wzGuide"), "第 3 步说明移至导航下")
     pg.evaluate("setWzView('edit')"); pg.wait_for_timeout(600)
     pg.evaluate("wzGo(5)"); pg.wait_for_timeout(700)
     ok("第 5 步 · 生成 SDS 草案" in pg.inner_text("#wzGuide"), "第 5 步说明移至导航下")

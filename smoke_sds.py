@@ -83,6 +83,26 @@ with sync_playwright() as p:
         kw = {3: '数据项完整度', 4: '分类建议', 5: '化学品及企业标识', 6: '审核与发布操作'}[s]
         print('  步骤 %d 长度 %d 含"%s":%s' % (s, len(h), kw, kw in h))
         if s == 4:
+            # ---- 本轮新增：三态口径（原则 7/8：不得把写死结论伪装成自动计算）----
+            tri = page.evaluate("""() => {
+              var m={}; wz.classItems.forEach(function(c){ m[c.id]={s:c.status,n:c.need||'',r:c.result}; });
+              return {m:m, ok4:wzCheck(4).ok,
+                      conf:wz.classItems.filter(function(c){return c.status==='pending'&&c.need==='confirm';}).length,
+                      judge:wz.classItems.filter(function(c){return c.status==='pending'&&c.need!=='confirm';}).length};
+            }""")
+            auto = ['acuteOral', 'skin', 'sens', 'eye', 'aqua']
+            bad = [k for k in auto if tri['m'][k]['s'] == 'pending']
+            if bad:
+                errors.append('[结论诚实性] 规则引擎可算的类别被置为待判定：%s' % ' / '.join(bad))
+            for k in ['ed', 'pmt', 'resp', 'repr']:
+                if tri['m'][k]['s'] != 'pending' or tri['m'][k]['n'] == 'confirm':
+                    errors.append('[结论诚实性] %s 应标「待人工判断」，实际 %s / %s' % (k, tri['m'][k]['s'], tri['m'][k]['n']))
+            for k in ['stot', 'carc']:
+                if tri['m'][k]['s'] != 'pending' or tri['m'][k]['n'] != 'confirm':
+                    errors.append('[结论诚实性] %s 应标「系统建议·待人工确认」，实际 %s / %s' % (k, tri['m'][k]['s'], tri['m'][k]['n']))
+            print('  三态：引擎自动 %d 项 / 待人工确认 %d 项 / 待人工判断 %d 项' % (len(auto), tri['conf'], tri['judge']))
+            if tri['ok4']:
+                errors.append('[阻断] 存在待判定项时 wzCheck(4) 仍放行')
             run = page.evaluate("""() => {
               var live=clpEvaluateMixture(wz.formula),items={};
               live.items.forEach(x=>items[x.id]={result:x.result,method:x.method,rules:x.ruleIds,formula:x.formula});
@@ -106,14 +126,48 @@ with sync_playwright() as p:
             if run['items']['skin']['result'] != '类别 2' or run['items']['sens']['result'] != '类别 1' \
                     or run['items']['eye']['result'] != '类别 2':
                 errors.append('[规则包] 示例配方的动态分类结果不正确')
-            if not all(x in run['body'] for x in ['本次调用的 CLP 规则包', 'CLP-R-0001', 'CLP-R-0002',
+            # 规则编号 / 方法编号属审计信息：默认必须收起，展开后才可见
+            if 'CLP-R-0001' in run['body']:
+                errors.append('[规则包] 规则编号/方法编号未默认收起，占用了主界面')
+            exp = page.evaluate("""() => {
+              for(var i=0;i<wz.classItems.length;i++) evToggle(i);
+              return {body:$('wzBody').innerText, btn:$('evbtn0')?$('evbtn0').textContent:''};
+            }""")
+            if '计算依据' not in exp['btn']:
+                errors.append('[规则包] 缺少「查看计算依据」展开入口')
+            if not all(x in exp['body'] for x in ['本次调用的 CLP 规则包', 'CLP-R-0001', 'CLP-R-0002',
                                                   'CLP-M-ATE-SUM', 'CLP-M-GCL-SUM', 'CLP-M-SCL', 'CLP-M-MFACTOR']):
-                errors.append('[规则包] SDS 第 4 步未展示规则包、规则编号与方法代码')
+                errors.append('[规则包] 展开「查看计算依据」后仍未展示规则包、规则编号与方法代码')
+            print('  审计信息默认收起：%s / 展开后可见：%s'
+                  % ('CLP-R-0001' not in run['body'], all(x in exp['body'] for x in ['CLP-R-0001', 'CLP-M-ATE-SUM'])))
             if run['frozen'] == run['next'] or run['frozen'] != run['pack']['id']:
                 errors.append('[规则包] SDS 未保留生成时的规则包版本快照')
             if not run['labels']['hCodes'] or not run['labels']['pCodes']:
                 errors.append('[规则包] 规则包没有返回 H 码与 P 码候选')
         page.screenshot(path=str(SS / ('_ss_sds_step%d.png' % s)))
+    # ---- 本轮新增：一键采纳系统建议 → H 码落到标签要素；缺输入的项仍阻断 ----
+    print('\n--- 采纳全部系统建议 / 阻断放行 ---')
+    page.evaluate('wzGo(4)'); page.wait_for_timeout(250)
+    before = page.evaluate("() => wz.classItems.filter(function(c){return c.status==='pending'&&c.need==='confirm';}).length")
+    page.evaluate('adoptAllSug()'); page.wait_for_timeout(250)
+    aft = page.evaluate("""() => ({
+      conf: wz.classItems.filter(function(c){return c.status==='pending'&&c.need==='confirm';}).length,
+      adopted: wz.classItems.filter(function(c){return c.status==='confirmed';}).length,
+      judge: wz.classItems.filter(function(c){return c.status==='pending'&&c.need!=='confirm';}).length,
+      manual: wz.classItems.filter(function(c){return c.status==='manual';}).length,
+      h: hCodesMix(), ok4: wzCheck(4).ok, nextDisabled: $('wzNext').disabled
+    })""")
+    print('  待确认 %d → %d（confirmed=%d / manual=%d）' % (before, aft['conf'], aft['adopted'], aft['manual']))
+    if aft['conf'] != 0 or aft['adopted'] == 0:
+        errors.append('[采纳] 「采纳全部系统建议」未把待确认项流转为已确认')
+    if aft['manual'] != 0:
+        errors.append('[采纳] 采纳不应被记为人工改判（manual=%d）' % aft['manual'])
+    if 'H350' not in ' '.join(aft['h']):
+        errors.append('[采纳] 采纳后致癌性结论仍未进入标签要素：%s' % ' / '.join(aft['h']))
+    if aft['ok4'] or not aft['nextDisabled']:
+        errors.append('[阻断] 仍有 %d 项待人工判断，却已放行进入第 5 步' % aft['judge'])
+    print('  仍有待人工判断 %d 项 → 第 5 步阻断：%s' % (aft['judge'], aft['nextDisabled']))
+
     page.evaluate("() => { wz.submitted=true; wz.published=true; wz.publishedAt=nowStr(); renderStep6(); }")
     page.wait_for_timeout(250)
     print('  已发布状态: %s' % ('已正式发布' in page.locator('#pageHost').inner_html()))
