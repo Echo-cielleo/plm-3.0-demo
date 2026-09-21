@@ -71,6 +71,7 @@ function wzInitState(){
     collect:{},        /* cas -> {items:[{k,v,src,miss}]} */
     classAdjust:{},    /* 分类人工调整记录 */
     classItems:null,
+    classPack:null,    /* 生成分类结论时冻结的 CLP 规则包版本快照 */
     draftEdits:{},     /* 章节临时编辑 */
     draftAt:'',
     view:'edit',       /* 步骤 5 视图：edit 编制态 / deliver 交付预览 */
@@ -433,7 +434,7 @@ function wzLoadMaterial(code){
   wz.formType=pure?'pure':'mix';
   /* R8 产品决策：不再带出配方，仅保留物质形态判定 */
   wz.formula=[];
-  wz.frozen=false;wz.collected=false;wz.collect={};wz.classItems=null;wz.draftAt='';
+  wz.frozen=false;wz.collected=false;wz.collect={};wz.classItems=null;wz.classPack=null;wz.draftAt='';
   closeModal();renderStep1();wzUpdateFoot();
   toast('已关联物料：'+r.name+'（配方请在第 2 步手动录入）','ok');
 }
@@ -615,7 +616,7 @@ function fmExpConfirm(eid){
       wz.formula=rec.rows.map(function(r){
         return {cas:r.cas,name:r.name,conc:r.pct,secret:false,chk:false};   /* chk:false = 待核对 */
       });
-      wz.frozen=false;wz.collected=false;wz.collect={};wz.classItems=null;wz.draftAt='';
+      wz.frozen=false;wz.collected=false;wz.collect={};wz.classItems=null;wz.classPack=null;wz.draftAt='';
       renderStep2();wzUpdateFoot();
       toast('已引入 '+rec.rows.length+' 个组分，请逐行核对后冻结','ok');
     },'确认引入');
@@ -666,7 +667,7 @@ function fmFreeze(){
 }
 function fmUnfreeze(){
   sdsConfirm('解除配方冻结','解除冻结后，<b>后面步骤已维护内容全部失效</b>——已汇集的受控数据、分类结论与 SDS 草案均需重新生成。',function(){
-    wz.frozen=false;wz.collected=false;wz.collect={};wz.classItems=null;wz.draftAt='';
+    wz.frozen=false;wz.collected=false;wz.collect={};wz.classItems=null;wz.classPack=null;wz.draftAt='';
     renderStep2();wzUpdateFoot();toast('已解除冻结，后面步骤已维护内容全部失效','warn');
   },'解除冻结',true);
 }
@@ -941,35 +942,41 @@ var COMP_CLP={
   '50-00-0':{name:'甲醛',
     uni:'Carc. 1B / Muta. 2 / Acute Tox. 3 / Skin Corr. 1B / Skin Sens. 1',
     scl:'STOT SE 3 ≥ 5%｜Skin Corr. 1B ≥ 25%｜Eye Dam. 1 ≥ 25%｜Skin Sens. 1 ≥ 0.2%',
+    haz:{acuteOral:true,skinCorr:'1B',eyeDamage:'1',skinSens:{cat:'1',scl:0.2},aquaticChronic:'2'},
     mM:0,mC:0,mSrc:'',lc50:'',noec:'',
     ateO:100,ateD:300,ateI:3,ate:'经口 100 mg/kg｜经皮 300 mg/kg｜吸入 3 mg/L',
     ateState:'known',aqState:'unknown'},
   '79-10-7':{name:'丙烯酸',
     uni:'Acute Tox. 4 / Skin Corr. 1A / Aquatic Chronic 3',
     scl:'Skin Irrit. 2 ≥ 1%｜Eye Irrit. 2 ≥ 1%（低于则免分类）',
+    haz:{acuteOral:true,skinCorr:'1A',eyeDamage:'1',aquaticChronic:'3'},
     mM:0,mC:0,mSrc:'',lc50:'',noec:'',
     ateO:500,ateD:1100,ateI:0,ate:'经口 500 mg/kg｜经皮 1 100 mg/kg',
     ateState:'known',aqState:'known'},
   '111-76-2':{name:'乙二醇单丁醚',
     uni:'Acute Tox. 4 / Eye Irrit. 2 / Skin Irrit. 2',
     scl:'—（统一分类无 SCL，按通用浓度限值执行）',
+    haz:{acuteOral:true,skinIrrit:'2',eyeIrrit:'2',aquaticChronic:'3'},
     mM:0,mC:0,mSrc:'',lc50:'',noec:'',
     ateO:500,ateD:1100,ateI:11,ate:'经口 500 mg/kg｜经皮 1 100 mg/kg｜吸入 11 mg/L',
     ateState:'known',aqState:'unknown'},
   '64-17-5':{name:'乙醇',
     uni:'Flam. Liq. 2 / Eye Irrit. 2',
     scl:'Eye Irrit. 2 ≥ 10%',
+    haz:{eyeIrrit:'2'},
     mM:0,mC:0,mSrc:'',lc50:'',noec:'',
     ateO:10470,ateD:0,ateI:0,ate:'经口 10 470 mg/kg（远高于分类阈值）',
     ateState:'known',aqState:'known'},
   '9009-54-5':{name:'聚氨酯预聚体',
     uni:'Skin Irrit. 2（聚合物）',
     scl:'—',
+    haz:{skinIrrit:'2'},
     mM:0,mC:0,mSrc:'',lc50:'',noec:'',
     ateO:0,ateD:0,ateI:0,ate:'—（经评估不适用急性毒性估算）',
     ateState:'na',aqState:'unknown'},
   '7732-18-5':{name:'水',
     uni:'不分类',scl:'—',
+    haz:{},
     mM:0,mC:0,mSrc:'',lc50:'',noec:'',
     ateO:90000,ateD:0,ateI:0,ate:'经口 > 90 000 mg/kg（远高于分类阈值，不分类）',
     ateState:'known',aqState:'known'},
@@ -1139,6 +1146,7 @@ function deriveTable(){
 /* H 语句与 EUH 全文（CLP Annex III；EUH380/381/450/451 为 2024/2865 新增） */
 var H_STMT={
   'H225':'Highly flammable liquid and vapour. / 高度易燃液体和蒸气。',
+  'H300':'Fatal if swallowed. / 吞咽致命。',
   'H301':'Toxic if swallowed. / 吞咽会中毒。',
   'H302':'Harmful if swallowed. / 吞咽有害。',
   'H311':'Toxic in contact with skin. / 皮肤接触会中毒。',
@@ -1162,6 +1170,7 @@ var H_STMT={
   'H410':'Very toxic to aquatic life with long lasting effects. / 对水生生物毒性极大并具有长期持续影响。',
   'H411':'Toxic to aquatic life with long lasting effects. / 对水生生物有毒并具有长期持续影响。',
   'H412':'Harmful to aquatic life with long lasting effects. / 对水生生物有害并具有长期持续影响。',
+  'H413':'May cause long lasting harmful effects to aquatic life. / 可能对水生生物造成长期持续的有害影响。',
   'EUH066':'Repeated exposure may cause skin dryness or cracking. / 重复接触可能导致皮肤干燥或开裂。',
   'EUH071':'Corrosive to the respiratory tract. / 对呼吸道有腐蚀性。',
   'EUH380':'May cause endocrine disruption in humans. / 可能对人体造成内分泌干扰。',
@@ -1218,6 +1227,7 @@ var P_STMT={
 /* H 语句 → 应选 P 语句组合（CLP Annex IV 选择表） */
 var P_BY_H={
   'H225':['P210','P233','P240','P241','P242','P243','P280','P303+P361+P353','P370+P378','P403+P235','P501'],
+  'H300':['P264','P270','P301+P310','P321','P330','P405','P501'],
   'H301':['P264','P270','P301+P310','P321','P330','P405','P501'],
   'H302':['P264','P270','P301+P312','P330','P501'],
   'H311':['P280','P302+P352','P312','P321','P361+P364','P405','P501'],
@@ -1240,24 +1250,25 @@ var P_BY_H={
   'H400':['P273','P391','P501'],
   'H410':['P273','P391','P501'],
   'H411':['P273','P391','P501'],
-  'H412':['P273','P501']
+  'H412':['P273','P501'],
+  'H413':['P273','P501']
 };
 /* H 语句 → 象形图 / 信号词 */
 var PIC_BY_H={
-  'H225':'GHS02（火焰）','H301':'GHS06（骷髅和交叉骨）','H311':'GHS06（骷髅和交叉骨）','H330':'GHS06（骷髅和交叉骨）',
+  'H225':'GHS02（火焰）','H300':'GHS06（骷髅和交叉骨）','H301':'GHS06（骷髅和交叉骨）','H311':'GHS06（骷髅和交叉骨）','H330':'GHS06（骷髅和交叉骨）',
   'H314':'GHS05（腐蚀性）','H318':'GHS05（腐蚀性）',
   'H302':'GHS07（感叹号）','H315':'GHS07（感叹号）','H317':'GHS07（感叹号）','H319':'GHS07（感叹号）',
   'H335':'GHS07（感叹号）','H336':'GHS07（感叹号）',
   'H340':'GHS08（健康危害）','H341':'GHS08（健康危害）','H350':'GHS08（健康危害）','H351':'GHS08（健康危害）',
   'H360':'GHS08（健康危害）','H361':'GHS08（健康危害）','H372':'GHS08（健康危害）','H373':'GHS08（健康危害）',
-  'H400':'GHS09（环境）','H410':'GHS09（环境）','H411':'GHS09（环境）','H412':'—'
+  'H400':'GHS09（环境）','H410':'GHS09（环境）','H411':'GHS09（环境）','H412':'—','H413':'—'
 };
 var SIG_BY_H={
-  'H225':'danger','H301':'danger','H311':'danger','H330':'danger','H314':'danger','H318':'danger',
+  'H225':'danger','H300':'danger','H301':'danger','H311':'danger','H330':'danger','H314':'danger','H318':'danger',
   'H340':'danger','H350':'danger','H360':'danger','H372':'danger',
   'H302':'warning','H315':'warning','H317':'warning','H319':'warning','H335':'warning','H336':'warning',
   'H341':'warning','H351':'warning','H361':'warning','H373':'warning',
-  'H400':'warning','H410':'warning','H411':'warning','H412':'—'
+  'H400':'warning','H410':'warning','H411':'warning','H412':'—','H413':'—'
 };
 /* 第 16.2 缩略语表 */
 var ABBR_TABLE=[
@@ -1406,6 +1417,9 @@ function clpParamTable(){
     +'标「不适用」的是已确认不达分类阈值的组分，属已知安全，不计入。</div></div></div>';
 }
 function buildClassItems(){
+  var run=clpEvaluateMixture(wz.formula),byId={};
+  run.items.forEach(function(item){byId[item.id]=item;});
+  wz.classPack=run.pack;
   return [
     /* B6：2024/2865 新增危害类别，结论须在 2.3 / 11.2 / 12.6 三处声明 */
     {id:'ed',name:'内分泌干扰（ED）',result:'不分类',code:'无 ED 组分，或含量低于 0.1%',status:'auto',
@@ -1425,35 +1439,10 @@ function buildClassItems(){
       opts:[
         {o:'PMT / vPvM 类别 1',d:'含 PMT 或 vPvM 组分 ≥ 0.1% → 判 PMT/vPvM，需 EUH450/EUH451 声明',hit:'当前无相关认定组分'},
         {o:'不分类（无需分类）',d:'无 PMT / vPvM 组分超限',hit:'✓ 系统建议'}]},
-    {id:'skin',name:'皮肤腐蚀/刺激',result:'类别 2',code:'H315 造成皮肤刺激',status:'auto',
-      rule:'CLP (EC) No 1272/2008 · ATP 21 · 附件 I 3.2.3 加和法',
-      input:'丙烯酸 2.50%（Cat.1A）、甲醛 0.35%（Cat.1B）、乙二醇单丁醚 8.50%（Cat.2）',
-      formula:'Σ(Ci 腐蚀1A/1B/1C) = 2.85% < 5% → 不判腐蚀；10×Σ(Cat1) + Σ(Cat2) = 10×2.85 + 8.50 = 37.0% ≥ 10% → 刺激 Cat.2',
-      src:[['reg','CLP Annex VI 统一分类'],['sup','供应商 SDS 组分分类']],
-      opts:[
-        {o:'腐蚀 类别 1A/1B/1C',d:'Σ(腐蚀性组分) ≥ 5% → 判腐蚀（按最强组分类别细分）',hit:'当前 2.85% ＜ 5%，未达到'},
-        {o:'类别 2',d:'10×Σ(Cat.1) + Σ(Cat.2) ≥ 10% → 判刺激',hit:'当前 37.0% ≥ 10% ✓ 系统建议'},
-        {o:'不分类（无需分类）',d:'低于上述任一限值，且无其他证据提示危害',hit:'已达类别 2 限值，不建议'}]},
-    /* 皮肤致敏：皮革涂饰剂最常见的分类结论（示例 SDS 的唯一分类即 Skin Sens. 1A / H317） */
-    {id:'sens',name:'皮肤致敏',result:'类别 1',code:'H317 可能导致皮肤过敏反应',status:'auto',
-      rule:'CLP (EC) No 1272/2008 · 附件 I 3.4.3.3.1 加和法 · 通用浓度限值 Cat.1/1A/1B ≥ 0.1%',
-      input:'甲醛 0.35%（Skin Sens. 1，CLP Annex VI Index 605-001-00-5）；其余组分无致敏认定',
-      formula:'Σ(Skin Sens. 1/1A/1B 组分) = 0.35% ≥ 0.1% → 混合物判皮肤致敏 类别 1（H317）',
-      src:[['reg','CLP Annex VI 统一分类'],['sup','供应商 SDS 组分分类']],
-      opts:[
-        {o:'类别 1A（强致敏）',d:'Σ(Skin Sens. 1A 组分) ≥ 0.1% → 判 1A',hit:'甲醛统一分类为 Skin Sens. 1，未细分到 1A'},
-        {o:'类别 1（致敏）',d:'Σ(Skin Sens. 1/1A/1B 组分) ≥ 0.1% → 判类别 1',hit:'当前 0.35% ≥ 0.1% ✓ 系统建议'},
-        {o:'类别 1B（弱致敏）',d:'Σ(Skin Sens. 1B 组分) ≥ 0.1% → 判 1B',hit:'甲醛统一分类为 Skin Sens. 1，未细分到 1B'},
-        {o:'不分类（无需分类）',d:'低于 0.1% 限值且无致敏证据',hit:'已达限值，不建议'}]},
-    {id:'eye',name:'严重眼损伤/眼刺激',result:'类别 2',code:'H319 造成严重眼刺激',status:'auto',
-      rule:'CLP (EC) No 1272/2008 · 附件 I 3.3.3.3 加和法',
-      input:'丙烯酸 2.50%（Cat.1）、甲醛 0.35%（Cat.1）、乙醇 5.00%（Cat.2）、乙二醇单丁醚 8.50%（Cat.2A）',
-      formula:'Σ(Cat.1) = 2.85% < 3% → 不判 Cat.1；10×Σ(Cat.1) + Σ(Cat.2) = 28.5 + 13.5 = 42.0% ≥ 10% → Cat.2',
-      src:[['reg','CLP Annex VI 统一分类'],['lab','眼刺激实测报告 TR-2026-0413']],
-      opts:[
-        {o:'类别 1（严重损伤）',d:'Σ(眼损伤 Cat.1) ≥ 3% → 判严重眼损伤',hit:'当前 2.85% ＜ 3%，未达到'},
-        {o:'类别 2',d:'10×Σ(Cat.1) + Σ(Cat.2) ≥ 10% → 判眼刺激',hit:'当前 42.0% ≥ 10% ✓ 系统建议'},
-        {o:'不分类（无需分类）',d:'低于上述任一限值',hit:'已达类别 2 限值，不建议'}]},
+    byId.acuteOral,
+    byId.skin,
+    byId.sens,
+    byId.eye,
     {id:'stot',name:'特异性靶器官毒性（一次接触）',result:'类别 3（呼吸道刺激）',code:'H335 可能引起呼吸道刺激',status:'auto',
       rule:'CLP 附件 I 3.8.3.4.5 · 通用浓度限值 20%',
       input:'甲醛 0.35%（STOT SE 3）、丙烯酸 2.50%（STOT SE 3）、乙二醇单丁醚 8.50%（STOT SE 3）',
@@ -1471,15 +1460,7 @@ function buildClassItems(){
         {o:'类别 1A / 1B',d:'Σ(致癌 Cat.1A/1B 组分) ≥ 0.1% → 判 Cat.1（按最强组分）',hit:'甲醛 0.35% ≥ 0.1% ✓ 系统建议'},
         {o:'类别 2',d:'Σ(致癌 Cat.2 组分) ≥ 1%（或 1A/1B 在 0.1%~1% 区间从严）',hit:'甲醛为 1B 且已超 0.1%，应判 1B'},
         {o:'不分类（无需分类）',d:'所有致癌组分均低于各自限值',hit:'不适用'}]},
-    {id:'aqua',name:'危害水生环境（长期）',result:'类别 3',code:'H412 对水生生物有害并具有长期持续影响',status:'auto',
-      rule:'CLP 附件 I 4.1.3.5.5 加和法 · M 因子未适用',
-      input:'甲醛 0.35%（Chronic 2）、丙烯酸 2.50%（Chronic 3）、乙二醇单丁醚 8.50%（Chronic 3）',
-      formula:'10×Σ(Chronic2) + Σ(Chronic3) = 3.5 + 11.0 = 14.5% ≥ 25%? 否；Σ(Chronic1-4) = 11.35% ≥ 25%? 否 → 按从严原则建议 Cat.3',
-      src:[['pub','PubChem 生态毒性辅助数据'],['sup','供应商 SDS 第 12 章']],
-      opts:[
-        {o:'类别 1 / 类别 2',d:'Σ(Chronic1)×M×100 + Σ(Chronic2)×10 ≥ 25% → 判 Cat.1/2（分级比较）',hit:'当前 3.5% ＜ 25%，未达到'},
-        {o:'类别 3',d:'Σ(Chronic 1~4 组分) ≥ 25% → 判 Cat.3',hit:'当前 11.35% ＜ 25%，系统按从严实践保留建议'},
-        {o:'不分类（无需分类）',d:'所有慢性毒性组分合计 ＜ 25%',hit:'未达限值，可据实改判'}]},
+    byId.aqua,
     {id:'resp',name:'呼吸道致敏',result:'—',code:'待人工判定',status:'pending',
       rule:'CLP 附件 I 3.4.3 · 需个案评估',
       input:'聚氨酯预聚体 38.65%：供应商未提供致敏性数据；游离异氰酸酯含量未实测',
@@ -1564,6 +1545,20 @@ function toggleEuh(code,on){
   if(!on&&i>=0)e.splice(i,1);
   wz.project.euh=e;wzUpdateFoot();
 }
+function clpPackCallCard(){
+  var p=wz.classPack;
+  if(!p)return '';
+  return '<div class="card" style="margin-bottom:14px"><div class="card-hd">'
+    +'<h3>本次调用的 CLP 规则包</h3><span class="tag green dot-tag">已调用并冻结快照</span></div>'
+    +'<div class="card-bd"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      +'<b class="mono" style="font-size:14px">'+esc(p.id)+'</b>'
+      +'<span class="tag blue">Annex VI '+esc(p.modules.vi)+'</span>'
+      +'<span class="tag blue">Annex I '+esc(p.modules.rules)+'</span>'
+      +'<span class="tag blue">标签字典 '+esc(p.modules.labels)+'</span>'
+      +'<span class="tag grey">'+p.methods.length+' 种计算方法</span></div>'
+      +'<div style="margin-top:9px;font-size:12.3px;color:var(--muted)">方法：'+esc(p.methods.join(' / '))
+      +'。本次分类结论已绑定该版本快照；法规库后续发布新版本不会改写本次结果。</div></div></div>';
+}
 function renderStep4(){
   if(!wz.classItems)wz.classItems=buildClassItems();
   var items=wz.classItems;
@@ -1584,6 +1579,7 @@ function renderStep4(){
         ?'<button class="btn sm warn" onclick="adjClass('+i+')">⚠ 人工判定</button>'
         :'<button class="btn sm" onclick="adjClass('+i+')">手动调整</button>')+'</span></div>'
       +'<div class="ev-bd">'
+        +(c.packId?'<div class="ev-f"><span class="k">规则包调用</span><span class="v"><b class="mono">'+esc(c.packId)+'</b><br><span class="tag blue">'+esc(c.ruleIds.join(' / '))+'</span> <span class="tag grey">'+esc(c.method)+'</span></span></div>':'')
         +'<div class="ev-f"><span class="k">计算规则版本</span><span class="v">'+c.rule+'</span></div>'
         +'<div class="ev-f"><span class="k">数据来源</span><span class="v">'+srcs+'</span></div>'
         +'<div class="ev-f span2" style="grid-column:span 2"><span class="k">输入参数</span><span class="v">'+esc(c.input)+'</span></div>'
@@ -1604,6 +1600,7 @@ function renderStep4(){
     +'带虚线下划线的'+term('GHS')+'术语可悬停查看解释，不确定时可点「问 AI 助手」。</div></div>');
   $('wzBody').innerHTML=
     pureNote
+    +clpPackCallCard()
     +paramTbl
     +'<div class="concl" style="margin-bottom:16px">'
       +'<div class="ghs-box"><h4>混合物 '+term('GHS')+' 危险分类结论</h4><div class="hz-list">'

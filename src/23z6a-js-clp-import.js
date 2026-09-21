@@ -27,7 +27,7 @@
 var CLP_IMP_MODS={
   vi:{
     key:'vi',label:'Annex VI｜物质统一分类',
-    tmpl:'CLP_AnnexVI_导入模板_ATP23.xlsx',
+    tmpl:'CLP_AnnexVI_导入模板_ATP23.csv',
     demo:'CLP_AnnexVI_ATP23_结构清单.xlsx',
     fileKind:'物质统一分类清单',
     rows:4182,rowsNote:'4,182 条协调分类条目（ATP 23 全量）',
@@ -82,7 +82,7 @@ var CLP_IMP_MODS={
   },
   rules:{
     key:'rules',label:'Annex I｜分类规则',
-    tmpl:'CLP_AnnexI_规则表模板_R2027.1.xlsx',
+    tmpl:'CLP_AnnexI_规则表模板_R2027.1.csv',
     demo:'CLP_AnnexI_规则表_R2027.1.xlsx',
     fileKind:'分类规则表',
     rows:18,rowsNote:'18 条规则（含 2 条待上线的新规则）',
@@ -94,15 +94,15 @@ var CLP_IMP_MODS={
     verNote:'现行 R2026.2 → 本次导入 R2027.1',
     gather:'规则表由**法规专员在系统外**使用统一模板整理，并逐条对照法规原文确认。系统不解析法规原文，只接收**已确认的结构化规则表**，负责结构校验、版本比较、规则引擎支持状态检查与审核发布。',
     fields:[
-      ['规则编号','唯一编号（如 CR-006）'],
+      ['内部规则编号','已有规则必填（如 CLP-R-0006）；新规则留空，由系统首次建档时生成且不可编辑'],
       ['规则名称','规则的业务名称'],
       ['危害类别','对应 Annex I 的危害类别或一般原则'],
       ['适用对象','物质 / 混合物 / 物质与混合物'],
       ['前置条件','触发该规则的条件描述'],
       ['所需输入','计算或判断所需的输入项'],
-      ['计算方法代码','引用「计算方法字典」的代码（如 M-ATE-SUM）'],
+      ['规则引擎方法','从系统已登记的方法中选择（如 CLP-M-ATE-SUM）；法规专员不编写计算代码'],
       ['阈值参数','阈值及其单位'],
-      ['计算公式','公式文本（无公式的规则填「逐案评估」）'],
+      ['法规公式 / 判定说明','用于法规核对与追溯的说明文本，不作为可执行代码；无公式填「逐案评估」'],
       ['是否允许加和','是 / 否—逐案评估'],
       ['例外条件','不适用或不成立的情形'],
       ['规则优先级','高（1）/ 中（2）/ 低（3）及并列关系'],
@@ -116,39 +116,39 @@ var CLP_IMP_MODS={
       ['人工核对日期','核对完成日期（YYYY-MM-DD）']
     ],
     checks:[
-      {name:'计算方法代码未匹配规则引擎',lv:'block',cnt:2,rows:['M-ED-PBT —— 方法已登记，但规则引擎尚未实现','M-NEWTOX —— 方法代码不在「计算方法字典」中']},
-      {name:'规则测试未通过',lv:'block',cnt:1,rows:['CR-006 内分泌干扰物（ED）与 PBT / vPvB / PMT / vPvM 判定规则 —— 测试未执行（引擎缺判定模块）']},
-      {name:'H 码未匹配标签字典',lv:'warn',cnt:1,rows:['CR-006 输出的 EUH450 在本次标签字典版本中未找到']},
-      {name:'规则之间存在重复或冲突',lv:'warn',cnt:2,rows:['CR-005 分层原则与 CR-001 的类别择优逻辑重叠','CR-007 桥接原则与 CR-002 通用限值加和在适用条件上互斥']},
-      {name:'来源条款缺失',lv:'warn',cnt:1,rows:['CR-007 的「来源章节及条款号」只填到 Part 1，缺条款号']},
-      {name:'阈值或单位缺失',lv:'info',cnt:1,rows:['CR-006 的阈值参数未带单位（应为 % 或 mg/kg）']},
+      {name:'规则引擎方法未匹配',lv:'block',cnt:2,rows:['CLP-M-ED-PBT —— 方法已登记，但规则引擎尚未实现','CLP-M-NEWTOX —— 方法代码不在「计算方法字典」中']},
+      {name:'规则测试未通过',lv:'block',cnt:1,rows:['CLP-R-0006 内分泌干扰物（ED）与 PBT / vPvB / PMT / vPvM 判定规则 —— 测试未执行（引擎缺判定模块）']},
+      {name:'H 码未匹配标签字典',lv:'warn',cnt:1,rows:['CLP-R-0006 输出的 EUH450 在本次标签字典版本中未找到']},
+      {name:'规则之间存在重复或冲突',lv:'warn',cnt:2,rows:['CLP-R-0005 分层原则与 CLP-R-0001 的类别择优逻辑重叠','CLP-R-0007 桥接原则与 CLP-R-0002 通用限值加和在适用条件上互斥']},
+      {name:'来源条款缺失',lv:'warn',cnt:1,rows:['CLP-R-0007 的「来源章节及条款号」只填到 Part 1，缺条款号']},
+      {name:'阈值或单位缺失',lv:'info',cnt:1,rows:['CLP-R-0006 的阈值参数未带单位（应为 % 或 mg/kg）']},
       {name:'人工核对记录缺失',lv:'info',cnt:2,rows:['导入表第 7 行：人工核对人已填，核对日期为空','导入表第 12 行：核对日期格式为 2026/9/16，应统一为 YYYY-MM-DD']},
       {name:'规则编号唯一、必填字段完整性、危害类别有效性',lv:'pass',cnt:0,rows:['14 条规则通过全部结构校验']}
     ],
     tests:[
-      {name:'混合物 T-01',conc:'丙酮 40% / 甲苯 30% / 二甲苯 30%',rule:'CR-001',calc:'ATE_mix = 100 / ( 40/5800 + 30/5000 + 30/3600 ) ≈ 4708 mg/kg',expect:'未分类（ATE > 2000）',actual:'未分类',res:'通过'},
-      {name:'混合物 T-02',conc:'丙烯酸 2% + 乙二醇单丁醚 12%',rule:'CR-002',calc:'Σ(Ci) ≥ 1%（Corr. 组分）→ Skin Corr. 1',expect:'Skin Corr. 1 / H314',actual:'Skin Corr. 1 / H314',res:'通过'},
-      {name:'混合物 T-03',conc:'甲醛 0.3%（该组分挂 SCL）',rule:'CR-003',calc:'SCL 替代 GCL：H317 门槛 C ≥ 0.2% → 触发皮肤致敏 1',expect:'Skin Sens. 1 / H317',actual:'Skin Sens. 1 / H317',res:'通过'},
-      {name:'混合物 T-04',conc:'含 2-乙基己酸锆 3%',rule:'CR-006',calc:'规则引擎缺少 ED / PBT 判定模块，未执行',expect:'Repr. 1B / H360Df',actual:'—（未执行）',res:'未通过'}
+      {name:'混合物 T-01',conc:'丙酮 40% / 甲苯 30% / 二甲苯 30%',rule:'CLP-R-0001',calc:'ATE_mix = 100 / ( 40/5800 + 30/5000 + 30/3600 ) ≈ 4708 mg/kg',expect:'未分类（ATE > 2000）',actual:'未分类',res:'通过'},
+      {name:'混合物 T-02',conc:'丙烯酸 2% + 乙二醇单丁醚 12%',rule:'CLP-R-0002',calc:'Σ(Ci) ≥ 1%（Corr. 组分）→ Skin Corr. 1',expect:'Skin Corr. 1 / H314',actual:'Skin Corr. 1 / H314',res:'通过'},
+      {name:'混合物 T-03',conc:'甲醛 0.3%（该组分挂 SCL）',rule:'CLP-R-0003',calc:'SCL 替代 GCL：H317 门槛 C ≥ 0.2% → 触发皮肤致敏 1',expect:'Skin Sens. 1 / H317',actual:'Skin Sens. 1 / H317',res:'通过'},
+      {name:'混合物 T-04',conc:'含 2-乙基己酸锆 3%',rule:'CLP-R-0006',calc:'规则引擎缺少 ED / PBT 判定模块，未执行',expect:'Repr. 1B / H360Df',actual:'—（未执行）',res:'未通过'}
     ],
     testNote:'测试未通过的规则**不进入本次发布清单**，需在引擎补齐后重新测试。',
-    excluded:['CR-006'],
+    excluded:['CLP-R-0006'],
     diffs:{add:2,mod:3,del:1},
     diffTypes:['新增规则','修改规则','废止规则','阈值变化','公式变化','例外条件变化','优先级变化','输出分类变化','来源条款变化'],
     items:[
-      {tp:'新增规则',k:'CR-007',n:'桥接原则（Bridging）—相似混合物分类沿用规则',a:'—',b:'沿用被桥接混合物分类',note:'引擎「需要配置参数」：参数已配置、测试通过 → 进入发布清单'},
-      {tp:'新增规则',k:'CR-006',n:'内分泌干扰物（ED）与 PBT / vPvB / PMT / vPvM 判定规则',a:'—',b:'ED / PBT / vPvB / PMT / vPvM 判定',note:'引擎「需要研发实现」+ 测试未执行 → 本次不发布'},
-      {tp:'阈值变化',k:'CR-001',n:'急性毒性—口服—混合物 ATE 计算规则',a:'Cat.2 ≥ 1% 且 < 5%',b:'Cat.2 ≥ 1% 且 < 5%（单位统一为 %）',note:'单位补全，数值未变'},
-      {tp:'公式变化',k:'CR-004',n:'慢性水生毒性—M 因子加权求和规则',a:'Chronic 2：Σ(Mi × Ci) ≥ 25%',b:'Chronic 2：Σ(10 × Mi × Ci) ≥ 25%',note:'按 Table 4.1.4 修正慢性折算系数'},
-      {tp:'例外条件变化',k:'CR-003',n:'SCL（特定浓度限值）优先于通用浓度限值',a:'未说明多类别 SCL 并存处理',b:'同一组分多类别 SCL 分别适用',note:'补充例外条件'},
-      {tp:'优先级变化',k:'CR-005',n:'同一危害类别的分层与优先级原则',a:'中（2）',b:'低（3）',note:'调整与其他规则的执行次序'},
-      {tp:'废止规则',k:'CR-000',n:'旧版急性毒性 ATE 换算（R2025 遗留）',a:'R2026.2 生效',b:'—',note:'已被 CR-001 完全覆盖'}
+      {tp:'新增规则',k:'CLP-R-0007',n:'桥接原则（Bridging）—相似混合物分类沿用规则',a:'—',b:'沿用被桥接混合物分类',note:'引擎「需要配置参数」：参数已配置、测试通过 → 进入发布清单'},
+      {tp:'新增规则',k:'CLP-R-0006',n:'内分泌干扰物（ED）与 PBT / vPvB / PMT / vPvM 判定规则',a:'—',b:'ED / PBT / vPvB / PMT / vPvM 判定',note:'引擎「需要研发实现」+ 测试未执行 → 本次不发布'},
+      {tp:'阈值变化',k:'CLP-R-0001',n:'急性毒性—口服—混合物 ATE 计算规则',a:'Cat.2 ≥ 1% 且 < 5%',b:'Cat.2 ≥ 1% 且 < 5%（单位统一为 %）',note:'单位补全，数值未变'},
+      {tp:'公式变化',k:'CLP-R-0004',n:'慢性水生毒性—M 因子加权求和规则',a:'Chronic 2：Σ(Mi × Ci) ≥ 25%',b:'Chronic 2：Σ(10 × Mi × Ci) ≥ 25%',note:'按 Table 4.1.4 修正慢性折算系数'},
+      {tp:'例外条件变化',k:'CLP-R-0003',n:'SCL（特定浓度限值）优先于通用浓度限值',a:'未说明多类别 SCL 并存处理',b:'同一组分多类别 SCL 分别适用',note:'补充例外条件'},
+      {tp:'优先级变化',k:'CLP-R-0005',n:'同一危害类别的分层与优先级原则',a:'中（2）',b:'低（3）',note:'调整与其他规则的执行次序'},
+      {tp:'废止规则',k:'CLP-R-0000',n:'旧版急性毒性 ATE 换算（R2025 遗留）',a:'R2026.2 生效',b:'—',note:'已被 CLP-R-0001 完全覆盖'}
     ],
-    landed:'新增 1 条规则（CR-007）落入 Tab2（状态由「待审核」转为「已发布」，版本写为本次版本号）；CR-006 因规则测试未通过被排除，不进入发布清单'
+    landed:'新增 1 条规则（CLP-R-0007）落入 Tab2（状态由「待审核」转为「已发布」，版本写为本次版本号）；CLP-R-0006 因规则测试未通过被排除，不进入发布清单'
   },
   labels:{
     key:'labels',label:'Annex III/IV/V｜标签字典',
-    tmpl:'CLP_AnnexIII_IV_标签字典模板_L2026.4.xlsx',
+    tmpl:'CLP_AnnexIII_IV_标签字典模板_L2026.4.csv',
     demo:'CLP_AnnexIII_IV_标签字典_L2026.4.xlsx',
     fileKind:'标签字典表',
     rows:293,rowsNote:'293 条（H 码约 100 + EUH 约 40 + P 码约 110 + 官方组合码 43）',
@@ -189,7 +189,7 @@ var CLP_IMP_MODS={
     diffs:{add:5,mod:3,del:2},
     diffTypes:['新增代码','修改文本','废止代码','图标代码变化','信号词变化','标签组合关系变化'],
     items:[
-      {tp:'新增代码',k:'H360Df',n:'可能对生育能力或胎儿造成伤害',a:'—',b:'GHS08 / 危险',note:'新增 H 码（配 CR-006 提升为发布后条目）'},
+      {tp:'新增代码',k:'H360Df',n:'可能对生育能力或胎儿造成伤害',a:'—',b:'GHS08 / 危险',note:'新增 H 码（配 CLP-R-0006 提升为发布后条目）'},
       {tp:'修改文本',k:'H301',n:'吞咽中毒（急性毒性—口服 类别 3）',a:'吞咽会中毒',b:'吞咽中毒（急性毒性—口服 类别 3）',note:'按新版本 Annex III 文本修订'},
       {tp:'信号词变化',k:'H302',n:'吞咽有害',a:'危险',b:'警告',note:'信号词映射更正（按危害类别 4）'},
       {tp:'图标代码变化',k:'H318',n:'造成严重眼损伤',a:'GHS05 / GHS07',b:'GHS05',note:'按优先级规则去除与 GHS05 重复的 GHS07'},
@@ -204,6 +204,22 @@ var CLP_IMP_LV={block:'阻断',warn:'告警',info:'提示',pass:'通过'};
 
 /* ---------- 2. 向导状态 ---------- */
 var _clpImp={step:1,mod:'vi',t4:'chk',done:{},file:'',origFile:'',uploadAt:''};
+
+function clpImpCsvCell(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}
+function clpImpDownloadTemplate(key){
+  var M=CLP_IMP_MODS[key]||clpImpMod();
+  var head=M.fields.map(function(f){return clpImpCsvCell(f[0]);}).join(',');
+  var blank=M.fields.map(function(){return '""';}).join(',');
+  downloadFile(M.tmpl,head+'\r\n'+blank+'\r\n','text/csv;charset=utf-8');
+  toast('已下载「'+M.label+'」导入模板','ok');
+}
+function clpTemplateCenter(){
+  openModal({title:'下载导入模板 · CLP 法规库',width:760,cls:'sds-scope clp-page',
+    body:'<div class="notice info" style="margin-bottom:12px"><div class="ni">i</div><div>按需要维护的模块下载 CSV 模板，填写后可在「导入新版本」中上传。模板只保留业务填写字段，系统编号与技术校验由导入流程处理。</div></div>'+
+      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>维护模块</th><th style="width:100px">模板列数</th><th style="width:130px">操作</th></tr></thead><tbody>'+
+      ['vi','rules','labels'].map(function(k){var M=CLP_IMP_MODS[k];return '<tr><td><b>'+esc(M.label)+'</b><div class="muted" style="font-size:12px">'+esc(M.fileKind)+'</div></td><td>'+M.fields.length+' 列</td><td><button class="btn sm" onclick="clpImpDownloadTemplate(\''+k+'\')">下载 CSV</button></td></tr>';}).join('')+
+      '</tbody></table></div>',footer:'<button class="btn primary" onclick="closeModal()">关闭</button>'});
+}
 
 function clpImpMod(){return CLP_IMP_MODS[_clpImp.mod]||CLP_IMP_MODS.vi;}
 function clpImpLvTag(lv){
@@ -405,13 +421,13 @@ function clpImpPickDemo(){clpImpPick();toast('已使用示例文件（演示数�
 function clpLImpTmpl(){
   var M=clpImpMod();
   openModal({title:'导入模板 · '+M.label,width:820,cls:'sds-scope clp-page',
-    body:'<div class="notice info" style="margin-bottom:12px"><div class="ni">i</div><div>模板文件：<b class="mono">'+esc(M.tmpl)+'</b>（原型阶段为静态演示，不产生真实下载）。下表即模板列定义，也是本模块的<b>字段契约</b>。</div></div>'+
+    body:'<div class="notice info" style="margin-bottom:12px"><div class="ni">i</div><div>模板文件：<b class="mono">'+esc(M.tmpl)+'</b>。下表是本模块的字段定义，点击下方按钮即可下载并填写。</div></div>'+
       '<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px;max-height:420px;overflow:auto"><table class="tbl"><thead><tr>'+
       '<th style="width:44px">序号</th><th style="width:190px">模板列名</th><th>填写说明</th></tr></thead><tbody>'+
       M.fields.map(function(f,i){return '<tr><td class="mono">'+(i+1)+'</td><td><b>'+esc(f[0])+'</b></td><td>'+clpImpMd(f[1])+'</td></tr>';}).join('')+
       '</tbody></table></div>'+
       '<div class="notice grey" style="margin-top:12px"><div class="ni">§</div><div>列数：<b>'+M.fields.length+' 列</b>。模板由法规专员在系统外填写，<b>逐条对照法规原文确认后</b>再上传；系统不解析法规原文。</div></div>',
-    footer:'<button class="btn" onclick="clpImpRestore()">返回向导</button><button class="btn primary" onclick="toast(\'模板已生成（演示）\',\'ok\')">下载模板</button>'});
+    footer:'<button class="btn" onclick="clpImpRestore()">返回向导</button><button class="btn primary" onclick="clpImpDownloadTemplate(\''+M.key+'\')">下载 CSV 模板</button>'});
 }
 
 /* ---------- 8. 第 4 步：数据校验与版本比较（三子 Tab） ---------- */
@@ -551,18 +567,18 @@ function clpLImpPublish(){
     CLP_VI_ROWS.forEach(function(r){r.ver=ver;r.src=r.src.replace(/经 ATP \d+ 采纳/,'经 '+ver+' 采纳');});
     CLP_VI_ROWS.push({idx:'029-022-00-4',name:'2-乙基己酸锆',cas:'1304-63-2',ec:'215-132-3',
       cls:'Repr. 1B',h:'H360Df',euh:'—',picto:'GHS08',signal:'危险',scl:'—',m:'—',ate:'—',notes:'—',
-      ver:ver,src:'Annex VI Part 3 · Table 3（经 '+ver+' 采纳）',rule:'CR-006'});
+      ver:ver,src:'Annex VI Part 3 · Table 3（经 '+ver+' 采纳）',rule:'CLP-R-0006'});
   }else if(M.key==='rules'){
     /* 规则以「规则编号」为准做 upsert：库中已存在同编号草稿时更新其状态与版本，
        不存在时才新增 —— 避免同一编号在规则表中出现两行。 */
     var hit=null;
-    CLP_RULES.forEach(function(r){if(r.id==='CR-007')hit=r;});
+    CLP_RULES.forEach(function(r){if(r.id==='CLP-R-0007')hit=r;});
     var draft={name:'桥接原则（Bridging）—相似混合物分类沿用规则',cat:'分类与标签一般原则',target:'混合物',
       gcl:'—',add:'否—逐案评估',ref:'Annex I，Part 1，1.5（桥接原则）',ver:ver,status:'已发布',
-      method:'M-BRIDGE',engine:'需要配置参数',test:'通过',checker:auditor,checkDate:clpImpNow().slice(0,10),h:'',
+      method:'CLP-M-BRIDGE',engine:'需要配置参数',test:'通过',checker:auditor,checkDate:clpImpNow().slice(0,10),h:'',
       det:{inputs:'相似混合物（稀释 / 浓度变化 / 同族组分替换）的已有分类结论与组分对照表',cond:'混合物由已分类混合物经稀释、浓度调整或同族组分替换得到，且危害类别不变时触发',formula:'按桥接场景逐案调用（不适用统一公式）：桥接表与判定参数需在规则引擎中配置后启用',except:'桥接不得用于致癌 / 生殖毒性 / 致突变等无阈值危害；桥接结论须由法规专员确认并留痕',prio:'低（3）——在常规规则之后应用',output:'沿用被桥接混合物的分类结论',label:'以沿用分类对应的 H 码与标签结果为准',src:'Regulation (EC) No 1272/2008，Annex I，Part 1，第 1.5 条（桥接原则）'}};
     if(hit){for(var k in draft){if(draft.hasOwnProperty(k))hit[k]=draft[k];}}
-    else{draft.id='CR-007';CLP_RULES.push(draft);}
+    else{draft.id=clpNextRuleId();CLP_RULES.push(draft);}
   }else{
     CLP_LABELS.push({tp:'H 码',isCombo:'否',code:'H360Df',text:'可能对生育能力或胎儿造成伤害',lang:'中文（zh）',
       picto:'GHS08',signal:'危险',combo:'组件码：无（单条码）',appliesTo:'生殖毒性 1A / 1B（含对哺乳期儿童的影响）',

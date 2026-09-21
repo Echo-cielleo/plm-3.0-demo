@@ -55,6 +55,13 @@ with sync_playwright() as pw:
         ok(f in text,'影响功能包含「%s」'%f)
     ok('REACH 管注册、授权与限制' in text and '本页面仅涉及 REACH' in text,'法制定位说明（REACH / CLP 分工）')
     ok('RoHS 限用物质' in text and '拆分' in text and 'C&L Inventory' in text and '外部参考数据' in text,'标注 RoHS 与 C&L Inventory 不并入本页')
+    ok(page.get_by_role('button',name='下载导入模板').count()==1,'顶部提供 REACH 导入模板下载入口')
+    page.evaluate('()=>rchTemplateCenter()');page.wait_for_timeout(120)
+    ok(page.locator('#mBody tbody tr').count()==5,'模板中心覆盖 REACH 5 个可维护模块')
+    with page.expect_download() as dl:
+        page.locator('#mBody').get_by_role('button',name='下载 CSV').first.click()
+    ok(dl.value.suggested_filename.endswith('.csv'),'REACH 模板可真实下载为 CSV 文件')
+    page.evaluate('closeModal()')
 
     print('\n=== Tab 切换（顶部主信息保持不变） ===')
     tabs=page.locator('#rchTabs button')
@@ -181,6 +188,7 @@ with sync_playwright() as pw:
     page.evaluate("()=>rchImpNext(2)");page.wait_for_timeout(120)
     page.fill('#riVer','V2026.3')
     page.evaluate("()=>rchImpNext(3)");page.wait_for_timeout(120)
+    ok(page.locator('#mBody').get_by_role('button',name='下载当前模块模板').count()==1,'导入第 3 步可下载当前模块模板')
     page.evaluate("()=>rchImpPickDemo()");page.wait_for_timeout(100)
     page.evaluate("()=>rchImpNext(4)");page.wait_for_timeout(150)
     mb=page.locator('#mBody').inner_text()

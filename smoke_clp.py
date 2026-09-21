@@ -4,7 +4,7 @@
    · 顶部主信息（证据灯 / CLP-REACH 分工）、5 Tab、模块版本信息条（ATP 22 口径）
    · Tab1 15 列（含 EUH / 象形图 / 信号词）、数据驱动的生效版本下拉、详情抽屉
    · Annex VI → 分类规则 → 标签字典 跳转链
-   · Tab2 14 列（含计算方法代码 / 引擎支持状态 / 规则测试状态 / 人工核对）、引擎状态筛选
+   · Tab2 8 列业务视图（技术编号 / 引擎方法收进详情）、自动化状态筛选
    · Tab3 Annex V 象形图只读块（9 个图式 + 适用危害类别）、组合码、字段适用性口径
    · Tab4 PCN/UFI 静态占位、Tab5 版本变更（含来源模块）
    · 五步导入向导：三模块切换（字段/条数/校验/变更/落点同步变化）、文件门禁、
@@ -91,10 +91,25 @@ with sync_playwright() as pw:
     ok('CLP 主版本' in text and '2024/2865 修订版' in text, '展示 CLP 主版本')
     ok('最近审核时间' in text and '最近更新时间' in text and '数据截止日期' in text, '展示审核/更新/数据截止日期')
     ok('质管-熊倩' in text and '附录 VI 随 ATP 发布导入' in text, '展示维护责任人与更新频率')
+    pack = page.evaluate('()=>clpActivePack()')
+    ok('生效规则包' in text and pack['id'] in text, '顶部展示当前生效规则包')
+    ok(pack['id'] == 'CLP-EU-ATP22-R2026.2-L2026.3', '规则包编号由三个生效模块版本组成')
+    ok(pack['tested'] and pack['ruleIds'] == ['CLP-R-0001', 'CLP-R-0002', 'CLP-R-0003', 'CLP-R-0004'],
+       '规则包只纳入已支持、测试通过、已审核的 4 条规则')
+    ok(pack['methods'] == ['CLP-M-ATE-SUM', 'CLP-M-GCL-SUM', 'CLP-M-SCL', 'CLP-M-MFACTOR'],
+       '规则包登记 4 种已支持计算方法')
     for f in ['物质查询', '混合物分类', '标签生成', 'SDS编制']:
         ok(f in text, '影响功能包含「%s」' % f)
     ok('CLP 管分类与标签' in text and 'REACH 管注册、授权与限制' in text, 'CLP / REACH 分工定位说明完整')
     ok('C&L Inventory' in text and '独立菜单维护' in text and 'REACH 独立清单' in text, '标注 C&L / SVHC 等不属本页')
+    ok(page.get_by_role('button', name='下载导入模板').count() == 1, '顶部提供导入模板下载入口')
+    page.evaluate('()=>clpTemplateCenter()')
+    page.wait_for_timeout(120)
+    ok(page.locator('#mBody tbody tr').count() == 3, '模板中心提供 Annex VI / Annex I / 标签字典 3 个模板')
+    with page.expect_download() as dl:
+        page.locator('#mBody').get_by_role('button', name='下载 CSV').first.click()
+    ok(dl.value.suggested_filename.endswith('.csv'), 'CLP 模板可真实下载为 CSV 文件')
+    page.evaluate('closeModal()')
 
     print('\n=== Tab 切换 ===')
     ok(page.locator('#clpTabs button').count() == 5, '共 5 个 Tab')
@@ -142,46 +157,52 @@ with sync_playwright() as pw:
     page.evaluate("()=>clpLViToRule('605-001-00-5')")
     page.wait_for_timeout(250)
     ok(page.evaluate('()=>_clpTab') == 'rules', '跳转到 Annex I 规则 Tab')
-    ok('CR-001' in page.locator('#clpDw .modal-hd h3').inner_text(), '抽屉打开对应规则 CR-001')
+    ok('急性毒性—口服—混合物 ATE' in page.locator('#clpDw .modal-hd h3').inner_text(), '抽屉打开对应分类规则')
+    page.locator('#clpDw details').evaluate('(d)=>d.open=true')
     dw = page.locator('#clpDw').inner_text()
-    ok('M-ATE-SUM' in dw and 'ATE 加和法' in dw, '抽屉展示计算方法代码并解析出方法名')
+    ok('技术信息（研发 / 追溯）' in dw and 'CLP-R-0001' in dw and 'CLP-M-ATE-SUM' in dw and 'ATE 加和法' in dw,
+       '技术编号与规则引擎方法收进可折叠技术信息')
     ok('已支持' in dw and '通过' in dw, '抽屉展示引擎支持状态与规则测试状态')
     ok('ATE_mix = 100 / Σ( Ci / ATEi )' in dw, '展示 ATE 计算公式')
-    ok('结构化规则表' in dw and '法规专员对照法规原文逐条确认后导入' in dw, '标注数据来源类型为结构化规则表')
+    ok('结构化规则表' in dw and '法规专员核对规则内容' in dw, '标注数据来源类型与法规专员核对职责')
     ok('自动解析' not in dw and '系统解析' not in dw, '规则抽屉无「自动解析」表述')
     ok(page.locator('#clpTable tbody tr').count() == 1, '列表按跳转过滤到目标规则')
-    page.evaluate("()=>clpLRuleToLabel('CR-001')")
+    page.evaluate("()=>clpLRuleToLabel('CLP-R-0001')")
     page.wait_for_timeout(250)
     ok(page.evaluate('()=>_clpTab') == 'labels', '跳转到标签字典 Tab')
     ok('H301' in page.locator('#clpDw .modal-hd h3').inner_text(), '抽屉打开 H301 字典条目')
     ok('仅 H 行适用' in page.locator('#clpDw').inner_text(), '字典抽屉标注字段适用性')
     page.evaluate("()=>clpLDrawerClose()")
 
-    print('\n=== Tab2 Annex I：14 列 + 引擎状态筛选 ===')
+    print('\n=== Tab2 Annex I：8 列业务视图 + 自动化状态筛选 ===')
     page.evaluate("()=>{_clpF.rules={kw:'',tgt:'',st:'',eng:''};clpLGoTab('rules');}")
     page.wait_for_timeout(200)
-    ok(page.evaluate('()=>CLP_RULES.length') == 7, '规则库 7 条（CR-001 ~ CR-007）')
+    ok(page.evaluate('()=>CLP_RULES.length') == 7, '规则库 7 条（CLP-R-0001 ~ CLP-R-0007）')
+    rules_text = page.locator('#clpTabBody').inner_text()
+    ok('法规专员只需核对规则内容' in rules_text and '内部编号和引擎方法' in rules_text,
+       '页面用业务语言说明法规专员维护边界')
+    ok(page.evaluate('()=>clpNextRuleId()') == 'CLP-R-0008', '新规则内部编号按现有最大序号由系统生成')
     head = page.locator('#clpTable thead').inner_text()
-    for c in ['规则编号', '规则名称', '适用危害类别', '适用对象', '通用浓度限值', '是否允许加和',
-              '依据条款', '计算方法代码', '规则引擎支持状态', '规则测试状态', '人工核对', '规则版本', '审核状态']:
+    for c in ['规则名称', '适用危害类别', '适用对象', '主要判断条件', '自动化状态', '规则校验', '规则版本', '发布状态']:
         ok(c in head, '规则列表含「%s」列' % c)
-    ok('否—逐案评估' in page.locator('#clpTable tbody').inner_text(), '逐案评估规则如实标注')
+    ok('内部规则编号' not in head and '规则引擎方法' not in head, '技术编号与引擎方法不占用主列表')
+    ok('可自动计算' in page.locator('#clpTable tbody').inner_text(), '主列表以业务语言展示自动化状态')
     page.select_option('#clpRuTgt', '混合物')
     page.wait_for_timeout(140)
     ok(page.locator('#clpTable tbody tr').count() == 4, '按适用对象（混合物）筛选出 4 条')
     page.select_option('#clpRuTgt', '')
     page.select_option('#clpRuEng', '需要研发实现')
     page.wait_for_timeout(140)
-    ok(page.locator('#clpTable tbody tr').count() == 1 and 'CR-006' in page.locator('#clpTable tbody').inner_text(),
-       '按引擎「需要研发实现」筛出 CR-006')
+    ok(page.locator('#clpTable tbody tr').count() == 1 and '内分泌干扰物' in page.locator('#clpTable tbody').inner_text(),
+       '按「需技术处理」筛出未实现规则')
     page.select_option('#clpRuEng', '需要配置参数')
     page.wait_for_timeout(140)
-    ok(page.locator('#clpTable tbody tr').count() == 1 and 'CR-007' in page.locator('#clpTable tbody').inner_text(),
-       '按引擎「需要配置参数」筛出 CR-007')
+    ok(page.locator('#clpTable tbody tr').count() == 1 and '桥接原则' in page.locator('#clpTable tbody').inner_text(),
+       '按「待配置」筛出桥接规则')
     page.select_option('#clpRuEng', '')
     page.select_option('#clpRuSt', '待审核')
     page.wait_for_timeout(140)
-    ok(page.locator('#clpTable tbody tr').count() == 2, '按审核状态「待审核」筛出 2 条（CR-006 / CR-007）')
+    ok(page.locator('#clpTable tbody tr').count() == 2, '按审核状态「待审核」筛出 2 条（CLP-R-0006 / CLP-R-0007）')
     page.select_option('#clpRuSt', '')
     page.wait_for_timeout(120)
 
@@ -195,7 +216,7 @@ with sync_playwright() as pw:
     ok(all(('GHS0%d' % i) in pcode for i in range(1, 10)), '图式编号 GHS01–GHS09 齐全')
     ok('急性毒性（经口 / 经皮 / 吸入）1 / 2 / 3' in pcode and '危害水生环境' in pcode, '每个图式列出适用危害类别')
     ok('图片素材建库时一次性导入，不随标签字典导入上传' in body, '说明 Annex V 不随字典导入')
-    ok(page.evaluate('()=>CLP_LABELS.length') == 15, '字典 15 条（含 3 条官方组合码）')
+    ok(page.evaluate('()=>CLP_LABELS.length') == 22, '字典 22 条（补齐规则包可能输出的 H 码，含 3 条官方组合码）')
     codes = page.evaluate("()=>CLP_LABELS.map(x=>x.code).join(' | ')")
     ok('H300+H310' in codes and 'H301+H311+H331' in codes and 'P305+P351+P338' in codes, '含 H / P 官方组合码')
     ok(page.evaluate("()=>CLP_LABELS.filter(x=>x.tp==='EUH 码').every(x=>x.combo.indexOf('EUH 无官方组合码')>=0)"),
@@ -282,6 +303,9 @@ with sync_playwright() as pw:
        and '对照法规原文确认后再上传' in page.locator('#mBody').inner_text(),
        '模板弹窗展示字段契约与列数')
     ok(page.locator('#mBody tbody tr').count() == 15, '模板弹窗列出 15 个模板列')
+    with page.expect_download() as dl:
+        page.locator('#mFoot').get_by_role('button', name='下载 CSV 模板').click()
+    ok(dl.value.suggested_filename == 'CLP_AnnexVI_导入模板_ATP23.csv', '向导内可下载当前模块的真实 CSV 模板')
     back_to_wizard(page)
     ok(page.evaluate('()=>_clpImp.step') == 3 and page.locator('#mBody .drop').count() == 1,
        '二级弹窗可返回向导第 3 步（向导不再丢失）')
@@ -349,8 +373,8 @@ with sync_playwright() as pw:
     fill_and_upload(page, 'rules')
     ok(page.locator('#mBody .cip-chk').count() == 8, 'Annex I 校验项 8 类（内容与 VI 不同）')
     chk = page.locator('#mBody').inner_text()
-    ok('计算方法代码未匹配规则引擎' in chk and '规则测试未通过' in chk, 'Annex I 规则专属校验项出现')
-    ok('CR-006 内分泌干扰物' in chk, '规则测试未通过项点名 CR-006')
+    ok('规则引擎方法未匹配' in chk and '规则测试未通过' in chk, 'Annex I 规则专属校验项出现')
+    ok('CLP-R-0006 内分泌干扰物' in chk, '规则测试未通过项点名 CLP-R-0006')
     ok(page.evaluate('()=>clpImpBlkN()') == 2, 'Annex I 同样 2 项阻断（引擎未匹配 / 测试未通过）')
     segs = page.locator('#mBody .clpimp-seg button').all_text_contents()
     ok(len(segs) == 3 and '规则测试' in segs[1], 'Annex I 才有子 Tab：%s' % ' / '.join(segs))
@@ -362,16 +386,16 @@ with sync_playwright() as pw:
     ok(page.locator('#mBody tbody tr').count() == 4, '规则测试列出 4 个用例')
     ok(page.locator('#mBody tr.cip-row-bad').count() == 1, '未通过的用例行单独标色（1 行）')
     ok('测试未通过' in tt and '本次排除规则' in tt, '测试概览含未通过数与排除数')
-    ok('本次排除' in tt and 'CR-006' in tt and '不计入发布数量' in tt, '标注排除 CR-006 且不计入发布数量')
+    ok('本次排除' in tt and 'CLP-R-0006' in tt and '不计入发布数量' in tt, '标注排除 CLP-R-0006 且不计入发布数量')
     ok(page.evaluate("()=>[].map.call($('cipT4').querySelectorAll('td'),x=>x.textContent).join('|').indexOf('未执行')>=0"),
        '未执行过程如实展示在计算过程列')
-    ok(page.evaluate('()=>CLP_IMP_MODS.rules.excluded[0]') == 'CR-006', '排除清单落在数据层（excluded）')
+    ok(page.evaluate('()=>CLP_IMP_MODS.rules.excluded[0]') == 'CLP-R-0006', '排除清单落在数据层（excluded）')
     page.evaluate("()=>clpImpT4('diff')")
     page.wait_for_timeout(220)
     d = page.locator('#mBody').inner_text()
     ok('已扣除排除项' in d, '版本比较：新增数已扣除排除项')
     add_stat = page.evaluate("()=>clpImpPublishCount().add")
-    ok(add_stat == 1, '发布新增数 = 2 − 1（排除 CR-006） = %s' % add_stat)
+    ok(add_stat == 1, '发布新增数 = 2 − 1（排除 CLP-R-0006） = %s' % add_stat)
     page.evaluate("()=>clpImpT4('chk')")
     page.wait_for_timeout(180)
     ok(clear_blocks(page), '清空 Annex I 的 2 项阻断')
@@ -384,8 +408,8 @@ with sync_playwright() as pw:
     confirm_and_publish(page)
     ok(page.evaluate('()=>CLP_MODULES.rules.ver') == 'R2027.1', '发布后 Annex I 模块版本 → R2027.1')
     ok(page.evaluate('()=>CLP_RULES.length') == n_ru, '规则表条数不变（按编号 upsert，不产生重复行）')
-    ok(page.evaluate("()=>CLP_RULES.filter(r=>r.id==='CR-007')[0].status") == '已发布', 'CR-007 状态转为「已发布」')
-    ok(page.evaluate("()=>CLP_RULES.filter(r=>r.id==='CR-006')[0].status") == '待审核', 'CR-006 保持「待审核」（被排除）')
+    ok(page.evaluate("()=>CLP_RULES.filter(r=>r.id==='CLP-R-0007')[0].status") == '已发布', 'CLP-R-0007 状态转为「已发布」')
+    ok(page.evaluate("()=>CLP_RULES.filter(r=>r.id==='CLP-R-0006')[0].status") == '待审核', 'CLP-R-0006 保持「待审核」（被排除）')
     ok(page.evaluate('()=>CLP_CHANGES[0].mod') == 'rules' and '排除 1 条' in page.evaluate("()=>CLP_CHANGES[0].content"),
        '变更记录标注来源模块与排除条数')
 
@@ -404,7 +428,7 @@ with sync_playwright() as pw:
     n_lb = page.evaluate('()=>CLP_LABELS.length')
     confirm_and_publish(page)
     ok(page.evaluate('()=>CLP_MODULES.labels.ver') == 'L2026.4', '发布后标签字典版本 → L2026.4')
-    ok(page.evaluate('()=>CLP_LABELS.length') == n_lb + 1, 'Tab3 新增 1 条字典条目（15 → 16）')
+    ok(page.evaluate('()=>CLP_LABELS.length') == n_lb + 1, 'Tab3 新增 1 条字典条目（22 → 23）')
     ok(page.evaluate("()=>CLP_LABELS.some(r=>r.code==='H360Df'&&r.st==='新增')"), '新增条目 H360Df 数据状态为「新增」')
 
     print('\n=== 发布结果复核：三张表 + 变更记录 ===')
@@ -419,8 +443,8 @@ with sync_playwright() as pw:
     page.wait_for_timeout(220)
     page.select_option('#clpRuSt', '已发布')
     page.wait_for_timeout(160)
-    ok(page.locator('#clpTable tbody tr').count() == 1 and 'CR-007' in page.locator('#clpTable tbody').inner_text(),
-       '规则表按「已发布」筛出 CR-007')
+    ok(page.locator('#clpTable tbody tr').count() == 1 and '桥接原则' in page.locator('#clpTable tbody').inner_text(),
+       '规则表按「已发布」筛出桥接原则')
     page.select_option('#clpRuSt', '')
     page.evaluate("()=>clpLGoTab('chg')")
     page.wait_for_timeout(220)

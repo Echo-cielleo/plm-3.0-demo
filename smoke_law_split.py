@@ -54,6 +54,9 @@ with sync_playwright() as pw:
     ok(page.locator('#lqTable').get_by_role('button',name='确认复审').count()==0 and page.locator('#lqTable').get_by_role('button',name='查看新版本 diff').count()==0,'查询页证据灯只读且无维护操作')
     page.fill('#lqKw','50-00-0');page.wait_for_timeout(100)
     ok(page.locator('#lqTable tbody tr').count()==6,'按 CAS 50-00-0 一次命中 6 条跨库记录')
+    summary=page.locator('#lqSubstance').inner_text()
+    ok('甲醛' in summary and 'CAS 50-00-0' in summary and '共命中 6 条记录' in summary and '覆盖 6 个法规来源' in summary,
+       '同一 CAS 先展示物质身份与跨法规命中汇总')
     sources=page.locator('#lqTable tbody tr td:nth-child(4)').all_text_contents()
     ok(len(set(sources))==6,'同一物质可同时看到 6 个法规来源')
     page.select_option('#lqSource','zdhc');page.wait_for_timeout(100)

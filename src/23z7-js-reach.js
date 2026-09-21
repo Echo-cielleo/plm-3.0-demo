@@ -274,6 +274,7 @@ function rchRender(){
   $('pageHost').innerHTML='<div class="sds-scope law-page">'+
     sdsHead('reachTitle','REACH 法规库','法规编号 '+REACH_TOP.code+' · 适用市场：'+REACH_TOP.market+' · 当前状态：'+REACH_TOP.status,
       '<button class="btn" onclick="rchToChg()">查看变更摘要</button>'+
+      '<button class="btn" onclick="rchTemplateCenter()">下载导入模板</button>'+
       '<button class="btn primary" onclick="rchImport()">导入新版本</button>')+
     '<div class="card" style="padding:14px 18px;margin-bottom:14px">'+
       '<dl class="desc-list" style="grid-template-columns:120px 1fr 120px 1fr;margin:0">'+
@@ -634,6 +635,27 @@ function rchChgImpact(i){
 }
 
 /* ---------- 11. 导入新版本 · 静态演示向导（与 CLP 页同一套五步） ---------- */
+var REACH_IMP_TEMPLATES={
+  svhc:{label:'SVHC 候选清单',file:'REACH_SVHC_候选清单导入模板.csv',fields:['物质名称','EC 号','CAS 号','列入原因','列入日期','批次','浓度阈值','来源条款']},
+  xiv:{label:'Annex XIV 授权清单',file:'REACH_AnnexXIV_授权清单导入模板.csv',fields:['条目号','物质名称','EC 号','CAS 号','内在属性','最迟申请日期','日落日期','豁免范围','来源条款']},
+  xvii:{label:'Annex XVII 限制清单',file:'REACH_AnnexXVII_限制清单导入模板.csv',fields:['条目号','物质或物质组','EC 号','CAS 号','适用范围','限制条件','限值及单位','豁免条件','生效日期','来源条款']},
+  sds:{label:'SDS 编制要求',file:'REACH_AnnexII_SDS要求导入模板.csv',fields:['章节','子章节','字段要求摘要','适用条件','对应系统字段','模板版本','生效日期','来源条款']},
+  pbt:{label:'Annex XIII PBT/vPvB 判定规则',file:'REACH_AnnexXIII_PBT规则导入模板.csv',fields:['规则名称','判定对象','指标','比较符','阈值','单位','输出结论','例外条件','来源条款']}
+};
+function rchCsvCell(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}
+function rchDownloadTemplate(key){
+  var T=REACH_IMP_TEMPLATES[key]||REACH_IMP_TEMPLATES.xvii;
+  var head=T.fields.map(rchCsvCell).join(','),blank=T.fields.map(function(){return '""';}).join(',');
+  downloadFile(T.file,head+'\r\n'+blank+'\r\n','text/csv;charset=utf-8');
+  toast('已下载「'+T.label+'」导入模板','ok');
+}
+function rchTemplateCenter(){
+  openModal({title:'下载导入模板 · REACH 法规库',width:760,cls:'sds-scope law-page',
+    body:'<div class="notice info" style="margin-bottom:12px"><div class="ni">i</div><div>选择需要维护的 REACH 模块下载 CSV 模板，法规专员只需整理清单内容和法规依据。</div></div>'+
+      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>维护模块</th><th style="width:100px">模板列数</th><th style="width:130px">操作</th></tr></thead><tbody>'+
+      ['svhc','xiv','xvii','sds','pbt'].map(function(k){var T=REACH_IMP_TEMPLATES[k];return '<tr><td><b>'+esc(T.label)+'</b></td><td>'+T.fields.length+' 列</td><td><button class="btn sm" onclick="rchDownloadTemplate(\''+k+'\')">下载 CSV</button></td></tr>';}).join('')+
+      '</tbody></table></div>',footer:'<button class="btn primary" onclick="closeModal()">关闭</button>'});
+}
 var _rchImp={step:1};
 function rchMini(n){
   var t=['登记来源文件','创建新版本','上传结构化数据','查看变更','审核发布'];
@@ -678,6 +700,7 @@ function rchImpHtml(n){
   }
   if(n===3){
     return rchMini(3)+
+      '<div class="toolbar" style="margin-bottom:10px"><b>结构化数据文件</b><div class="grow"></div><button class="btn" onclick="rchDownloadTemplate(\''+esc(_rchImp.mod||'xvii')+'\')">下载当前模块模板</button></div>'+
       '<div style="margin-top:4px"><div class="drop" onclick="document.getElementById(\'riFile\').click()"><div class="ic">⇪</div><p>上传结构化数据文件（Excel / CSV / JSON）</p><small>结构化清单来自官方发布附件的整理稿 · 原型为静态演示，不进行真实解析</small></div>'+
       '<input type="file" id="riFile" accept=".xlsx,.csv,.json" style="display:none" onchange="rchImpPick(this)"></div>'+
       '<div id="riFileRow" style="margin-top:12px"></div>'+

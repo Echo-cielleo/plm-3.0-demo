@@ -82,6 +82,37 @@ with sync_playwright() as p:
         h = page.locator('#pageHost').inner_html()
         kw = {3: '数据项完整度', 4: '分类建议', 5: '化学品及企业标识', 6: '审核与发布操作'}[s]
         print('  步骤 %d 长度 %d 含"%s":%s' % (s, len(h), kw, kw in h))
+        if s == 4:
+            run = page.evaluate("""() => {
+              var live=clpEvaluateMixture(wz.formula),items={};
+              live.items.forEach(x=>items[x.id]={result:x.result,method:x.method,rules:x.ruleIds,formula:x.formula});
+              var frozen=wz.classPack.id,old=CLP_MODULES.rules.ver;
+              CLP_MODULES.rules.ver='R2099.9';
+              var next=clpActivePack().id;
+              CLP_MODULES.rules.ver=old;
+              return {pack:wz.classPack,items:items,labels:live.labels,frozen:frozen,next:next,
+                body:$('wzBody').innerText};
+            }""")
+            print('  规则包=%s 方法=%s' % (run['pack']['id'], ' / '.join(run['pack']['methods'])))
+            print('  计算结果=%s' % ', '.join('%s:%s' % (k, v['result']) for k, v in run['items'].items()))
+            if run['pack']['id'] != 'CLP-EU-ATP22-R2026.2-L2026.3':
+                errors.append('[规则包] 生效包编号不正确：%s' % run['pack']['id'])
+            if run['pack']['methods'] != ['CLP-M-ATE-SUM', 'CLP-M-GCL-SUM', 'CLP-M-SCL', 'CLP-M-MFACTOR']:
+                errors.append('[规则包] 四种计算方法未完整启用')
+            expected = {'acuteOral': 'CLP-M-ATE-SUM', 'skin': 'CLP-M-GCL-SUM', 'sens': 'CLP-M-SCL',
+                        'eye': 'CLP-M-GCL-SUM', 'aqua': 'CLP-M-MFACTOR'}
+            if any(run['items'].get(k, {}).get('method') != v for k, v in expected.items()):
+                errors.append('[规则包] SDS 分类项没有按预期调用规则方法')
+            if run['items']['skin']['result'] != '类别 2' or run['items']['sens']['result'] != '类别 1' \
+                    or run['items']['eye']['result'] != '类别 2':
+                errors.append('[规则包] 示例配方的动态分类结果不正确')
+            if not all(x in run['body'] for x in ['本次调用的 CLP 规则包', 'CLP-R-0001', 'CLP-R-0002',
+                                                  'CLP-M-ATE-SUM', 'CLP-M-GCL-SUM', 'CLP-M-SCL', 'CLP-M-MFACTOR']):
+                errors.append('[规则包] SDS 第 4 步未展示规则包、规则编号与方法代码')
+            if run['frozen'] == run['next'] or run['frozen'] != run['pack']['id']:
+                errors.append('[规则包] SDS 未保留生成时的规则包版本快照')
+            if not run['labels']['hCodes'] or not run['labels']['pCodes']:
+                errors.append('[规则包] 规则包没有返回 H 码与 P 码候选')
         page.screenshot(path=str(SS / ('_ss_sds_step%d.png' % s)))
     page.evaluate("() => { wz.submitted=true; wz.published=true; wz.publishedAt=nowStr(); renderStep6(); }")
     page.wait_for_timeout(250)
