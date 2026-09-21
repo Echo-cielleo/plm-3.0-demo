@@ -31,9 +31,9 @@ var REACH_TOP={
   publish:'已发布 · v2026.08',
   lastCheck:'2026-08-01',
   lastReview:'2026-08-05',
-  auditor:'质管-熊倩',
+  auditor:'质管-杨工',
   cutoff:'2026-08-01',
-  owner:'质管-熊倩',
+  owner:'质管-杨工',
   cycle:'SVHC 每年 1 月 / 7 月各一批；Annex XIV、Annex XVII 随官方修订更新',
   funcs:['SDS 编制','第 15 章法规判断','受限物质查询'],
   note:'REACH 管注册、授权与限制（能不能用、要不要申报）；CLP 管分类与标签。本页面仅涉及 REACH。',
@@ -43,15 +43,15 @@ var REACH_TOP={
 /* 各 Tab 模块自己的版本信息（不同清单更新与生效时间并不同步） */
 var REACH_MODULES={
   sds:{key:'sds',label:'SDS 编制要求',ver:'Annex II · (EU) 2020/878 版',eff:'2021-01-01',status:'已审核',cutoff:'2026-08-01',
-    owner:'质管-熊倩',src:'法规原文（Annex II 结构与内容要求，人工整理成字段要求）',srcTag:'法规原文 · 人工整理',srcFile:'annex_ii_2020_878_structure.json',due:'2027-01-31'},
+    owner:'质管-杨工',src:'法规原文（Annex II 结构与内容要求，人工整理成字段要求）',srcTag:'法规原文 · 人工整理',srcFile:'annex_ii_2020_878_structure.json',due:'2027-01-31'},
   svhc:{key:'svhc',label:'SVHC 候选清单',ver:'第 33 批',eff:'2026-06-25',status:'已生效',cutoff:'2026-06-26',
-    owner:'质管-熊倩',src:'官方候选清单（ECHA 发布，人工导入）',srcTag:'官方清单 · 人工导入',srcFile:'svhc_candidate_list_33.xlsx',due:'2027-01-31'},
+    owner:'质管-杨工',src:'官方候选清单（ECHA 发布，人工导入）',srcTag:'官方清单 · 人工导入',srcFile:'svhc_candidate_list_33.xlsx',due:'2027-01-31'},
   xiv:{key:'xiv',label:'Annex XIV 授权清单',ver:'V2026.1',eff:'2026-05-20',status:'待复核',cutoff:'2026-05-22',
-    owner:'质管-熊倩',src:'官方法规清单（强制采用）',srcTag:'官方清单 · 强制采用',srcFile:'annex_xiv_v2026_1.xlsx',due:'2026-10-31'},
+    owner:'质管-杨工',src:'官方法规清单（强制采用）',srcTag:'官方清单 · 强制采用',srcFile:'annex_xiv_v2026_1.xlsx',due:'2026-10-31'},
   xvii:{key:'xvii',label:'Annex XVII 限制清单',ver:'V2026.2',eff:'2026-06-01',status:'已生效',cutoff:'2026-06-03',
-    owner:'质管-熊倩',src:'官方法规清单（强制采用）',srcTag:'官方清单 · 强制采用',srcFile:'annex_xvii_v2026_2.xlsx',due:'2027-03-31'},
+    owner:'质管-杨工',src:'官方法规清单（强制采用）',srcTag:'官方清单 · 强制采用',srcFile:'annex_xvii_v2026_2.xlsx',due:'2027-03-31'},
   pbt:{key:'pbt',label:'Annex XIII PBT/vPvB 判定规则',ver:'R2026.1',eff:'2026-06-01',status:'已审核',cutoff:'2026-06-20',
-    owner:'质管-熊倩',src:'人工审核规则（由法规专员依 Annex XIII 整理成型）',srcTag:'人工审核规则',srcFile:'annex_xiii_rules_r2026_1.json',due:'2026-12-31'}
+    owner:'质管-杨工',src:'人工审核规则（由法规专员依 Annex XIII 整理成型）',srcTag:'人工审核规则',srcFile:'annex_xiii_rules_r2026_1.json',due:'2026-12-31'}
 };
 
 /* Tab1：SDS 编制要求（16 章结构与字段要求；三条法规依据分清） */
@@ -188,19 +188,19 @@ var REACH_MON={
 var REACH_CHANGES=[
   {mod:'SVHC 候选清单',tp:'新增',content:'候选清单第 34 批：拟新增 3 项物质（2027-01 批）',
    diff:'新增 3 条物质条目（名称 / CAS / 列入原因 / 列入日期）',tpl:'无需改模板；SDS 第 15 章法规引用需重新取值',
-   eff:'2027-01-15（预计）',status:'待审核',by:'质管-熊倩',subs:'待评估',recipes:'—',sds:'—'},
+   eff:'2027-01-15（预计）',status:'待审核',by:'质管-杨工',subs:'待评估',recipes:'—',sds:'—'},
   {mod:'Annex XVII 限制清单',tp:'修改',content:'Entry 77 甲醛：纺织品与皮革限值口径细化',
    diff:'限值由单一阈值改为分品类口径（纺织与皮革 ≤ 75 mg/kg）',tpl:'SDS 第 15 章与受限物质比对口径需同步',
-   eff:'2026-08-06',status:'已审核',by:'质管-熊倩',subs:2,recipes:'2',sds:'2'},
+   eff:'2026-08-06',status:'已审核',by:'质管-杨工',subs:2,recipes:'2',sds:'2'},
   {mod:'Annex XIV 授权清单',tp:'新增',content:'授权清单新增 5 项物质（含铬酸盐类衍生物）',
    diff:'新增 5 个条目及其最迟申请日期 / 日落日期',tpl:'无需改模板；命中组分需提示「需授权」',
-   eff:'2026-11-01（预计）',status:'待审核',by:'质管-熊倩',subs:'待评估',recipes:'—',sds:'—'},
+   eff:'2026-11-01（预计）',status:'待审核',by:'质管-杨工',subs:'待评估',recipes:'—',sds:'—'},
   {mod:'SDS 编制要求',tp:'修改',content:'Annex II 第 14 节运输信息：衔接 UN TDG 第 23 修订版表述',
    diff:'第 14 节 14.1~14.7 子项表述调整（按运输方式分别取数）',tpl:'SDS-TPL-2026.1 → 2026.2（仅第 14 章）',
-   eff:'2026-09-30',status:'已审核',by:'质管-熊倩',subs:'—',recipes:'—',sds:'3'},
+   eff:'2026-09-30',status:'已审核',by:'质管-杨工',subs:'—',recipes:'—',sds:'3'},
   {mod:'Annex XIII PBT/vPvB',tp:'修改',content:'vP 沉积物半衰期判定阈值复核（120 d → 180 d 表述统一）',
    diff:'VP-01 沉积物判定阈值表述与表 2 对齐',tpl:'无需改模板；判定规则版本升级为 R2026.2',
-   eff:'2026-06-01',status:'已审核',by:'质管-熊倩',subs:'—',recipes:'—',sds:'—'}
+   eff:'2026-06-01',status:'已审核',by:'质管-杨工',subs:'—',recipes:'—',sds:'—'}
 ];
 
 /* ---------- 2. 模块证据灯与信息条 ---------- */

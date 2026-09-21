@@ -50,7 +50,7 @@ with sync_playwright() as pw:
     ok('EUR-Lex' in text,'展示官方来源 EUR-Lex')
     ok('当前发布状态' in text,'展示当前发布状态')
     ok('最近检查时间' in text and '最近审核时间' in text and '审核人' in text and '数据截止日期' in text,'展示检查 / 审核 / 审核人 / 数据截止日期')
-    ok('质管-熊倩' in text and 'SVHC 每年 1 月 / 7 月各一批' in text,'展示维护责任人与更新频率')
+    ok('质管-杨工' in text and 'SVHC 每年 1 月 / 7 月各一批' in text,'展示维护责任人与更新频率')
     for f in ['SDS 编制','第 15 章法规判断','受限物质查询']:
         ok(f in text,'影响功能包含「%s」'%f)
     ok('REACH 管注册、授权与限制' in text and '本页面仅涉及 REACH' in text,'法制定位说明（REACH / CLP 分工）')

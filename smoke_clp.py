@@ -30,13 +30,10 @@ def ok(value, message):
         print('  ✘ ' + message)
 
 
-def clear_blocks(page):
-    """逐项点「标记已处理」，直到无未处理阻断项。"""
-    for _ in range(8):
-        if page.evaluate('()=>clpImpBlkN()') == 0:
-            return True
-        page.evaluate("()=>{var b=document.querySelectorAll('#mBody .cip-chk .btn-link');if(b.length)b[0].click();}")
-        page.wait_for_timeout(90)
+def reupload_fixed(page):
+    """上传修正版示例并重新校验；阻断项只能通过该路径清零。"""
+    page.evaluate('()=>clpImpReupload()')
+    page.wait_for_timeout(160)
     return page.evaluate('()=>clpImpBlkN()') == 0
 
 
@@ -90,7 +87,7 @@ with sync_playwright() as pw:
     ok(page.locator('#pageHost .ev').count() > 0 and '复审预警' in text, '顶部展示证据灯')
     ok('CLP 主版本' in text and '2024/2865 修订版' in text, '展示 CLP 主版本')
     ok('最近审核时间' in text and '最近更新时间' in text and '数据截止日期' in text, '展示审核/更新/数据截止日期')
-    ok('质管-熊倩' in text and '附录 VI 随 ATP 发布导入' in text, '展示维护责任人与更新频率')
+    ok('质管-杨工' in text and '附录 VI 随 ATP 发布导入' in text, '展示维护责任人与更新频率')
     pack = page.evaluate('()=>clpActivePack()')
     ok('生效规则包' in text and pack['id'] in text, '顶部展示当前生效规则包')
     ok(pack['id'] == 'CLP-EU-ATP22-R2026.2-L2026.3', '规则包编号由三个生效模块版本组成')
@@ -100,8 +97,17 @@ with sync_playwright() as pw:
        '规则包登记 4 种已支持计算方法')
     for f in ['物质查询', '混合物分类', '标签生成', 'SDS编制']:
         ok(f in text, '影响功能包含「%s」' % f)
-    ok('CLP 管分类与标签' in text and 'REACH 管注册、授权与限制' in text, 'CLP / REACH 分工定位说明完整')
-    ok('C&L Inventory' in text and '独立菜单维护' in text and 'REACH 独立清单' in text, '标注 C&L / SVHC 等不属本页')
+    ok(page.get_by_role('button', name='页面说明').count() == 1, '顶部提供折叠的「页面说明」入口')
+    ok('open' not in (page.locator('#np-law-clp').get_attribute('class') or ''), '提示文本框默认收起')
+    page.get_by_role('button', name='页面说明').click()
+    page.wait_for_timeout(120)
+    hint_text = page.locator('#np-law-clp').inner_text()
+    ok('open' in (page.locator('#np-law-clp').get_attribute('class') or ''), '点击后展开提示文本框')
+    ok('CLP 管分类与标签' in hint_text and 'REACH 管注册、授权与限制' in hint_text, '提示文本框保留 CLP / REACH 分工说明')
+    ok('C&L Inventory' in hint_text and '独立菜单维护' in hint_text and 'REACH 独立清单' in hint_text, '提示文本框保留来源与维护位置说明')
+    ok('法规专员只需核对规则内容' in hint_text and '内部编号和引擎方法' in hint_text, '提示文本框收纳 Annex I 维护说明')
+    page.get_by_role('button', name='页面说明').click()
+    ok('open' not in (page.locator('#np-law-clp').get_attribute('class') or ''), '提示文本框可再次收起')
     ok(page.get_by_role('button', name='下载导入模板').count() == 1, '顶部提供导入模板下载入口')
     page.evaluate('()=>clpTemplateCenter()')
     page.wait_for_timeout(120)
@@ -179,8 +185,8 @@ with sync_playwright() as pw:
     page.wait_for_timeout(200)
     ok(page.evaluate('()=>CLP_RULES.length') == 7, '规则库 7 条（CLP-R-0001 ~ CLP-R-0007）')
     rules_text = page.locator('#clpTabBody').inner_text()
-    ok('法规专员只需核对规则内容' in rules_text and '内部编号和引擎方法' in rules_text,
-       '页面用业务语言说明法规专员维护边界')
+    ok('法规专员只需核对规则内容' not in rules_text and page.locator('#clpTabBody .notice.info').count() == 0,
+       'Annex I 不再平铺维护提示文本框')
     ok(page.evaluate('()=>clpNextRuleId()') == 'CLP-R-0008', '新规则内部编号按现有最大序号由系统生成')
     head = page.locator('#clpTable thead').inner_text()
     for c in ['规则名称', '适用危害类别', '适用对象', '主要判断条件', '自动化状态', '规则校验', '规则版本', '发布状态']:
@@ -206,16 +212,31 @@ with sync_playwright() as pw:
     page.select_option('#clpRuSt', '')
     page.wait_for_timeout(120)
 
-    print('\n=== Tab3 Annex III/IV/V：Annex V 只读图式 + 字段适用性 ===')
+    print('\n=== Tab3 Annex III/IV/V：Annex V 象形图素材管理 + 字段适用性 ===')
     page.evaluate("()=>{_clpF.labels={kw:'',tp:'',st:''};clpLGoTab('labels');}")
     page.wait_for_timeout(220)
     body = page.locator('#clpTabBody').inner_text()
-    ok('Annex V｜危险象形图' in body and '只读' in body, 'Tab3 顶部展示 Annex V 只读图式块')
+    ok('Annex V｜危险象形图' in body and '管理象形图素材' in body, 'Tab3 顶部展示 Annex V 素材管理入口')
     ok(page.locator('#clpTabBody .picto-item').count() == 9, '图式块含 9 个（GHS01–GHS09）')
     pcode = page.locator('#clpTabBody .picto-grid').inner_text()
     ok(all(('GHS0%d' % i) in pcode for i in range(1, 10)), '图式编号 GHS01–GHS09 齐全')
     ok('急性毒性（经口 / 经皮 / 吸入）1 / 2 / 3' in pcode and '危害水生环境' in pcode, '每个图式列出适用危害类别')
-    ok('图片素材建库时一次性导入，不随标签字典导入上传' in body, '说明 Annex V 不随字典导入')
+    page.locator('.clp-picto button', has_text='管理象形图素材').click()
+    page.wait_for_timeout(120)
+    manage = page.locator('#mBody').inner_text()
+    ok('管理象形图素材 · Annex V' in page.locator('#modal .modal-hd').inner_text(), '打开 Annex V 象形图素材管理弹窗')
+    ok(page.locator('#mBody .clp-picto-manage tbody tr').count() == 9, '素材管理表含 9 个固定编号')
+    ok('GHS01' in manage and 'GHS09' in manage and '编号固定，不可新增或删除' in manage, '弹窗明确固定编号与不可新增删除')
+    ok(page.locator('#mBody input[type=file]').count() == 9, '每个象形图提供独立上传 / 替换入口')
+    page.locator('#mBody input[type=file]#clpPicFile-GHS01').set_input_files({
+        'name': 'GHS01-replacement.svg', 'mimeType': 'image/svg+xml',
+        'buffer': b'<svg xmlns="http://www.w3.org/2000/svg"/>'
+    })
+    page.wait_for_timeout(120)
+    ok('GHS01-replacement.svg' in page.locator('#mBody').inner_text() and '已替换（演示）' in page.locator('#mBody').inner_text(),
+       '选择 SVG 后更新素材文件名与状态（演示）')
+    page.evaluate('()=>closeModal()')
+    ok('不参与 Annex III' in manage and 'Annex IV' in manage, 'Annex V 素材维护与 H / EUH / P 字典导入分离')
     ok(page.evaluate('()=>CLP_LABELS.length') == 22, '字典 22 条（补齐规则包可能输出的 H 码，含 3 条官方组合码）')
     codes = page.evaluate("()=>CLP_LABELS.map(x=>x.code).join(' | ')")
     ok('H300+H310' in codes and 'H301+H311+H331' in codes and 'P305+P351+P338' in codes, '含 H / P 官方组合码')
@@ -281,9 +302,9 @@ with sync_playwright() as pw:
     ok([v[3] for v in sig.values()] == [15, 20, 11], '模板列数按模块区分：15 / 20 / 11')
     ok([v[4] for v in sig.values()] == [8, 8, 10], '校验项数按模块区分：8 / 8 / 10')
     ok(page.evaluate("()=>CLP_IMP_MODS.vi.diffTypes.length") == 6 and
-       page.evaluate("()=>CLP_IMP_MODS.rules.diffTypes.length") == 9 and
+       page.evaluate("()=>CLP_IMP_MODS.rules.diffTypes.length") == 10 and
        page.evaluate("()=>CLP_IMP_MODS.labels.diffTypes.length") == 6,
-       '变更类型覆盖面按模块区分：6 / 9 / 6')
+       '变更类型覆盖面按模块区分：6 / 10 / 6')
 
     print('\n=== 导入向导 · 第 3 步：文件门禁 + 模板弹窗可返回 ===')
     page.select_option('#cipMod', 'vi')
@@ -322,20 +343,31 @@ with sync_playwright() as pw:
     segs = page.locator('#mBody .clpimp-seg button').all_text_contents()
     ok(len(segs) == 2 and '数据校验' in segs[0] and '版本比较' in segs[1],
        'Annex VI 第 4 步 2 个子 Tab（无「规则测试」）：%s' % ' / '.join(segs))
+    ok('数据校验' in page.locator('#mBody .clpimp-seg button.on').inner_text(), '第 4 步默认选中「数据校验」')
     ok(page.locator('#mBody .stat').count() == 4, '校验概览 4 个统计块')
-    ok(page.locator('#mBody .cip-chk').count() == 8, 'Annex VI 校验项 8 类')
-    ok('阻断' in page.locator('#mBody .cip-chk').first.inner_text(), '校验项按阻断/告警/提示分级')
-    ok(page.evaluate('()=>clpImpBlkN()') == 2, 'Annex VI 存在 2 项未处理阻断')
+    ok(page.locator('#mBody .cip-check-table tbody tr').count() == 7, 'Annex VI 的 7 类问题以二维表格逐行展示')
+    heads = page.locator('#mBody .cip-check-table thead').inner_text()
+    ok(all(x in heads for x in ['级别', '检查项', '数量', '问题明细', '处理方式', '当前状态']), '校验二维表格 6 列齐全')
+    ok('阻断' in page.locator('#mBody .cip-check-table tbody tr').first.inner_text(), '校验问题按阻断/告警/提示分级')
+    ok(page.evaluate('()=>clpImpBlkN()') == 2 and page.evaluate("()=>clpImpSum('block')") == 5,
+       'Annex VI 明确展示 5 处 / 2 类阻断问题')
+    ok('标记已处理' not in page.locator('#mBody').inner_text(), '阻断项不再提供「标记已处理」快捷放行')
+    with page.expect_download() as dl:
+        page.get_by_role('button', name='下载问题明细').click()
+    ok(dl.value.suggested_filename == 'CLP_vi_校验问题明细.csv', '可下载逐条校验问题明细 CSV')
     ok(page.evaluate("()=>$('cipNext4').disabled") is True, '存在未处理阻断项时「提交审核」禁用')
     page.evaluate("()=>clpLImpNext(5)")
     page.wait_for_timeout(180)
     ok(page.evaluate('()=>_clpImp.step') == 4, '有阻断项时无法进入第 5 步')
-    ok(clear_blocks(page), '逐项「标记已处理」可清空阻断项')
+    ok(reupload_fixed(page), '上传修正版并重新校验后才清空阻断项')
     page.wait_for_timeout(160)
+    ok('修正版复检通过' in page.locator('#mBody').inner_text() and '修正版' in page.evaluate('()=>_clpImp.file'),
+       '复检通过状态与修正版文件名均有留痕')
     ok(page.evaluate("()=>$('cipNext4').disabled") is False, '阻断项清空后「提交审核」解禁')
-    page.evaluate("()=>clpImpT4('diff')")
+    page.locator('#mBody .clpimp-seg button').get_by_text('版本比较').click()
     page.wait_for_timeout(200)
     df = page.locator('#mBody').inner_text()
+    ok('版本比较' in page.locator('#mBody .clpimp-seg button.on').inner_text(), '点击后选中态切换到「版本比较」')
     ok('新增物质' in df and '修改物质' in df and '删除物质' in df, '版本比较覆盖新增/修改/删除')
     ok('变更类型覆盖面' in df and 'SCL / M 因子 / ATE 变化' in df, '版本比较展示该模块的变更类型覆盖面')
     ok('必须经人工逐条核对确认后' in df, '预览强调人工逐条核对')
@@ -371,34 +403,43 @@ with sync_playwright() as pw:
 
     print('\n=== 导入向导 · Annex I 分支：规则测试与排除项 ===')
     fill_and_upload(page, 'rules')
-    ok(page.locator('#mBody .cip-chk').count() == 8, 'Annex I 校验项 8 类（内容与 VI 不同）')
+    ok(page.locator('#mBody .cip-check-table tbody tr').count() == 7, 'Annex I 的 7 类问题使用二维表格（内容与 VI 不同）')
     chk = page.locator('#mBody').inner_text()
     ok('规则引擎方法未匹配' in chk and '规则测试未通过' in chk, 'Annex I 规则专属校验项出现')
     ok('CLP-R-0006 内分泌干扰物' in chk, '规则测试未通过项点名 CLP-R-0006')
+    ok('CLP-R-0008（演示）' in chk and '需创建研发任务后重新测试' in chk,
+       '数据校验展示明确的「需研发开发」演示明细')
     ok(page.evaluate('()=>clpImpBlkN()') == 2, 'Annex I 同样 2 项阻断（引擎未匹配 / 测试未通过）')
     segs = page.locator('#mBody .clpimp-seg button').all_text_contents()
     ok(len(segs) == 3 and '规则测试' in segs[1], 'Annex I 才有子 Tab：%s' % ' / '.join(segs))
-    page.evaluate("()=>clpImpT4('test')")
+    page.locator('#mBody .clpimp-seg button').get_by_text('规则测试').click()
     page.wait_for_timeout(220)
     tt = page.locator('#mBody').inner_text()
+    ok('规则测试' in page.locator('#mBody .clpimp-seg button.on').inner_text(), 'Annex I 点击后选中态切换到「规则测试」')
     st = page.evaluate('()=>clpImpTestStat()')
     ok(st == {'pass': 3, 'fail': 1, 'total': 4}, '规则测试统计 4 例：通过 3 / 未通过 1 → %s' % st)
     ok(page.locator('#mBody tbody tr').count() == 4, '规则测试列出 4 个用例')
     ok(page.locator('#mBody tr.cip-row-bad').count() == 1, '未通过的用例行单独标色（1 行）')
     ok('测试未通过' in tt and '本次排除规则' in tt, '测试概览含未通过数与排除数')
-    ok('本次排除' in tt and 'CLP-R-0006' in tt and '不计入发布数量' in tt, '标注排除 CLP-R-0006 且不计入发布数量')
+    ok('本次排除' in tt and 'CLP-R-0006' in tt and 'CLP-R-0008' in tt and '不计入发布数量' in tt,
+       '标注排除 CLP-R-0006 / CLP-R-0008 且不计入发布数量')
     ok(page.evaluate("()=>[].map.call($('cipT4').querySelectorAll('td'),x=>x.textContent).join('|').indexOf('未执行')>=0"),
        '未执行过程如实展示在计算过程列')
-    ok(page.evaluate('()=>CLP_IMP_MODS.rules.excluded[0]') == 'CLP-R-0006', '排除清单落在数据层（excluded）')
-    page.evaluate("()=>clpImpT4('diff')")
+    ok(page.evaluate('()=>CLP_IMP_MODS.rules.excluded') == ['CLP-R-0006', 'CLP-R-0008'],
+       '两条排除规则落在数据层（excluded）')
+    page.locator('#mBody .clpimp-seg button').get_by_text('版本比较').click()
     page.wait_for_timeout(220)
     d = page.locator('#mBody').inner_text()
+    ok('版本比较' in page.locator('#mBody .clpimp-seg button.on').inner_text(), 'Annex I 点击后选中态切换到「版本比较」')
     ok('已扣除排除项' in d, '版本比较：新增数已扣除排除项')
+    ok('需研发实现' in d and 'CLP-R-0008（演示）' in d and '创建研发任务后重新测试' in d,
+       '版本比较展示「需研发实现」类型及示例明细')
     add_stat = page.evaluate("()=>clpImpPublishCount().add")
-    ok(add_stat == 1, '发布新增数 = 2 − 1（排除 CLP-R-0006） = %s' % add_stat)
-    page.evaluate("()=>clpImpT4('chk')")
+    ok(add_stat == 1, '发布新增数 = 3 − 2（排除 CLP-R-0006 / 0008） = %s' % add_stat)
+    page.locator('#mBody .clpimp-seg button').get_by_text('数据校验').click()
     page.wait_for_timeout(180)
-    ok(clear_blocks(page), '清空 Annex I 的 2 项阻断')
+    ok('数据校验' in page.locator('#mBody .clpimp-seg button.on').inner_text(), 'Annex I 可切回「数据校验」选中态')
+    ok(reupload_fixed(page), 'Annex I 上传修正版并复检后清空 2 类阻断')
     page.wait_for_timeout(160)
     page.evaluate("()=>clpLImpNext(5)")
     page.wait_for_timeout(220)
@@ -410,15 +451,15 @@ with sync_playwright() as pw:
     ok(page.evaluate('()=>CLP_RULES.length') == n_ru, '规则表条数不变（按编号 upsert，不产生重复行）')
     ok(page.evaluate("()=>CLP_RULES.filter(r=>r.id==='CLP-R-0007')[0].status") == '已发布', 'CLP-R-0007 状态转为「已发布」')
     ok(page.evaluate("()=>CLP_RULES.filter(r=>r.id==='CLP-R-0006')[0].status") == '待审核', 'CLP-R-0006 保持「待审核」（被排除）')
-    ok(page.evaluate('()=>CLP_CHANGES[0].mod') == 'rules' and '排除 1 条' in page.evaluate("()=>CLP_CHANGES[0].content"),
+    ok(page.evaluate('()=>CLP_CHANGES[0].mod') == 'rules' and '排除 2 条' in page.evaluate("()=>CLP_CHANGES[0].content"),
        '变更记录标注来源模块与排除条数')
 
     print('\n=== 导入向导 · Annex III/IV/V 分支 ===')
     fill_and_upload(page, 'labels')
-    ok(page.locator('#mBody .cip-chk').count() == 10, '标签字典校验项 10 类')
+    ok(page.locator('#mBody .cip-check-table tbody tr').count() == 9, '标签字典的 9 类问题使用二维表格')
     segs = page.locator('#mBody .clpimp-seg button').all_text_contents()
     ok(len(segs) == 2, '标签字典无「规则测试」子 Tab（仅 2 个子 Tab）：%s' % ' / '.join(segs))
-    ok(clear_blocks(page), '清空标签字典的 2 项阻断')
+    ok(reupload_fixed(page), '标签字典上传修正版并复检后清空 2 类阻断')
     page.wait_for_timeout(160)
     page.evaluate("()=>clpLImpNext(5)")
     page.wait_for_timeout(220)

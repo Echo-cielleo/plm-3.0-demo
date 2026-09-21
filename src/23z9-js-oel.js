@@ -34,7 +34,7 @@
 var OEL_TOP={
   title:'职业接触限值（OEL）',
   lastUpd:'2026-09-12',
-  owner:'质管-熊倩',
+  owner:'质管-杨工',
   note:'OEL 不是一部单独法规：欧盟与中国各自发布限值清单（欧盟 IOELV、中国 GBZ 2.1），限值类型、更新周期与法律效力各不相同。因此本页<b>不逐条维护散落在法规中的条文</b>，而是以「<b>官方来源 → 数据集版本 → 限值明细 → 版本对比 → 审核发布</b>」五步为单位维护。',
   boundary:'限值类型口径不同（中国为 <b>MAC / PC-TWA / PC-STEL</b>，欧盟为 <b>8h TWA / STEL</b>），系统按<b>长期 / 短期 / 上限</b>三个语义槽位对齐类型名，但<b>只对齐语义、不换算数值</b>；同一 CAS 在不同来源、不同版本中的记录<b>并存</b>，由业务按目标市场选用对应数据集版本。'
 };
@@ -75,7 +75,7 @@ var OEL_SOURCES=[
 var OEL_SETS=[
   {id:'DS-EU-2601',rg:'欧盟（EU）',name:'EU IOELV 指示性职业接触限值清单',ver:'V2026.1',
    pub:'2025-12-10',eff:'2026-01-01',exp:'—',pdf:'eu_ioelv_v2026_1_oj.pdf',xls:'eu_ioelv_v2026_1.xlsx',
-   cnt:168,st:'已发布',owner:'质管-熊倩',due:'2026-12-31',
+   cnt:168,st:'已发布',owner:'质管-杨工',due:'2026-12-31',
    note:'含 (EU) 2022/431 新增的甲醛等条目；限值类型 8h TWA / STEL'},
   {id:'DS-CN-1901',rg:'中国',name:'GBZ 2.1-2019 化学有害因素职业接触限值',ver:'2019 版',
    pub:'2019-08-27',eff:'2020-04-01',exp:'—',pdf:'gbz2.1-2019.pdf',xls:'gbz2.1-2019_t1_t4.xlsx',
@@ -83,7 +83,7 @@ var OEL_SETS=[
    note:'表 1 化学有害因素 358 条 + 表 4 生物监测指标；本页限值明细仅收录表 1 节选'},
   {id:'DS-EU-2701',rg:'欧盟（EU）',name:'EU IOELV 指示性职业接触限值清单',ver:'V2027.1',
    pub:'2026-09-15',eff:'待定',exp:'—',pdf:'eu_ioelv_v2027_1_oj.pdf',xls:'eu_ioelv_v2027_1.xlsx',
-   cnt:172,st:'待审核',owner:'质管-熊倩',due:'2026-12-31',
+   cnt:172,st:'待审核',owner:'质管-杨工',due:'2026-12-31',
    note:'已按官方草案整理 172 条（新增乙苯、撤回 2-乙氧基乙醇等）；生效日期待官方公报确认'},
   {id:'DS-CN-2601',rg:'中国',name:'GBZ 2.1 修订版（送审稿）',ver:'2026 送审稿',
    pub:'2026-08-25',eff:'待定',exp:'—',pdf:'gbz2.1_rev_draft.pdf',xls:'gbz2.1_rev_draft_t1.xlsx',
@@ -91,7 +91,7 @@ var OEL_SETS=[
    note:'新增 3 条化学有害因素；部分限值拟收紧（正式发布前不作为合规依据）'},
   {id:'DS-EU-2501',rg:'欧盟（EU）',name:'EU IOELV 指示性职业接触限值清单',ver:'V2025.1',
    pub:'2024-12-05',eff:'2025-01-01',exp:'2025-12-31',pdf:'eu_ioelv_v2025_1_oj.pdf',xls:'eu_ioelv_v2025_1.xlsx',
-   cnt:161,st:'已失效',owner:'质管-熊倩',due:'',
+   cnt:161,st:'已失效',owner:'质管-杨工',due:'',
    note:'已被 V2026.1 替代，保留历史版本用于版本对比与追溯'},
   {id:'DS-CN-2701',rg:'中国',name:'GBZ 2.1 下一次修订',ver:'2027 版',
    pub:'待发布',eff:'待定',exp:'—',pdf:'—',xls:'—',
@@ -177,7 +177,7 @@ var OEL_LIMITS=[
 /* ---------- 5. 版本对比与审核（Tab 4，演示样例数据） ---------- */
 var OEL_CMP={
   A:{rg:'欧盟（EU）',title:'EU IOELV V2026.1 → V2027.1',base:'DS-EU-2601',tgt:'DS-EU-2701',
-     st:'待审核',owner:'质管-熊倩',src:'欧盟委员会 IOELV 指令修订（演示样例）'},
+     st:'待审核',owner:'质管-杨工',src:'欧盟委员会 IOELV 指令修订（演示样例）'},
   B:{rg:'中国',title:'GBZ 2.1-2019 → 2026 送审稿',base:'DS-CN-1901',tgt:'DS-CN-2601',
      st:'待审核',owner:'质管-郭工',src:'国家职业卫生标准修订送审稿（演示样例）'}
 };

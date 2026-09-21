@@ -66,7 +66,7 @@ function rohsRender(){
       ['数据版本','2015/863（2019-07-22 生效）',true],
       ['数据来源','Directive 2011/65/EU Annex II',false],
       ['维护方式','人工维护（10 行结构化数据表）',false],
-      ['维护责任人','质管-熊倩',false],
+      ['维护责任人','质管-杨工',false],
       ['审核状态','已审核 <span class="ev ev-green"><i></i>有效</span>',false,true],
       ['来源类型','官方指令 · 人工维护',false]
     ])+

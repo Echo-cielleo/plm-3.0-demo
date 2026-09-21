@@ -2146,17 +2146,17 @@ body.nav-collapsed .nav-tool-txt{display:none}
 .clpimp-seg button.on{background:#fff;color:var(--primary);font-weight:650;
   box-shadow:0 1px 3px rgba(20,45,80,.10)}
 
-/* ---------- 4. 数据校验分组卡片（阻断 / 告警 / 提示 / 通过） ---------- */
-.cip-chk{border:1px solid var(--line);border-left:3px solid #d5dee8;border-radius:8px;
-  margin-bottom:9px;background:#fff;overflow:hidden}
-.cip-chk.is-done{border-left-color:var(--green);background:#fafdf9}
-.cip-chk-hd{display:flex;align-items:center;gap:8px;padding:9px 12px;
-  background:#f8fafd;border-bottom:1px solid var(--line2);flex-wrap:wrap}
-.cip-chk-hd b{font-size:12.8px;font-weight:650}
-.cip-chk.is-done .cip-chk-hd{background:#f4fbf6}
-.cip-chk-bd{padding:7px 12px 9px 26px;font-size:12.4px;color:var(--ink2,#4a5a6a)}
-.cip-chk-bd li{list-style:disc outside;margin:3px 0;line-height:1.62}
-.cip-chk-bd li b{color:var(--ink,#2c3a4a)}
+/* ---------- 4. 数据校验二维明细表 ---------- */
+.cip-check-actions{padding:0 0 9px;border-bottom:none;gap:8px}
+.cip-check-table{border:1px solid var(--line);border-radius:8px;max-height:340px;overflow:auto}
+.cip-check-table table{width:100%;min-width:0;table-layout:fixed}
+.cip-check-table th{position:sticky;top:0;z-index:1;background:#f5f7fa}
+.cip-check-table th,.cip-check-table td{padding-left:8px;padding-right:8px;word-break:break-word}
+.cip-check-table td{vertical-align:top;line-height:1.5;font-size:11.8px}
+.cip-check-table tr.is-fixed{background:#f7fcf8}
+.cip-check-table tr.is-fixed td:first-child{box-shadow:inset 3px 0 0 var(--green)}
+.cip-check-details{display:flex;flex-direction:column;gap:3px;color:var(--ink2,#4a5a6a)}
+.cip-check-details b{color:var(--ink,#2c3a4a)}
 
 /* ---------- 5. 上传文件的元信息条（第 3 步） ---------- */
 .cip-filemeta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
@@ -9465,7 +9465,7 @@ var CLP_TOP={
   lastReview:'2026-07-18',
   lastUpdate:'2026-07-18 16:05',
   cutoff:'2026-07-15',
-  owner:'质管-熊倩',
+  owner:'质管-杨工',
   cycle:'附录 VI 随 ATP 发布导入；分类规则与标签字典按季度复核',
   funcs:['物质查询','混合物分类','标签生成','SDS编制'],
   note:'CLP 管分类与标签（怎么分类、怎么贴标）；REACH 管注册、授权与限制（能不能用、要不要申报）。本页面仅涉及 CLP。'
@@ -9475,10 +9475,10 @@ var CLP_TOP={
    ATP 口径（2026-09-18 核）：ATP 20 = 2025-02-01；ATP 21 = 2025-09-01；
    ATP 22 = 2026-05-01（现行）；本次导入目标 = ATP 23（待发布）。 */
 var CLP_MODULES={
-  vi:{key:'vi',label:'Annex VI｜物质统一分类',ver:'ATP 22',eff:'2026-05-01',status:'已生效',cutoff:'2026-04-28',owner:'质管-熊倩',src:'整理数据：ECHA CHEM 导出 / 开放数据门户（法律效力以 OJ 公布为准）',srcTag:'官方清单 · 强制采用',due:'2026-10-15'},
-  rules:{key:'rules',label:'Annex I｜分类规则',ver:'R2026.2',eff:'2026-06-01',status:'已审核',cutoff:'2026-06-20',owner:'质管-熊倩',src:'法规专员对照法规原文确认后导入的结构化规则',srcTag:'结构化规则表',due:'2026-12-31'},
-  labels:{key:'labels',label:'Annex III/IV/V｜标签字典',ver:'L2026.3（含 2024/2865 同步）',eff:'2024-12-10',status:'已生效',cutoff:'2026-06-30',owner:'质管-熊倩',src:'官方标签字典（按版本维护）',srcTag:'官方标签字典',due:'2027-03-31'},
-  pcn:{key:'pcn',label:'Annex VIII｜PCN / UFI',ver:'规划中',eff:'—',status:'占位',cutoff:'—',owner:'质管-熊倩',src:'官方法规清单（强制采用）',srcTag:'后续模块 · 静态占位',due:''}
+  vi:{key:'vi',label:'Annex VI｜物质统一分类',ver:'ATP 22',eff:'2026-05-01',status:'已生效',cutoff:'2026-04-28',owner:'质管-杨工',src:'整理数据：ECHA CHEM 导出 / 开放数据门户（法律效力以 OJ 公布为准）',srcTag:'官方清单 · 强制采用',due:'2026-10-15'},
+  rules:{key:'rules',label:'Annex I｜分类规则',ver:'R2026.2',eff:'2026-06-01',status:'已审核',cutoff:'2026-06-20',owner:'质管-杨工',src:'法规专员对照法规原文确认后导入的结构化规则',srcTag:'结构化规则表',due:'2026-12-31'},
+  labels:{key:'labels',label:'Annex III/IV/V｜标签字典',ver:'L2026.3（含 2024/2865 同步）',eff:'2024-12-10',status:'已生效',cutoff:'2026-06-30',owner:'质管-杨工',src:'官方标签字典（按版本维护）',srcTag:'官方标签字典',due:'2027-03-31'},
+  pcn:{key:'pcn',label:'Annex VIII｜PCN / UFI',ver:'规划中',eff:'—',status:'占位',cutoff:'—',owner:'质管-杨工',src:'官方法规清单（强制采用）',srcTag:'后续模块 · 静态占位',due:''}
 };
 
 /* Tab1：Annex VI 物质统一分类（5 条示例数据；euh / picto / signal 对齐 Table 3.1 的 Labelling 区块） */
@@ -9492,23 +9492,23 @@ var CLP_VI_ROWS=[
 
 /* Tab2：Annex I 分类规则（法规专员维护命中条件与参数，计算由已登记的引擎方法执行） */
 var CLP_RULES=[
-  {id:'CLP-R-0001',name:'急性毒性—口服—混合物 ATE 计算规则',cat:'急性毒性（口服）',target:'混合物',gcl:'按 ATE_mix 落入 Cat.1 / 2 / 3 / 4 区间',add:'是',ref:'Annex I，Part 3，3.1.3.6（口服 ATE 加和公式）',ver:'R2026.2',status:'已审核',method:'CLP-M-ATE-SUM',engine:'已支持',test:'通过',checker:'质管-熊倩',checkDate:'2026-06-18',h:'H301',
+  {id:'CLP-R-0001',name:'急性毒性—口服—混合物 ATE 计算规则',cat:'急性毒性（口服）',target:'混合物',gcl:'按 ATE_mix 落入 Cat.1 / 2 / 3 / 4 区间',add:'是',ref:'Annex I，Part 3，3.1.3.6（口服 ATE 加和公式）',ver:'R2026.2',status:'已审核',method:'CLP-M-ATE-SUM',engine:'已支持',test:'通过',checker:'质管-杨工',checkDate:'2026-06-18',h:'H301',
     run:{route:'oral',thresholds:[{max:5,cat:'类别 1',h:'H300'},{max:50,cat:'类别 2',h:'H300'},{max:300,cat:'类别 3',h:'H301'},{max:2000,cat:'类别 4',h:'H302'}]},
     det:{inputs:'各组分浓度 Ci（%）；各组分口服 ATEi（优先取 Annex VI Table 3 统一值；无统一值时取企业自评估值）',cond:'混合物中含 ≥ 1 个已分类急性毒性（口服）组分',formula:'ATE_mix = 100 / Σ( Ci / ATEi )（Ci 为百分比浓度；ATEi 单位 mg/kg 体重）',except:'组分无可靠 ATE 时按 CLP 的未知急性毒性规则处理并记录数据缺口；推定无急性毒性的组分不进入公式',prio:'高（1）——先识别适用组分及可用 ATE，再执行加和',output:'按 ATE_mix 所落区间输出 Acute Tox. 1 / 2 / 3 / 4（口服）',label:'对应 H300 / H301 / H302 + GHS06（Cat.1/2/3）/ GHS07（Cat.4）· 信号词：危险 / 警告',src:'Regulation (EC) No 1272/2008，Annex I，Part 3，第 3.1.3.6 条（急性毒性—混合物 ATE 计算公式）'}},
-  {id:'CLP-R-0002',name:'皮肤腐蚀 / 刺激—通用浓度限值加和规则',cat:'皮肤腐蚀/刺激',target:'混合物',gcl:'Skin Corr. 1：≥ 5%；Skin Irrit. 2：加权和 ≥ 10%',add:'是',ref:'Annex I，Part 3，3.2.3',ver:'R2026.2',status:'已审核',method:'CLP-M-GCL-SUM',engine:'已支持',test:'通过',checker:'质管-熊倩',checkDate:'2026-06-18',h:'H314',
+  {id:'CLP-R-0002',name:'皮肤腐蚀 / 刺激—通用浓度限值加和规则',cat:'皮肤腐蚀/刺激',target:'混合物',gcl:'Skin Corr. 1：≥ 5%；Skin Irrit. 2：加权和 ≥ 10%',add:'是',ref:'Annex I，Part 3，3.2.3',ver:'R2026.2',status:'已审核',method:'CLP-M-GCL-SUM',engine:'已支持',test:'通过',checker:'质管-杨工',checkDate:'2026-06-18',h:'H314',
     run:{skinCorr:5,skinIrrit:10,eyeDamage:3,eyeIrrit:10,weight:10},
     det:{inputs:'各组分浓度 Ci（%）与皮肤腐蚀/刺激分类；各组分的 SCL（如有）',cond:'混合物含 ≥ 1 个 Skin Corr. / Skin Irrit. 已分类组分',formula:'Σ(Skin Corr. 1) ≥ 5% → Skin Corr. 1；否则 10×Σ(Cat.1)+Σ(Cat.2) ≥ 10% → Skin Irrit. 2',except:'Cat.1 内 1A/1B/1C 按 Annex I 细分；有 SCL 的组分以 SCL 替代通用限值',prio:'中（2）——腐蚀判断先于刺激判断，同浓度区间取更严类别',output:'Skin Corr. 1 / Skin Irrit. 2；眼损伤/刺激使用同类加和框架独立判断',label:'对应 H314 / H315 / H318 / H319 + GHS05（腐蚀）/ GHS07（刺激）· 信号词：危险 / 警告',src:'Regulation (EC) No 1272/2008，Annex I，Part 3，第 3.2.3 条（皮肤腐蚀 / 刺激—混合物分类）'}},
-  {id:'CLP-R-0003',name:'SCL（特定浓度限值）优先于通用浓度限值',cat:'全部健康 / 环境危害类别',target:'物质与混合物',gcl:'见 Annex VI Table 3 各条目 SCL 列',add:'否—逐案评估',ref:'Annex I，Part 1，1.2 + Annex VI，Table 3',ver:'R2026.2',status:'已审核',method:'CLP-M-SCL',engine:'已支持',test:'通过',checker:'质管-熊倩',checkDate:'2026-06-18',h:'H317',
+  {id:'CLP-R-0003',name:'SCL（特定浓度限值）优先于通用浓度限值',cat:'全部健康 / 环境危害类别',target:'物质与混合物',gcl:'见 Annex VI Table 3 各条目 SCL 列',add:'否—逐案评估',ref:'Annex I，Part 1，1.2 + Annex VI，Table 3',ver:'R2026.2',status:'已审核',method:'CLP-M-SCL',engine:'已支持',test:'通过',checker:'质管-杨工',checkDate:'2026-06-18',h:'H317',
     run:{sclOverridesGcl:true,skinSensGcl:0.1},
     det:{inputs:'组分对应的 Annex VI 条目及其 SCL 列（例：甲醛 Skin Sens. 1; H317: C ≥ 0.2%）',cond:'组分在 Annex VI Table 3 中挂有 SCL 时触发',formula:'混合物分类时以 SCL 替换同危害类别的通用浓度限值（GCL）参与判断',except:'SCL 高于 GCL 时按 SCL 放宽、低于 GCL 时按 SCL 收紧；同一组分多类别 SCL 分别适用',prio:'高（1）——先于一切通用限值加和规则',output:'按 SCL 门槛得到的混合物分类',label:'以组分各自 SCL 对应的 H 码与标签结果为准',src:'Regulation (EC) No 1272/2008，Annex VI，Table 3 SCL 列；Annex I，Part 1，第 1.2 条（分类与标签一般原则）'}},
-  {id:'CLP-R-0004',name:'慢性水生毒性—M 因子加权求和规则',cat:'危害水生环境（慢性）',target:'混合物',gcl:'按 Table 4.1.2 的 M 因子加权和与 25% 阈值逐级判断',add:'是',ref:'Annex I，Part 4，4.1.3.5（求和法）',ver:'R2026.2',status:'已审核',method:'CLP-M-MFACTOR',engine:'已支持',test:'通过',checker:'质管-熊倩',checkDate:'2026-06-18',h:'H410',
+  {id:'CLP-R-0004',name:'慢性水生毒性—M 因子加权求和规则',cat:'危害水生环境（慢性）',target:'混合物',gcl:'按 Table 4.1.2 的 M 因子加权和与 25% 阈值逐级判断',add:'是',ref:'Annex I，Part 4，4.1.3.5（求和法）',ver:'R2026.2',status:'已审核',method:'CLP-M-MFACTOR',engine:'已支持',test:'通过',checker:'质管-杨工',checkDate:'2026-06-18',h:'H410',
     run:{limit:25,chronic2Weight:10,chronic3Weight:100},
     det:{inputs:'各组分的慢性水生分类与 M 因子（Annex VI 统一 M 或企业自评估 M）',cond:'混合物含 Aquatic Chronic 1 / 2 / 3 / 4 组分',formula:'按 Table 4.1.2 逐级计算：Σ(M×Chronic 1)；10×前项+Σ(Chronic 2)；100×前项+10×Σ(Chronic 2)+Σ(Chronic 3)；总和，均与 25% 比较',except:'无统一 M 的 Chronic 1 组分须依法设定 M 后参与求和；未分类组分不参与但需记录',prio:'中（2）',output:'Aquatic Chronic 1 / 2 / 3 / 4',label:'对应 H410 / H411 / H412 / H413；类别 1 / 2 使用 GHS09',src:'Regulation (EC) No 1272/2008，Annex I，Part 4，第 4.1.3.5 条（危害水生环境—混合物求和法；长期危害加和见 Table 4.1.2）'}},
-  {id:'CLP-R-0005',name:'同一危害类别的分层与优先级原则',cat:'全部危害类别',target:'物质与混合物',gcl:'—',add:'否—逐案评估',ref:'Annex I，Part 1，1.2（分层原则）',ver:'R2026.2',status:'已审核',method:'CLP-M-LAYER',engine:'已支持',test:'通过',checker:'质管-熊倩',checkDate:'2026-06-18',h:'',
+  {id:'CLP-R-0005',name:'同一危害类别的分层与优先级原则',cat:'全部危害类别',target:'物质与混合物',gcl:'—',add:'否—逐案评估',ref:'Annex I，Part 1，1.2（分层原则）',ver:'R2026.2',status:'已审核',method:'CLP-M-LAYER',engine:'已支持',test:'通过',checker:'质管-杨工',checkDate:'2026-06-18',h:'',
     det:{inputs:'同一健康危害路径下的多个候选分类结果',cond:'同一路径（如口服急性毒性）出现多个可选类别时',formula:'取证据支持的最严类别；上位类别覆盖下位类别（如 Carc. 1B 与 Carc. 2 并存时输出 1B）',except:'不同路径（口服/皮肤/吸入）互不覆盖，分别输出；物理危害按各 Hazard 类别独立规则执行',prio:'低（3）——在其他规则产出结果后应用',output:'每个危害路径的最终唯一分类',label:'以最终分类对应的 H 码与标签结果为准',src:'Regulation (EC) No 1272/2008，Annex I，Part 1，第 1.2 条（分类与标签一般原则）'}},
-  {id:'CLP-R-0006',name:'内分泌干扰物（ED）与 PBT / vPvB / PMT / vPvM 判定规则',cat:'附加危害类别（欧盟特有）',target:'物质与混合物',gcl:'ED（人类健康 / 环境）：≥ 0.1%（按组分）；PBT / vPvB / PMT / vPvM：按 Annex I Part 5 判定要素',add:'否—逐案评估',ref:'Annex I，Part 5（(EU) 2024/2865 引入的附加危害）',ver:'R2027.1',status:'待审核',method:'CLP-M-ED-PBT',engine:'需要研发实现',test:'未执行',checker:'质管-熊倩',checkDate:'2026-09-16',h:'',
+  {id:'CLP-R-0006',name:'内分泌干扰物（ED）与 PBT / vPvB / PMT / vPvM 判定规则',cat:'附加危害类别（欧盟特有）',target:'物质与混合物',gcl:'ED（人类健康 / 环境）：≥ 0.1%（按组分）；PBT / vPvB / PMT / vPvM：按 Annex I Part 5 判定要素',add:'否—逐案评估',ref:'Annex I，Part 5（(EU) 2024/2865 引入的附加危害）',ver:'R2027.1',status:'待审核',method:'CLP-M-ED-PBT',engine:'需要研发实现',test:'未执行',checker:'质管-杨工',checkDate:'2026-09-16',h:'',
     det:{inputs:'组分的持久性（P）/ 生物累积性（B）/ 毒性（T）测试与评估数据；内分泌活性证据（人体健康 / 环境）',cond:'组分同时满足 P / B / T 判定要素，或存在内分泌干扰活性证据时触发',formula:'按 Annex I Part 5 要素逐项判定（不适用浓度加和公式）：ED → 分类为 ED（人类健康）/ ED（环境）；PBT / vPvB / PMT / vPvM 分别按各自要素判定',except:'无完整测试数据时按 Annex I Part 5 的「证据权重」途径评估；UVCB 物质与金属化合物另有专门判定要素',prio:'中（2）——在常规危害类别判定完成后附加',output:'ED（人类健康）/ ED（环境）/ PBT / vPvB / PMT / vPvM',label:'对应 EUH380 / EUH381（内分泌干扰）与 EUH430 / EUH431 / EUH440 / EUH441 / EUH450 / EUH451（环境）等补充说明',src:'Regulation (EC) No 1272/2008，Annex I，Part 5（由 (EU) 2024/2865 引入；配套危害类别由 (EU) 2023/707 建立）'}},
-  {id:'CLP-R-0007',name:'桥接原则（Bridging）—相似混合物分类沿用规则',cat:'分类与标签一般原则',target:'混合物',gcl:'—',add:'否—逐案评估',ref:'Annex I，Part 1，1.5（桥接原则）',ver:'R2027.1',status:'待审核',method:'CLP-M-BRIDGE',engine:'需要配置参数',test:'通过',checker:'质管-熊倩',checkDate:'2026-09-17',h:'',
+  {id:'CLP-R-0007',name:'桥接原则（Bridging）—相似混合物分类沿用规则',cat:'分类与标签一般原则',target:'混合物',gcl:'—',add:'否—逐案评估',ref:'Annex I，Part 1，1.5（桥接原则）',ver:'R2027.1',status:'待审核',method:'CLP-M-BRIDGE',engine:'需要配置参数',test:'通过',checker:'质管-杨工',checkDate:'2026-09-17',h:'',
     det:{inputs:'相似混合物（稀释 / 浓度变化 / 同族组分替换）的已有分类结论与组分对照表',cond:'混合物由已分类混合物经稀释、浓度调整或同族组分替换得到，且危害类别不变时触发',formula:'按桥接场景逐案调用（不适用统一公式）：桥接表与判定参数需在规则引擎中配置后启用',except:'桥接不得用于致癌 / 生殖毒性 / 致突变等无阈值危害；桥接结论须由法规专员确认并留痕',prio:'低（3）——在常规规则之后应用',output:'沿用被桥接混合物的分类结论',label:'以沿用分类对应的 H 码与标签结果为准',src:'Regulation (EC) No 1272/2008，Annex I，Part 1，第 1.5 条（桥接原则）'}}
 ];
 
@@ -9676,18 +9676,18 @@ function clpEvaluateMixture(formula){
   return {pack:pack,items:items,labels:{hCodes:hCodes,pCodes:pCodes,pictograms:pictograms,signal:signal}};
 }
 
-/* Annex V 危险象形图（GHS01–GHS09，9 个，只读展示）
-   素材（图片）在建库时一次性导入，不随标签字典导入上传；本页只展示编号 / 名称 / 适用危害类别。 */
+/* Annex V 危险象形图（GHS01–GHS09，9 个，固定编号）
+   素材（图片）独立维护，不随标签字典结构化数据导入；本页展示编号 / 名称 / 适用危害类别。 */
 var CLP_PICTO=[
-  {code:'GHS01',name:'爆炸物',cls:'不稳定爆炸物；爆炸物 1.1 / 1.2 / 1.3 / 1.4；自反应物质与混合物 A / B；有机过氧化物 A / B'},
-  {code:'GHS02',name:'火焰',cls:'易燃气体 1；气溶胶 1 / 2；易燃液体 1 / 2 / 3；易燃固体 1 / 2；自反应物质 B–F；发火液体 1；发火固体 1；自热物质 1 / 2；遇水放出易燃气体的物质 1 / 2 / 3；有机过氧化物 B–F'},
-  {code:'GHS03',name:'火焰在圆环上',cls:'氧化性气体 1；氧化性液体 1 / 2 / 3；氧化性固体 1 / 2 / 3'},
-  {code:'GHS04',name:'气瓶',cls:'加压气体（压缩气体 / 液化气体 / 冷冻液化气体 / 溶解气体）'},
-  {code:'GHS05',name:'腐蚀',cls:'金属腐蚀物 1；皮肤腐蚀 1A / 1B / 1C；严重眼损伤 1'},
-  {code:'GHS06',name:'骷髅与交叉骨',cls:'急性毒性（经口 / 经皮 / 吸入）1 / 2 / 3'},
-  {code:'GHS07',name:'感叹号',cls:'急性毒性 4；皮肤刺激 2；眼刺激 2；皮肤致敏 1 / 1A / 1B；呼吸道刺激（STOT SE 3）；麻醉效应（STOT SE 3）'},
-  {code:'GHS08',name:'健康危害',cls:'呼吸道致敏 1 / 1A / 1B；生殖细胞致突变 1A / 1B / 2；致癌 1A / 1B / 2；生殖毒性 1A / 1B / 2；STOT SE 1 / 2；STOT RE 1 / 2；吸入危害 1'},
-  {code:'GHS09',name:'环境',cls:'危害水生环境·急性 1；危害水生环境·慢性 1 / 2'}
+  {code:'GHS01',name:'爆炸物',cls:'不稳定爆炸物；爆炸物 1.1 / 1.2 / 1.3 / 1.4；自反应物质与混合物 A / B；有机过氧化物 A / B',file:'GHS01.svg',state:'已上传',updated:'2026-06-30',owner:'质管-杨工'},
+  {code:'GHS02',name:'火焰',cls:'易燃气体 1；气溶胶 1 / 2；易燃液体 1 / 2 / 3；易燃固体 1 / 2；自反应物质 B–F；发火液体 1；发火固体 1；自热物质 1 / 2；遇水放出易燃气体的物质 1 / 2 / 3；有机过氧化物 B–F',file:'GHS02.svg',state:'已上传',updated:'2026-06-30',owner:'质管-杨工'},
+  {code:'GHS03',name:'火焰在圆环上',cls:'氧化性气体 1；氧化性液体 1 / 2 / 3；氧化性固体 1 / 2 / 3',file:'GHS03.svg',state:'已上传',updated:'2026-06-30',owner:'质管-杨工'},
+  {code:'GHS04',name:'气瓶',cls:'加压气体（压缩气体 / 液化气体 / 冷冻液化气体 / 溶解气体）',file:'GHS04.svg',state:'已上传',updated:'2026-06-30',owner:'质管-杨工'},
+  {code:'GHS05',name:'腐蚀',cls:'金属腐蚀物 1；皮肤腐蚀 1A / 1B / 1C；严重眼损伤 1',file:'GHS05.svg',state:'已上传',updated:'2026-06-30',owner:'质管-杨工'},
+  {code:'GHS06',name:'骷髅与交叉骨',cls:'急性毒性（经口 / 经皮 / 吸入）1 / 2 / 3',file:'GHS06.svg',state:'已上传',updated:'2026-06-30',owner:'质管-杨工'},
+  {code:'GHS07',name:'感叹号',cls:'急性毒性 4；皮肤刺激 2；眼刺激 2；皮肤致敏 1 / 1A / 1B；呼吸道刺激（STOT SE 3）；麻醉效应（STOT SE 3）',file:'GHS07.svg',state:'已上传',updated:'2026-06-30',owner:'质管-杨工'},
+  {code:'GHS08',name:'健康危害',cls:'呼吸道致敏 1 / 1A / 1B；生殖细胞致突变 1A / 1B / 2；致癌 1A / 1B / 2；生殖毒性 1A / 1B / 2；STOT SE 1 / 2；STOT RE 1 / 2；吸入危害 1',file:'GHS08.svg',state:'已上传',updated:'2026-06-30',owner:'质管-杨工'},
+  {code:'GHS09',name:'环境',cls:'危害水生环境·急性 1；危害水生环境·慢性 1 / 2',file:'GHS09.svg',state:'已上传',updated:'2026-06-30',owner:'质管-杨工'}
 ];
 
 /* Tab3：Annex III/IV/V 标签字典（官方字典，按版本维护；非企业自行分类结果） */
@@ -9718,11 +9718,11 @@ var CLP_LABELS=[
 
 /* Tab5：版本变更与影响（物质数量来自官方变更清单；配方/SDS 数量为示例数据） */
 var CLP_CHANGES=[
-  {mod:'vi',tp:'新增',content:'ATP 22：新增 12 个统一分类条目（含 2-乙基己酸酯类等）',reason:'ECHA RAC 意见采纳 → 第 22 次 ATP',eff:'2026-05-01',by:'质管-熊倩',subs:12,recipes:'3',sds:'2'},
-  {mod:'vi',tp:'修改',content:'ATP 22：5 项条目分类加严（含甲醛相关 SCL 调整）',reason:'毒理学与生态毒理学证据更新',eff:'2026-05-01',by:'质管-熊倩',subs:5,recipes:'2',sds:'2'},
-  {mod:'vi',tp:'废止',content:'ATP 22：2 项旧条目被新条目替代删除',reason:'条目整合清理',eff:'2026-05-01',by:'质管-熊倩',subs:2,recipes:'0',sds:'0'},
-  {mod:'rules',tp:'新增',content:'分类规则库：新增 5 类欧盟附加危害类别（ED / PBT / vPvB / PMT / vPvM）判定规则',reason:'(EU) 2023/707 新危害类别实施',eff:'2026-11-01（存量物质截止）',by:'质管-熊倩',subs:'待评估',recipes:'—',sds:'—'},
-  {mod:'labels',tp:'修改',content:'标签字典：版式规则更新（最小字号、行距 ≥ 字号 120%、P 码每标签 ≤ 6 条）',reason:'(EU) 2024/2865 CLP 大修',eff:'2026-05-20（过渡期截止）',by:'质管-熊倩',subs:'—',recipes:'—',sds:'—'}
+  {mod:'vi',tp:'新增',content:'ATP 22：新增 12 个统一分类条目（含 2-乙基己酸酯类等）',reason:'ECHA RAC 意见采纳 → 第 22 次 ATP',eff:'2026-05-01',by:'质管-杨工',subs:12,recipes:'3',sds:'2'},
+  {mod:'vi',tp:'修改',content:'ATP 22：5 项条目分类加严（含甲醛相关 SCL 调整）',reason:'毒理学与生态毒理学证据更新',eff:'2026-05-01',by:'质管-杨工',subs:5,recipes:'2',sds:'2'},
+  {mod:'vi',tp:'废止',content:'ATP 22：2 项旧条目被新条目替代删除',reason:'条目整合清理',eff:'2026-05-01',by:'质管-杨工',subs:2,recipes:'0',sds:'0'},
+  {mod:'rules',tp:'新增',content:'分类规则库：新增 5 类欧盟附加危害类别（ED / PBT / vPvB / PMT / vPvM）判定规则',reason:'(EU) 2023/707 新危害类别实施',eff:'2026-11-01（存量物质截止）',by:'质管-杨工',subs:'待评估',recipes:'—',sds:'—'},
+  {mod:'labels',tp:'修改',content:'标签字典：版式规则更新（最小字号、行距 ≥ 字号 120%、P 码每标签 ≤ 6 条）',reason:'(EU) 2024/2865 CLP 大修',eff:'2026-05-20（过渡期截止）',by:'质管-杨工',subs:'—',recipes:'—',sds:'—'}
 ];
 
 /* ---------- 2. 模块证据灯与信息条 ---------- */
@@ -9791,11 +9791,18 @@ function clpLTopLamp(){
 
 function clpLRender(){
   var worst=clpLTopLamp(),pack=clpActivePack();
+  var hint=noteBlock('law-clp',
+    '<b>法规分工</b><br>'+esc(CLP_TOP.note)+
+    '<div class="np-n"><b>来源类型与维护位置</b>Annex VI 官方统一分类（强制采用，本页 Tab 1）· Annex I 分类判断规则（人工整理，本页 Tab 2）· Annex III/IV/V 官方标签字典（本页 Tab 3）；C&L Inventory 为 ECHA 企业申报汇总参考，<strong>独立菜单维护，不并入本页</strong>；SVHC / Annex XIV / Annex XVII 属 <strong>REACH 独立清单</strong>，亦不在本页。</div>'+
+    '<div class="np-n"><b>Annex I 规则维护</b>法规专员只需核对规则内容：上传结构化规则后，系统自动匹配计算能力并完成校验；用户重点确认适用范围、判断条件、输出结果与法规依据，处理异常后发布。内部编号和引擎方法收在详情的「技术信息」中，无需日常维护。</div>',
+    '页面说明');
   $('pageHost').innerHTML='<div class="sds-scope clp-page">'+
     sdsHead('clpTitle','CLP 法规库','法规编号 '+CLP_TOP.code+' · 适用市场：'+CLP_TOP.market+' · 当前状态：'+CLP_TOP.status,
+      hint.btn+
       '<button class="btn" onclick="clpLGoChg()">查看变更摘要</button>'+
       '<button class="btn" onclick="clpTemplateCenter()">下载导入模板</button>'+
       '<button class="btn primary" onclick="clpLImport()">导入新版本</button>')+
+    hint.panel+
     '<div class="card" style="padding:14px 18px;margin-bottom:14px">'+
       '<dl class="desc-list" style="grid-template-columns:120px 1fr 120px 1fr;margin:0">'+
         '<dt>法规名称</dt><dd><b>'+esc(CLP_TOP.name)+'</b></dd>'+
@@ -9814,8 +9821,6 @@ function clpLRender(){
           +'<span class="tag '+(pack.tested?'green':'red')+' dot-tag">'+esc(pack.status)+'</span>'
           +'<span class="muted" style="margin-left:8px">Annex VI '+esc(pack.modules.vi)+' · Annex I '+esc(pack.modules.rules)+' · 标签字典 '+esc(pack.modules.labels)+' · '+pack.methods.length+' 种计算方法</span></dd>'+
       '</dl>'+
-      '<div class="notice info" style="margin:12px 0 0"><div class="ni">i</div><div>'+esc(CLP_TOP.note)+'</div></div>'+
-      '<div class="notice grey" style="margin:10px 0 0"><div class="ni">§</div><div><b>来源类型与维护位置：</b>Annex VI 官方统一分类（强制采用，本页 Tab 1）· Annex I 分类判断规则（人工整理，本页 Tab 2）· Annex III/IV/V 官方标签字典（本页 Tab 3）；C&L Inventory 为 ECHA 企业申报汇总参考，<b>独立菜单维护，不并入本页</b>；SVHC / Annex XIV / Annex XVII 属 <b>REACH 独立清单</b>，亦不在本页。</div></div>'+
     '</div>'+
     '<div id="clpTabs" style="margin-bottom:12px"></div>'+
     '<div id="clpTabBody"></div>'+
@@ -9837,7 +9842,6 @@ function clpLRenderTab(){
   var m=_clpTab==='chg'?null:CLP_MODULES[_clpTab];
   var h=m?clpLStrip(m):'<div class="notice warn" style="margin-bottom:12px"><div class="ni">!</div><div>本页汇总各模块的版本变更记录。<b>影响配方数量与 SDS 数量为示例数据</b>（原型阶段），不代表系统已具备影响分析能力。</div></div>';
   if(_clpTab==='labels')h+=clpLPictoBlock();
-  if(_clpTab==='rules')h+='<div class="notice info" style="margin-bottom:12px"><div class="ni">i</div><div><b>法规专员只需核对规则内容：</b>上传结构化规则后，系统自动匹配计算能力并完成校验；用户重点确认适用范围、判断条件、输出结果与法规依据，处理异常后发布。内部编号和引擎方法收在详情的「技术信息」中，无需日常维护。</div></div>';
   h+='<div class="card"><div class="toolbar" style="flex-wrap:wrap">';
   if(_clpTab==='vi'){
     var f=_clpF.vi;
@@ -9959,16 +9963,33 @@ function clpLRuStTag(v){
   var c=(v==='已发布'||v==='已审核')?'green':(v==='待审核'?'orange':(v==='审核中'?'blue':'grey'));
   return '<span class="tag '+c+' dot-tag">'+esc(v||'—')+'</span>';
 }
-/* Annex V 危险象形图：只读展示块（图片素材建库时一次性导入，不随字典导入上传） */
+/* Annex V 危险象形图：固定编号展示 + 图片素材独立维护入口 */
 function clpLPictoBlock(){
   return '<div class="card clp-picto" style="margin-bottom:12px;padding:14px 18px">'+
-    '<div class="toolbar" style="margin-bottom:10px"><b style="font-size:13.5px">Annex V｜危险象形图（GHS01–GHS09，共 '+CLP_PICTO.length+' 个 · 只读）</b>'+
-    '<div class="grow"></div><span class="muted" style="font-size:12px">图片素材建库时一次性导入，不随标签字典导入上传</span></div>'+
+    '<div class="toolbar" style="margin-bottom:10px"><b style="font-size:13.5px">Annex V｜危险象形图（GHS01–GHS09，共 '+CLP_PICTO.length+' 个）</b>'+
+    '<div class="grow"></div><span class="muted" style="font-size:12px;margin-right:8px">9 个固定编号 · 素材独立维护</span><button class="btn sm" onclick="clpLPictoManage()">管理象形图素材</button></div>'+
     '<div class="picto-grid">'+CLP_PICTO.map(function(p){
       return '<div class="picto-item"><span class="pdia"><i></i></span><div><b class="mono">'+esc(p.code)+'</b><span>'+esc(p.name)+'</span><em>'+esc(p.cls)+'</em></div></div>';
     }).join('')+'</div>'+
-    '<div class="notice grey" style="margin:12px 0 0"><div class="ni">§</div><div><b>为什么 Annex V 不随字典导入：</b>象形图是<b>图片资产</b>（GHS01–GHS09 为官方图片文件），不是文本表格。本页只维护「编号 → 名称 → 适用危害类别」的对照关系；图片素材在建库时一次性导入，字典导入流程只覆盖 Annex III（H 码 / EUH）与 Annex IV（P 码）。</div></div>'+
     '</div>';
+}
+function clpLPictoManage(){
+  var rows=CLP_PICTO.map(function(p){
+    var st=p.state==='已上传'?'<span class="tag green">已上传</span>':'<span class="tag orange">'+esc(p.state||'待保存')+'</span>';
+    return '<tr><td class="mono"><b>'+esc(p.code)+'</b></td><td>'+esc(p.name)+'</td><td><span class="mono">'+esc(p.file||'未上传')+'</span><span class="sub">'+st+'</span></td><td>'+esc(p.updated||'—')+'<span class="sub">'+esc(p.owner||'—')+'</span></td><td class="acts"><label class="btn sm">上传 / 替换<input type="file" id="clpPicFile-'+esc(p.code)+'" accept=".svg,.png,image/svg+xml,image/png" style="display:none" onchange="clpLPictoPick(\''+esc(p.code)+'\',this)"></label></td></tr>';
+  }).join('');
+  openModal({title:'管理象形图素材 · Annex V',width:900,cls:'sds-scope clp-page',body:
+    '<div class="notice info" style="margin-bottom:12px"><div class="ni">i</div><div><b>素材单独维护：</b>仅支持 SVG / PNG；GHS01–GHS09 编号固定，不可新增或删除。本入口只维护图片文件，不参与 Annex III（H / EUH）与 Annex IV（P 码）的结构化字典导入。</div></div>'+
+    '<div class="tbl-wrap clp-picto-manage"><table class="tbl tbl-sm"><thead><tr><th style="width:90px">编号</th><th style="width:120px">名称</th><th>当前素材</th><th style="width:150px">最近更新</th><th style="width:110px">操作</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+  });
+}
+function clpLPictoPick(code,el){
+  var p=CLP_PICTO.filter(function(x){return x.code===code;})[0],f=el&&el.files&&el.files[0];
+  if(!p||!f)return;
+  if(!/\.(svg|png)$/i.test(f.name)){toast('仅支持 SVG 或 PNG 图片','warn');el.value='';return;}
+  p.file=f.name;p.state='已替换（演示）';p.updated='2026-09-21';p.owner=CLP_TOP.owner;
+  clpLPictoManage();
+  toast(p.code+' 素材已替换（演示）','ok');
 }
 /* 通用表格渲染（cols: [标题,取值键,宽度] 仅用于表头；行内容由 rowHtml 生成） */
 function clpLTable(cols,rows,rowHtml){
@@ -10254,7 +10275,7 @@ var CLP_IMP_MODS={
       ['人工核对日期','核对完成日期（YYYY-MM-DD）']
     ],
     checks:[
-      {name:'规则引擎方法未匹配',lv:'block',cnt:2,rows:['CLP-M-ED-PBT —— 方法已登记，但规则引擎尚未实现','CLP-M-NEWTOX —— 方法代码不在「计算方法字典」中']},
+      {name:'规则引擎方法未匹配',lv:'block',cnt:3,rows:['CLP-M-ED-PBT —— 方法已登记，但规则引擎尚未实现','CLP-M-NEWTOX —— 方法代码不在「计算方法字典」中','CLP-R-0008（演示）/ CLP-M-NEWTOX —— 新计算方法尚未开发，需创建研发任务后重新测试']},
       {name:'规则测试未通过',lv:'block',cnt:1,rows:['CLP-R-0006 内分泌干扰物（ED）与 PBT / vPvB / PMT / vPvM 判定规则 —— 测试未执行（引擎缺判定模块）']},
       {name:'H 码未匹配标签字典',lv:'warn',cnt:1,rows:['CLP-R-0006 输出的 EUH450 在本次标签字典版本中未找到']},
       {name:'规则之间存在重复或冲突',lv:'warn',cnt:2,rows:['CLP-R-0005 分层原则与 CLP-R-0001 的类别择优逻辑重叠','CLP-R-0007 桥接原则与 CLP-R-0002 通用限值加和在适用条件上互斥']},
@@ -10270,19 +10291,20 @@ var CLP_IMP_MODS={
       {name:'混合物 T-04',conc:'含 2-乙基己酸锆 3%',rule:'CLP-R-0006',calc:'规则引擎缺少 ED / PBT 判定模块，未执行',expect:'Repr. 1B / H360Df',actual:'—（未执行）',res:'未通过'}
     ],
     testNote:'测试未通过的规则**不进入本次发布清单**，需在引擎补齐后重新测试。',
-    excluded:['CLP-R-0006'],
-    diffs:{add:2,mod:3,del:1},
-    diffTypes:['新增规则','修改规则','废止规则','阈值变化','公式变化','例外条件变化','优先级变化','输出分类变化','来源条款变化'],
+    excluded:['CLP-R-0006','CLP-R-0008'],
+    diffs:{add:3,mod:3,del:1},
+    diffTypes:['新增规则','修改规则','废止规则','阈值变化','公式变化','例外条件变化','优先级变化','输出分类变化','来源条款变化','需研发实现'],
     items:[
       {tp:'新增规则',k:'CLP-R-0007',n:'桥接原则（Bridging）—相似混合物分类沿用规则',a:'—',b:'沿用被桥接混合物分类',note:'引擎「需要配置参数」：参数已配置、测试通过 → 进入发布清单'},
       {tp:'新增规则',k:'CLP-R-0006',n:'内分泌干扰物（ED）与 PBT / vPvB / PMT / vPvM 判定规则',a:'—',b:'ED / PBT / vPvB / PMT / vPvM 判定',note:'引擎「需要研发实现」+ 测试未执行 → 本次不发布'},
+      {tp:'需研发实现',k:'CLP-R-0008（演示）',n:'新危害类别判定规则（演示条目）',a:'—',b:'待开发 CLP-M-NEWTOX',note:'计算方法尚未开发；本次排除发布，创建研发任务后重新测试'},
       {tp:'阈值变化',k:'CLP-R-0001',n:'急性毒性—口服—混合物 ATE 计算规则',a:'Cat.2 ≥ 1% 且 < 5%',b:'Cat.2 ≥ 1% 且 < 5%（单位统一为 %）',note:'单位补全，数值未变'},
       {tp:'公式变化',k:'CLP-R-0004',n:'慢性水生毒性—M 因子加权求和规则',a:'Chronic 2：Σ(Mi × Ci) ≥ 25%',b:'Chronic 2：Σ(10 × Mi × Ci) ≥ 25%',note:'按 Table 4.1.4 修正慢性折算系数'},
       {tp:'例外条件变化',k:'CLP-R-0003',n:'SCL（特定浓度限值）优先于通用浓度限值',a:'未说明多类别 SCL 并存处理',b:'同一组分多类别 SCL 分别适用',note:'补充例外条件'},
       {tp:'优先级变化',k:'CLP-R-0005',n:'同一危害类别的分层与优先级原则',a:'中（2）',b:'低（3）',note:'调整与其他规则的执行次序'},
       {tp:'废止规则',k:'CLP-R-0000',n:'旧版急性毒性 ATE 换算（R2025 遗留）',a:'R2026.2 生效',b:'—',note:'已被 CLP-R-0001 完全覆盖'}
     ],
-    landed:'新增 1 条规则（CLP-R-0007）落入 Tab2（状态由「待审核」转为「已发布」，版本写为本次版本号）；CLP-R-0006 因规则测试未通过被排除，不进入发布清单'
+    landed:'新增 1 条规则（CLP-R-0007）落入 Tab2（状态由「待审核」转为「已发布」，版本写为本次版本号）；CLP-R-0006 与 CLP-R-0008（演示）因需技术处理或测试未通过被排除，不进入发布清单'
   },
   labels:{
     key:'labels',label:'Annex III/IV/V｜标签字典',
@@ -10341,7 +10363,7 @@ var CLP_IMP_KEYS=['vi','rules','labels'];
 var CLP_IMP_LV={block:'阻断',warn:'告警',info:'提示',pass:'通过'};
 
 /* ---------- 2. 向导状态 ---------- */
-var _clpImp={step:1,mod:'vi',t4:'chk',done:{},file:'',origFile:'',uploadAt:''};
+var _clpImp={step:1,mod:'vi',t4:'chk',rechecked:false,file:'',origFile:'',uploadAt:''};
 
 function clpImpCsvCell(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}
 function clpImpDownloadTemplate(key){
@@ -10368,15 +10390,21 @@ function clpImpNow(){
   var d=new Date(),p=function(x){return (x<10?'0':'')+x;};
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
 }
-/* 未处理的阻断项数量（>0 时不允许进入第 5 步） */
+/* 未处理的阻断类别数（>0 时不允许进入第 5 步）；只有上传修正版并复检后才能清零 */
 function clpImpBlkN(){
+  if(_clpImp.rechecked)return 0;
   var c=clpImpMod().checks||0,n=0;
-  for(var i=0;i<c.length;i++){if(c[i].lv==='block'&&!_clpImp.done[i])n++;}
+  for(var i=0;i<c.length;i++){if(c[i].lv==='block')n++;}
   return n;
 }
 function clpImpSum(lv){
   var c=clpImpMod().checks||[],n=0;
   for(var i=0;i<c.length;i++){if(c[i].lv===lv)n+=c[i].cnt||0;}
+  return n;
+}
+function clpImpTypeN(lv){
+  var c=clpImpMod().checks||[],n=0;
+  for(var i=0;i<c.length;i++){if(c[i].lv===lv)n++;}
   return n;
 }
 function clpImpRuleSet(){
@@ -10422,7 +10450,7 @@ function clpImpRestore(){
     body:clpLImpHtml(_clpImp.step),footer:clpLImpFoot(_clpImp.step)});
 }
 function clpLImport(){
-  _clpImp={step:1,mod:'vi',t4:'chk',done:{},file:'',origFile:'',uploadAt:''};
+  _clpImp={step:1,mod:'vi',t4:'chk',rechecked:false,file:'',origFile:'',uploadAt:''};
   clpImpRestore();
 }
 function clpLImpGo(n){
@@ -10434,7 +10462,7 @@ function clpLImpNext(n){
   if(n===2){
     var sel=$('cipMod');
     var newMod=sel.value;
-    if(newMod!==_clpImp.mod){_clpImp.mod=newMod;_clpImp.done={};_clpImp.t4='chk';_clpImp.file='';}
+    if(newMod!==_clpImp.mod){_clpImp.mod=newMod;_clpImp.rechecked=false;_clpImp.t4='chk';_clpImp.file='';}
     _clpImp.src=$('cipSrc').value.trim();
     _clpImp.srcCode=$('cipCode').value.trim();
     _clpImp.link=$('cipLink').value.trim();
@@ -10449,7 +10477,7 @@ function clpLImpNext(n){
     _clpImp.verNote=$('cipNote2').value.trim();
   }
   if(n===4&&!_clpImp.file){toast('请先上传结构化数据文件（或使用示例文件）','warn');return;}
-  if(n===5&&clpImpBlkN()>0){toast('仍有 '+clpImpBlkN()+' 项阻断问题未标记已处理，无法提交审核','warn');return;}
+  if(n===5&&clpImpBlkN()>0){toast('仍有 '+clpImpSum('block')+' 处阻断问题（'+clpImpBlkN()+' 类），请修正表格并重新上传','warn');return;}
   clpLImpGo(n);
 }
 function clpLImpFoot(n){
@@ -10461,7 +10489,7 @@ function clpLImpFoot(n){
     '<button class="btn primary" id="cipNext3"'+(_clpImp.file?'':' disabled')+' onclick="clpLImpNext(4)">下一步：数据校验与版本比较</button>';
   if(n===4){
     var blk=clpImpBlkN();
-    return '<div class="left">第 4 步 / 共 5 步'+(blk>0?' · 待处理阻断 '+blk+' 项':'')+'</div>'+
+    return '<div class="left">第 4 步 / 共 5 步'+(blk>0?' · 待修正阻断 '+clpImpSum('block')+' 处 / '+blk+' 类':'')+'</div>'+
       '<button class="btn" onclick="clpLImpGo(3)">上一步</button>'+
       '<button class="btn" onclick="clpLImpImpact()">查看影响范围</button>'+
       '<button class="btn primary" id="cipNext4"'+(blk>0?' disabled':'')+' onclick="clpLImpNext(5)">提交审核</button>';
@@ -10505,7 +10533,7 @@ function clpImpPickOrig(){
 /* 切换模块后，示例数据同步变化（第 1 步就地提示） */
 function clpLImpModSwitch(){
   var sel=$('cipMod');if(!sel)return;
-  _clpImp.mod=sel.value;_clpImp.done={};_clpImp.t4='chk';_clpImp.file='';_clpImp.origFile='';
+  _clpImp.mod=sel.value;_clpImp.rechecked=false;_clpImp.t4='chk';_clpImp.file='';_clpImp.origFile='';
   _clpImp.src='';_clpImp.srcCode='';_clpImp.link='';
   clpLImpGo(1);
   toast('已切换到「'+CLP_IMP_MODS[_clpImp.mod].label+'」，后续步骤的字段 / 条数 / 校验 / 变更预览将同步变化','ok');
@@ -10551,7 +10579,7 @@ function clpImpFileRow(){
     '<span><em>上传时间</em><b>'+esc(_clpImp.uploadAt||'—')+'</b></span></div>';
 }
 function clpImpPick(){
-  _clpImp.file=clpImpMod().demo;_clpImp.uploadAt=clpImpNow();
+  _clpImp.file=clpImpMod().demo;_clpImp.uploadAt=clpImpNow();_clpImp.rechecked=false;
   var r=$('cipFileRow');if(r)r.innerHTML=clpImpFileRow();
   var b=$('cipNext3');if(b){b.disabled=false;b.classList.remove('disabled');}
 }
@@ -10580,7 +10608,7 @@ function clpLImpHtml4(){
   out+='<div id="cipT4">'+clpImpT4Html()+'</div>';
   return out;
 }
-function clpImpT4(k){_clpImp.t4=k;$('cipT4').innerHTML=clpImpT4Html();}
+function clpImpT4(k){_clpImp.t4=k;$('mBody').innerHTML=clpLImpHtml4();}
 function clpImpT4Html(){
   if(_clpImp.t4==='chk')return clpImpChkHtml();
   if(_clpImp.t4==='test')return clpImpTestHtml();
@@ -10588,32 +10616,54 @@ function clpImpT4Html(){
 }
 function clpImpChkHtml(){
   var M=clpImpMod(),h='';
+  var blk=_clpImp.rechecked?0:clpImpSum('block');
   h+='<div class="stat-row">'+
-    '<div class="stat" style="border-color:var(--red-b,#f3c6c6);background:var(--red-bg,#fdecec)"><b style="color:var(--red,#c0392b)">'+clpImpSum('block')+'</b><span>阻断项（须逐项标记已处理）</span></div>'+
-    '<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">'+clpImpSum('warn')+'</b><span>告警项（须确认）</span></div>'+
-    '<div class="stat"><b>'+clpImpSum('info')+'</b><span>提示项</span></div>'+
+    '<div class="stat" style="border-color:var(--red-b,#f3c6c6);background:var(--red-bg,#fdecec)"><b style="color:var(--red,#c0392b)">'+blk+'</b><span>阻断问题'+(_clpImp.rechecked?'（修正版复检后）':' · '+clpImpTypeN('block')+' 类')+'</span></div>'+
+    '<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">'+clpImpSum('warn')+'</b><span>告警问题 · '+clpImpTypeN('warn')+' 类（发布前确认）</span></div>'+
+    '<div class="stat"><b>'+clpImpSum('info')+'</b><span>提示问题 · '+clpImpTypeN('info')+' 类</span></div>'+
     '<div class="stat" style="border-color:var(--green-b);background:var(--green-bg)"><b style="color:var(--green)">'+((function(){var c=M.checks||[];for(var i=0;i<c.length;i++){if(c[i].lv==='pass')return c[i].rows[0];}return '—';})())+'</b><span>通过校验的数据量</span></div>'+
     '</div>';
-  h+=(M.checks||[]).map(function(c,i){
-    var done=!!_clpImp.done[i];
-    var need=(c.lv==='block'||c.lv==='warn');
-    return '<div class="cip-chk '+(done?'is-done':'')+'">'+
-      '<div class="cip-chk-hd">'+clpImpLvTag(c.lv)+'<b>'+esc(c.name)+'</b>'+
-      (c.cnt?'<span class="tag grey">'+c.cnt+' 处</span>':'')+
-      '<div class="grow"></div>'+
-      (need?(done?'<span class="tag green">已标记处理</span>':'<button class="btn-link" onclick="clpImpFix('+i+')">标记已处理</button>'):'')+
-      '</div>'+
-      '<ul class="cip-chk-bd">'+c.rows.map(function(r){return '<li>'+clpImpMd(r)+'</li>';}).join('')+'</ul>'+
-      '</div>';
-  }).join('');
-  h+='<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div><b>存在未处理的阻断项时禁止进入第 5 步。</b>校验只报告结构与格式问题，<b>不判断数据本身是否正确</b> —— 正确性由法规专员对照法规原文在系统外完成。</div></div>';
+  h+='<div class="toolbar cip-check-actions"><b>校验问题明细</b><div class="grow"></div>'+
+    '<button class="btn" onclick="clpImpDownloadIssues()">下载问题明细</button>'+
+    '<button class="btn primary" onclick="clpImpReupload()">上传修正版并重新校验</button></div>';
+  h+='<div class="tbl-wrap cip-check-table"><table class="tbl"><thead><tr>'+
+    '<th style="width:58px">级别</th><th style="width:128px">检查项</th><th style="width:52px">数量</th>'+
+    '<th>问题明细</th><th style="width:174px">处理方式</th><th style="width:112px">当前状态</th>'+
+    '</tr></thead><tbody>'+(M.checks||[]).filter(function(c){return c.lv!=='pass';}).map(function(c){
+      var handling=clpImpHandling(c),status='';
+      if(c.lv==='block')status=_clpImp.rechecked?'<span class="tag green">修正版复检通过</span>':'<span class="tag red">待修正重传</span>';
+      else if(c.lv==='warn')status=_clpImp.rechecked?'<span class="tag orange">复检保留 · 待审核确认</span>':'<span class="tag orange">待确认</span>';
+      else status='<span class="tag blue">提示 · 不阻断</span>';
+      return '<tr class="cip-check-row '+(_clpImp.rechecked&&c.lv==='block'?'is-fixed':'')+'"><td>'+clpImpLvTag(c.lv)+'</td>'+
+        '<td><b>'+esc(c.name)+'</b></td><td class="mono">'+esc(String(c.cnt||0))+' 处</td>'+
+        '<td><div class="cip-check-details">'+c.rows.map(function(r){return '<div>• '+clpImpMd(r)+'</div>';}).join('')+'</div></td>'+
+        '<td>'+esc(handling)+'</td><td>'+status+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  h+='<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div><b>阻断问题不能手工点选放行。</b>法规专员须在线下修正结构化表并重新上传，系统复检通过后才可提交审核；告警项须在发布前结合法规原文确认，提示项不阻断流程。</div></div>';
   return h;
 }
-function clpImpFix(i){
-  _clpImp.done[i]=true;
+function clpImpHandling(c){
+  if(c.lv==='block'&&clpImpMod().key==='rules')return '修正规则或方法编号后重传；仍不支持的规则排除本次发布';
+  if(c.lv==='block')return '在线下表格修正后重新上传';
+  if(c.lv==='warn')return '优先修正后重传；确需保留时在审核说明中确认';
+  return '建议修正，不阻断提交';
+}
+function clpImpDownloadIssues(){
+  var M=clpImpMod(),rows=[['级别','检查项','发现数量','问题明细','处理方式']];
+  (M.checks||[]).filter(function(c){return c.lv!=='pass';}).forEach(function(c){
+    c.rows.forEach(function(r){rows.push([CLP_IMP_LV[c.lv],c.name,c.cnt+' 处',String(r).replace(/\*\*/g,''),clpImpHandling(c)]);});
+  });
+  var csv=rows.map(function(r){return r.map(clpImpCsvCell).join(',');}).join('\r\n')+'\r\n';
+  downloadFile('CLP_'+M.key+'_校验问题明细.csv',csv,'text/csv;charset=utf-8');
+  toast('已下载校验问题明细','ok');
+}
+function clpImpReupload(){
+  var name=_clpImp.file||clpImpMod().demo,p=name.lastIndexOf('.');
+  _clpImp.file=p>0?name.slice(0,p)+'_修正版'+name.slice(p):name+'_修正版';
+  _clpImp.uploadAt=clpImpNow();_clpImp.rechecked=true;
   $('cipT4').innerHTML=clpImpT4Html();
   $('mFoot').innerHTML=clpLImpFoot(4);
-  toast(clpImpBlkN()>0?('已标记 1 项；仍有 '+clpImpBlkN()+' 项阻断待处理'):'全部阻断项已处理，可提交审核','ok');
+  toast('修正版已上传并重新校验：阻断问题 0 处，可提交审核','ok');
 }
 function clpImpTestHtml(){
   var M=clpImpMod(),s=clpImpTestStat();
@@ -10688,7 +10738,7 @@ function clpLImpHtml5(){
 function clpLImpPublish(){
   var M=clpImpMod();
   if(!$('cipOk1').checked||!$('cipOk2').checked||!$('cipOk3').checked){toast('请先勾选全部三项人工确认','warn');return;}
-  if(clpImpBlkN()>0){toast('仍有 '+clpImpBlkN()+' 项阻断问题未处理，无法发布','warn');return;}
+  if(clpImpBlkN()>0){toast('仍有 '+clpImpSum('block')+' 处阻断问题未修正，无法发布','warn');return;}
   var auditor=($('cipAuditor')&&$('cipAuditor').value.trim())||CLP_TOP.owner;
   var opinion=($('cipOpinion')&&$('cipOpinion').value.trim())||'同意发布';
   var ver=_clpImp.ver||M.ver,eff=_clpImp.eff||M.eff,cut=_clpImp.cut||M.cut;
@@ -10726,7 +10776,7 @@ function clpLImpPublish(){
   /* ③ 版本变更与影响：新增变更记录（带来源模块） */
   CLP_CHANGES.unshift({mod:M.key,tp:'新增',
     content:ver+' 导入（'+M.label+'）：新增 '+c.add+' 条 / 修改 '+c.mod+' 条 / 废止 '+c.del+' 条'+
-      ((M.excluded||[]).length?('；排除 '+M.excluded.length+' 条（规则测试未通过）'):''),
+      ((M.excluded||[]).length?('；排除 '+M.excluded.length+' 条（需技术处理或规则测试未通过）'):''),
     reason:'法规专员整理稿导入 · 人工审核通过（审核人 '+auditor+'；'+opinion+'）',
     eff:eff,by:auditor,subs:c.add,recipes:'—',sds:'—'});
 
@@ -10787,9 +10837,9 @@ var REACH_TOP={
   publish:'已发布 · v2026.08',
   lastCheck:'2026-08-01',
   lastReview:'2026-08-05',
-  auditor:'质管-熊倩',
+  auditor:'质管-杨工',
   cutoff:'2026-08-01',
-  owner:'质管-熊倩',
+  owner:'质管-杨工',
   cycle:'SVHC 每年 1 月 / 7 月各一批；Annex XIV、Annex XVII 随官方修订更新',
   funcs:['SDS 编制','第 15 章法规判断','受限物质查询'],
   note:'REACH 管注册、授权与限制（能不能用、要不要申报）；CLP 管分类与标签。本页面仅涉及 REACH。',
@@ -10799,15 +10849,15 @@ var REACH_TOP={
 /* 各 Tab 模块自己的版本信息（不同清单更新与生效时间并不同步） */
 var REACH_MODULES={
   sds:{key:'sds',label:'SDS 编制要求',ver:'Annex II · (EU) 2020/878 版',eff:'2021-01-01',status:'已审核',cutoff:'2026-08-01',
-    owner:'质管-熊倩',src:'法规原文（Annex II 结构与内容要求，人工整理成字段要求）',srcTag:'法规原文 · 人工整理',srcFile:'annex_ii_2020_878_structure.json',due:'2027-01-31'},
+    owner:'质管-杨工',src:'法规原文（Annex II 结构与内容要求，人工整理成字段要求）',srcTag:'法规原文 · 人工整理',srcFile:'annex_ii_2020_878_structure.json',due:'2027-01-31'},
   svhc:{key:'svhc',label:'SVHC 候选清单',ver:'第 33 批',eff:'2026-06-25',status:'已生效',cutoff:'2026-06-26',
-    owner:'质管-熊倩',src:'官方候选清单（ECHA 发布，人工导入）',srcTag:'官方清单 · 人工导入',srcFile:'svhc_candidate_list_33.xlsx',due:'2027-01-31'},
+    owner:'质管-杨工',src:'官方候选清单（ECHA 发布，人工导入）',srcTag:'官方清单 · 人工导入',srcFile:'svhc_candidate_list_33.xlsx',due:'2027-01-31'},
   xiv:{key:'xiv',label:'Annex XIV 授权清单',ver:'V2026.1',eff:'2026-05-20',status:'待复核',cutoff:'2026-05-22',
-    owner:'质管-熊倩',src:'官方法规清单（强制采用）',srcTag:'官方清单 · 强制采用',srcFile:'annex_xiv_v2026_1.xlsx',due:'2026-10-31'},
+    owner:'质管-杨工',src:'官方法规清单（强制采用）',srcTag:'官方清单 · 强制采用',srcFile:'annex_xiv_v2026_1.xlsx',due:'2026-10-31'},
   xvii:{key:'xvii',label:'Annex XVII 限制清单',ver:'V2026.2',eff:'2026-06-01',status:'已生效',cutoff:'2026-06-03',
-    owner:'质管-熊倩',src:'官方法规清单（强制采用）',srcTag:'官方清单 · 强制采用',srcFile:'annex_xvii_v2026_2.xlsx',due:'2027-03-31'},
+    owner:'质管-杨工',src:'官方法规清单（强制采用）',srcTag:'官方清单 · 强制采用',srcFile:'annex_xvii_v2026_2.xlsx',due:'2027-03-31'},
   pbt:{key:'pbt',label:'Annex XIII PBT/vPvB 判定规则',ver:'R2026.1',eff:'2026-06-01',status:'已审核',cutoff:'2026-06-20',
-    owner:'质管-熊倩',src:'人工审核规则（由法规专员依 Annex XIII 整理成型）',srcTag:'人工审核规则',srcFile:'annex_xiii_rules_r2026_1.json',due:'2026-12-31'}
+    owner:'质管-杨工',src:'人工审核规则（由法规专员依 Annex XIII 整理成型）',srcTag:'人工审核规则',srcFile:'annex_xiii_rules_r2026_1.json',due:'2026-12-31'}
 };
 
 /* Tab1：SDS 编制要求（16 章结构与字段要求；三条法规依据分清） */
@@ -10944,19 +10994,19 @@ var REACH_MON={
 var REACH_CHANGES=[
   {mod:'SVHC 候选清单',tp:'新增',content:'候选清单第 34 批：拟新增 3 项物质（2027-01 批）',
    diff:'新增 3 条物质条目（名称 / CAS / 列入原因 / 列入日期）',tpl:'无需改模板；SDS 第 15 章法规引用需重新取值',
-   eff:'2027-01-15（预计）',status:'待审核',by:'质管-熊倩',subs:'待评估',recipes:'—',sds:'—'},
+   eff:'2027-01-15（预计）',status:'待审核',by:'质管-杨工',subs:'待评估',recipes:'—',sds:'—'},
   {mod:'Annex XVII 限制清单',tp:'修改',content:'Entry 77 甲醛：纺织品与皮革限值口径细化',
    diff:'限值由单一阈值改为分品类口径（纺织与皮革 ≤ 75 mg/kg）',tpl:'SDS 第 15 章与受限物质比对口径需同步',
-   eff:'2026-08-06',status:'已审核',by:'质管-熊倩',subs:2,recipes:'2',sds:'2'},
+   eff:'2026-08-06',status:'已审核',by:'质管-杨工',subs:2,recipes:'2',sds:'2'},
   {mod:'Annex XIV 授权清单',tp:'新增',content:'授权清单新增 5 项物质（含铬酸盐类衍生物）',
    diff:'新增 5 个条目及其最迟申请日期 / 日落日期',tpl:'无需改模板；命中组分需提示「需授权」',
-   eff:'2026-11-01（预计）',status:'待审核',by:'质管-熊倩',subs:'待评估',recipes:'—',sds:'—'},
+   eff:'2026-11-01（预计）',status:'待审核',by:'质管-杨工',subs:'待评估',recipes:'—',sds:'—'},
   {mod:'SDS 编制要求',tp:'修改',content:'Annex II 第 14 节运输信息：衔接 UN TDG 第 23 修订版表述',
    diff:'第 14 节 14.1~14.7 子项表述调整（按运输方式分别取数）',tpl:'SDS-TPL-2026.1 → 2026.2（仅第 14 章）',
-   eff:'2026-09-30',status:'已审核',by:'质管-熊倩',subs:'—',recipes:'—',sds:'3'},
+   eff:'2026-09-30',status:'已审核',by:'质管-杨工',subs:'—',recipes:'—',sds:'3'},
   {mod:'Annex XIII PBT/vPvB',tp:'修改',content:'vP 沉积物半衰期判定阈值复核（120 d → 180 d 表述统一）',
    diff:'VP-01 沉积物判定阈值表述与表 2 对齐',tpl:'无需改模板；判定规则版本升级为 R2026.2',
-   eff:'2026-06-01',status:'已审核',by:'质管-熊倩',subs:'—',recipes:'—',sds:'—'}
+   eff:'2026-06-01',status:'已审核',by:'质管-杨工',subs:'—',recipes:'—',sds:'—'}
 ];
 
 /* ---------- 2. 模块证据灯与信息条 ---------- */
@@ -11601,7 +11651,7 @@ function rohsRender(){
       ['数据版本','2015/863（2019-07-22 生效）',true],
       ['数据来源','Directive 2011/65/EU Annex II',false],
       ['维护方式','人工维护（10 行结构化数据表）',false],
-      ['维护责任人','质管-熊倩',false],
+      ['维护责任人','质管-杨工',false],
       ['审核状态','已审核 <span class="ev ev-green"><i></i>有效</span>',false,true],
       ['来源类型','官方指令 · 人工维护',false]
     ])+
@@ -11741,7 +11791,7 @@ regPage('law:trans',{title:'运输法规库',crumb:['合规管理','法规库维
 var OEL_TOP={
   title:'职业接触限值（OEL）',
   lastUpd:'2026-09-12',
-  owner:'质管-熊倩',
+  owner:'质管-杨工',
   note:'OEL 不是一部单独法规：欧盟与中国各自发布限值清单（欧盟 IOELV、中国 GBZ 2.1），限值类型、更新周期与法律效力各不相同。因此本页<b>不逐条维护散落在法规中的条文</b>，而是以「<b>官方来源 → 数据集版本 → 限值明细 → 版本对比 → 审核发布</b>」五步为单位维护。',
   boundary:'限值类型口径不同（中国为 <b>MAC / PC-TWA / PC-STEL</b>，欧盟为 <b>8h TWA / STEL</b>），系统按<b>长期 / 短期 / 上限</b>三个语义槽位对齐类型名，但<b>只对齐语义、不换算数值</b>；同一 CAS 在不同来源、不同版本中的记录<b>并存</b>，由业务按目标市场选用对应数据集版本。'
 };
@@ -11782,7 +11832,7 @@ var OEL_SOURCES=[
 var OEL_SETS=[
   {id:'DS-EU-2601',rg:'欧盟（EU）',name:'EU IOELV 指示性职业接触限值清单',ver:'V2026.1',
    pub:'2025-12-10',eff:'2026-01-01',exp:'—',pdf:'eu_ioelv_v2026_1_oj.pdf',xls:'eu_ioelv_v2026_1.xlsx',
-   cnt:168,st:'已发布',owner:'质管-熊倩',due:'2026-12-31',
+   cnt:168,st:'已发布',owner:'质管-杨工',due:'2026-12-31',
    note:'含 (EU) 2022/431 新增的甲醛等条目；限值类型 8h TWA / STEL'},
   {id:'DS-CN-1901',rg:'中国',name:'GBZ 2.1-2019 化学有害因素职业接触限值',ver:'2019 版',
    pub:'2019-08-27',eff:'2020-04-01',exp:'—',pdf:'gbz2.1-2019.pdf',xls:'gbz2.1-2019_t1_t4.xlsx',
@@ -11790,7 +11840,7 @@ var OEL_SETS=[
    note:'表 1 化学有害因素 358 条 + 表 4 生物监测指标；本页限值明细仅收录表 1 节选'},
   {id:'DS-EU-2701',rg:'欧盟（EU）',name:'EU IOELV 指示性职业接触限值清单',ver:'V2027.1',
    pub:'2026-09-15',eff:'待定',exp:'—',pdf:'eu_ioelv_v2027_1_oj.pdf',xls:'eu_ioelv_v2027_1.xlsx',
-   cnt:172,st:'待审核',owner:'质管-熊倩',due:'2026-12-31',
+   cnt:172,st:'待审核',owner:'质管-杨工',due:'2026-12-31',
    note:'已按官方草案整理 172 条（新增乙苯、撤回 2-乙氧基乙醇等）；生效日期待官方公报确认'},
   {id:'DS-CN-2601',rg:'中国',name:'GBZ 2.1 修订版（送审稿）',ver:'2026 送审稿',
    pub:'2026-08-25',eff:'待定',exp:'—',pdf:'gbz2.1_rev_draft.pdf',xls:'gbz2.1_rev_draft_t1.xlsx',
@@ -11798,7 +11848,7 @@ var OEL_SETS=[
    note:'新增 3 条化学有害因素；部分限值拟收紧（正式发布前不作为合规依据）'},
   {id:'DS-EU-2501',rg:'欧盟（EU）',name:'EU IOELV 指示性职业接触限值清单',ver:'V2025.1',
    pub:'2024-12-05',eff:'2025-01-01',exp:'2025-12-31',pdf:'eu_ioelv_v2025_1_oj.pdf',xls:'eu_ioelv_v2025_1.xlsx',
-   cnt:161,st:'已失效',owner:'质管-熊倩',due:'',
+   cnt:161,st:'已失效',owner:'质管-杨工',due:'',
    note:'已被 V2026.1 替代，保留历史版本用于版本对比与追溯'},
   {id:'DS-CN-2701',rg:'中国',name:'GBZ 2.1 下一次修订',ver:'2027 版',
    pub:'待发布',eff:'待定',exp:'—',pdf:'—',xls:'—',
@@ -11884,7 +11934,7 @@ var OEL_LIMITS=[
 /* ---------- 5. 版本对比与审核（Tab 4，演示样例数据） ---------- */
 var OEL_CMP={
   A:{rg:'欧盟（EU）',title:'EU IOELV V2026.1 → V2027.1',base:'DS-EU-2601',tgt:'DS-EU-2701',
-     st:'待审核',owner:'质管-熊倩',src:'欧盟委员会 IOELV 指令修订（演示样例）'},
+     st:'待审核',owner:'质管-杨工',src:'欧盟委员会 IOELV 指令修订（演示样例）'},
   B:{rg:'中国',title:'GBZ 2.1-2019 → 2026 送审稿',base:'DS-CN-1901',tgt:'DS-CN-2601',
      st:'待审核',owner:'质管-郭工',src:'国家职业卫生标准修订送审稿（演示样例）'}
 };

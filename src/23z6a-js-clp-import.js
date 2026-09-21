@@ -116,7 +116,7 @@ var CLP_IMP_MODS={
       ['人工核对日期','核对完成日期（YYYY-MM-DD）']
     ],
     checks:[
-      {name:'规则引擎方法未匹配',lv:'block',cnt:2,rows:['CLP-M-ED-PBT —— 方法已登记，但规则引擎尚未实现','CLP-M-NEWTOX —— 方法代码不在「计算方法字典」中']},
+      {name:'规则引擎方法未匹配',lv:'block',cnt:3,rows:['CLP-M-ED-PBT —— 方法已登记，但规则引擎尚未实现','CLP-M-NEWTOX —— 方法代码不在「计算方法字典」中','CLP-R-0008（演示）/ CLP-M-NEWTOX —— 新计算方法尚未开发，需创建研发任务后重新测试']},
       {name:'规则测试未通过',lv:'block',cnt:1,rows:['CLP-R-0006 内分泌干扰物（ED）与 PBT / vPvB / PMT / vPvM 判定规则 —— 测试未执行（引擎缺判定模块）']},
       {name:'H 码未匹配标签字典',lv:'warn',cnt:1,rows:['CLP-R-0006 输出的 EUH450 在本次标签字典版本中未找到']},
       {name:'规则之间存在重复或冲突',lv:'warn',cnt:2,rows:['CLP-R-0005 分层原则与 CLP-R-0001 的类别择优逻辑重叠','CLP-R-0007 桥接原则与 CLP-R-0002 通用限值加和在适用条件上互斥']},
@@ -132,19 +132,20 @@ var CLP_IMP_MODS={
       {name:'混合物 T-04',conc:'含 2-乙基己酸锆 3%',rule:'CLP-R-0006',calc:'规则引擎缺少 ED / PBT 判定模块，未执行',expect:'Repr. 1B / H360Df',actual:'—（未执行）',res:'未通过'}
     ],
     testNote:'测试未通过的规则**不进入本次发布清单**，需在引擎补齐后重新测试。',
-    excluded:['CLP-R-0006'],
-    diffs:{add:2,mod:3,del:1},
-    diffTypes:['新增规则','修改规则','废止规则','阈值变化','公式变化','例外条件变化','优先级变化','输出分类变化','来源条款变化'],
+    excluded:['CLP-R-0006','CLP-R-0008'],
+    diffs:{add:3,mod:3,del:1},
+    diffTypes:['新增规则','修改规则','废止规则','阈值变化','公式变化','例外条件变化','优先级变化','输出分类变化','来源条款变化','需研发实现'],
     items:[
       {tp:'新增规则',k:'CLP-R-0007',n:'桥接原则（Bridging）—相似混合物分类沿用规则',a:'—',b:'沿用被桥接混合物分类',note:'引擎「需要配置参数」：参数已配置、测试通过 → 进入发布清单'},
       {tp:'新增规则',k:'CLP-R-0006',n:'内分泌干扰物（ED）与 PBT / vPvB / PMT / vPvM 判定规则',a:'—',b:'ED / PBT / vPvB / PMT / vPvM 判定',note:'引擎「需要研发实现」+ 测试未执行 → 本次不发布'},
+      {tp:'需研发实现',k:'CLP-R-0008（演示）',n:'新危害类别判定规则（演示条目）',a:'—',b:'待开发 CLP-M-NEWTOX',note:'计算方法尚未开发；本次排除发布，创建研发任务后重新测试'},
       {tp:'阈值变化',k:'CLP-R-0001',n:'急性毒性—口服—混合物 ATE 计算规则',a:'Cat.2 ≥ 1% 且 < 5%',b:'Cat.2 ≥ 1% 且 < 5%（单位统一为 %）',note:'单位补全，数值未变'},
       {tp:'公式变化',k:'CLP-R-0004',n:'慢性水生毒性—M 因子加权求和规则',a:'Chronic 2：Σ(Mi × Ci) ≥ 25%',b:'Chronic 2：Σ(10 × Mi × Ci) ≥ 25%',note:'按 Table 4.1.4 修正慢性折算系数'},
       {tp:'例外条件变化',k:'CLP-R-0003',n:'SCL（特定浓度限值）优先于通用浓度限值',a:'未说明多类别 SCL 并存处理',b:'同一组分多类别 SCL 分别适用',note:'补充例外条件'},
       {tp:'优先级变化',k:'CLP-R-0005',n:'同一危害类别的分层与优先级原则',a:'中（2）',b:'低（3）',note:'调整与其他规则的执行次序'},
       {tp:'废止规则',k:'CLP-R-0000',n:'旧版急性毒性 ATE 换算（R2025 遗留）',a:'R2026.2 生效',b:'—',note:'已被 CLP-R-0001 完全覆盖'}
     ],
-    landed:'新增 1 条规则（CLP-R-0007）落入 Tab2（状态由「待审核」转为「已发布」，版本写为本次版本号）；CLP-R-0006 因规则测试未通过被排除，不进入发布清单'
+    landed:'新增 1 条规则（CLP-R-0007）落入 Tab2（状态由「待审核」转为「已发布」，版本写为本次版本号）；CLP-R-0006 与 CLP-R-0008（演示）因需技术处理或测试未通过被排除，不进入发布清单'
   },
   labels:{
     key:'labels',label:'Annex III/IV/V｜标签字典',
@@ -203,7 +204,7 @@ var CLP_IMP_KEYS=['vi','rules','labels'];
 var CLP_IMP_LV={block:'阻断',warn:'告警',info:'提示',pass:'通过'};
 
 /* ---------- 2. 向导状态 ---------- */
-var _clpImp={step:1,mod:'vi',t4:'chk',done:{},file:'',origFile:'',uploadAt:''};
+var _clpImp={step:1,mod:'vi',t4:'chk',rechecked:false,file:'',origFile:'',uploadAt:''};
 
 function clpImpCsvCell(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}
 function clpImpDownloadTemplate(key){
@@ -230,15 +231,21 @@ function clpImpNow(){
   var d=new Date(),p=function(x){return (x<10?'0':'')+x;};
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
 }
-/* 未处理的阻断项数量（>0 时不允许进入第 5 步） */
+/* 未处理的阻断类别数（>0 时不允许进入第 5 步）；只有上传修正版并复检后才能清零 */
 function clpImpBlkN(){
+  if(_clpImp.rechecked)return 0;
   var c=clpImpMod().checks||0,n=0;
-  for(var i=0;i<c.length;i++){if(c[i].lv==='block'&&!_clpImp.done[i])n++;}
+  for(var i=0;i<c.length;i++){if(c[i].lv==='block')n++;}
   return n;
 }
 function clpImpSum(lv){
   var c=clpImpMod().checks||[],n=0;
   for(var i=0;i<c.length;i++){if(c[i].lv===lv)n+=c[i].cnt||0;}
+  return n;
+}
+function clpImpTypeN(lv){
+  var c=clpImpMod().checks||[],n=0;
+  for(var i=0;i<c.length;i++){if(c[i].lv===lv)n++;}
   return n;
 }
 function clpImpRuleSet(){
@@ -284,7 +291,7 @@ function clpImpRestore(){
     body:clpLImpHtml(_clpImp.step),footer:clpLImpFoot(_clpImp.step)});
 }
 function clpLImport(){
-  _clpImp={step:1,mod:'vi',t4:'chk',done:{},file:'',origFile:'',uploadAt:''};
+  _clpImp={step:1,mod:'vi',t4:'chk',rechecked:false,file:'',origFile:'',uploadAt:''};
   clpImpRestore();
 }
 function clpLImpGo(n){
@@ -296,7 +303,7 @@ function clpLImpNext(n){
   if(n===2){
     var sel=$('cipMod');
     var newMod=sel.value;
-    if(newMod!==_clpImp.mod){_clpImp.mod=newMod;_clpImp.done={};_clpImp.t4='chk';_clpImp.file='';}
+    if(newMod!==_clpImp.mod){_clpImp.mod=newMod;_clpImp.rechecked=false;_clpImp.t4='chk';_clpImp.file='';}
     _clpImp.src=$('cipSrc').value.trim();
     _clpImp.srcCode=$('cipCode').value.trim();
     _clpImp.link=$('cipLink').value.trim();
@@ -311,7 +318,7 @@ function clpLImpNext(n){
     _clpImp.verNote=$('cipNote2').value.trim();
   }
   if(n===4&&!_clpImp.file){toast('请先上传结构化数据文件（或使用示例文件）','warn');return;}
-  if(n===5&&clpImpBlkN()>0){toast('仍有 '+clpImpBlkN()+' 项阻断问题未标记已处理，无法提交审核','warn');return;}
+  if(n===5&&clpImpBlkN()>0){toast('仍有 '+clpImpSum('block')+' 处阻断问题（'+clpImpBlkN()+' 类），请修正表格并重新上传','warn');return;}
   clpLImpGo(n);
 }
 function clpLImpFoot(n){
@@ -323,7 +330,7 @@ function clpLImpFoot(n){
     '<button class="btn primary" id="cipNext3"'+(_clpImp.file?'':' disabled')+' onclick="clpLImpNext(4)">下一步：数据校验与版本比较</button>';
   if(n===4){
     var blk=clpImpBlkN();
-    return '<div class="left">第 4 步 / 共 5 步'+(blk>0?' · 待处理阻断 '+blk+' 项':'')+'</div>'+
+    return '<div class="left">第 4 步 / 共 5 步'+(blk>0?' · 待修正阻断 '+clpImpSum('block')+' 处 / '+blk+' 类':'')+'</div>'+
       '<button class="btn" onclick="clpLImpGo(3)">上一步</button>'+
       '<button class="btn" onclick="clpLImpImpact()">查看影响范围</button>'+
       '<button class="btn primary" id="cipNext4"'+(blk>0?' disabled':'')+' onclick="clpLImpNext(5)">提交审核</button>';
@@ -367,7 +374,7 @@ function clpImpPickOrig(){
 /* 切换模块后，示例数据同步变化（第 1 步就地提示） */
 function clpLImpModSwitch(){
   var sel=$('cipMod');if(!sel)return;
-  _clpImp.mod=sel.value;_clpImp.done={};_clpImp.t4='chk';_clpImp.file='';_clpImp.origFile='';
+  _clpImp.mod=sel.value;_clpImp.rechecked=false;_clpImp.t4='chk';_clpImp.file='';_clpImp.origFile='';
   _clpImp.src='';_clpImp.srcCode='';_clpImp.link='';
   clpLImpGo(1);
   toast('已切换到「'+CLP_IMP_MODS[_clpImp.mod].label+'」，后续步骤的字段 / 条数 / 校验 / 变更预览将同步变化','ok');
@@ -413,7 +420,7 @@ function clpImpFileRow(){
     '<span><em>上传时间</em><b>'+esc(_clpImp.uploadAt||'—')+'</b></span></div>';
 }
 function clpImpPick(){
-  _clpImp.file=clpImpMod().demo;_clpImp.uploadAt=clpImpNow();
+  _clpImp.file=clpImpMod().demo;_clpImp.uploadAt=clpImpNow();_clpImp.rechecked=false;
   var r=$('cipFileRow');if(r)r.innerHTML=clpImpFileRow();
   var b=$('cipNext3');if(b){b.disabled=false;b.classList.remove('disabled');}
 }
@@ -442,7 +449,7 @@ function clpLImpHtml4(){
   out+='<div id="cipT4">'+clpImpT4Html()+'</div>';
   return out;
 }
-function clpImpT4(k){_clpImp.t4=k;$('cipT4').innerHTML=clpImpT4Html();}
+function clpImpT4(k){_clpImp.t4=k;$('mBody').innerHTML=clpLImpHtml4();}
 function clpImpT4Html(){
   if(_clpImp.t4==='chk')return clpImpChkHtml();
   if(_clpImp.t4==='test')return clpImpTestHtml();
@@ -450,32 +457,54 @@ function clpImpT4Html(){
 }
 function clpImpChkHtml(){
   var M=clpImpMod(),h='';
+  var blk=_clpImp.rechecked?0:clpImpSum('block');
   h+='<div class="stat-row">'+
-    '<div class="stat" style="border-color:var(--red-b,#f3c6c6);background:var(--red-bg,#fdecec)"><b style="color:var(--red,#c0392b)">'+clpImpSum('block')+'</b><span>阻断项（须逐项标记已处理）</span></div>'+
-    '<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">'+clpImpSum('warn')+'</b><span>告警项（须确认）</span></div>'+
-    '<div class="stat"><b>'+clpImpSum('info')+'</b><span>提示项</span></div>'+
+    '<div class="stat" style="border-color:var(--red-b,#f3c6c6);background:var(--red-bg,#fdecec)"><b style="color:var(--red,#c0392b)">'+blk+'</b><span>阻断问题'+(_clpImp.rechecked?'（修正版复检后）':' · '+clpImpTypeN('block')+' 类')+'</span></div>'+
+    '<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">'+clpImpSum('warn')+'</b><span>告警问题 · '+clpImpTypeN('warn')+' 类（发布前确认）</span></div>'+
+    '<div class="stat"><b>'+clpImpSum('info')+'</b><span>提示问题 · '+clpImpTypeN('info')+' 类</span></div>'+
     '<div class="stat" style="border-color:var(--green-b);background:var(--green-bg)"><b style="color:var(--green)">'+((function(){var c=M.checks||[];for(var i=0;i<c.length;i++){if(c[i].lv==='pass')return c[i].rows[0];}return '—';})())+'</b><span>通过校验的数据量</span></div>'+
     '</div>';
-  h+=(M.checks||[]).map(function(c,i){
-    var done=!!_clpImp.done[i];
-    var need=(c.lv==='block'||c.lv==='warn');
-    return '<div class="cip-chk '+(done?'is-done':'')+'">'+
-      '<div class="cip-chk-hd">'+clpImpLvTag(c.lv)+'<b>'+esc(c.name)+'</b>'+
-      (c.cnt?'<span class="tag grey">'+c.cnt+' 处</span>':'')+
-      '<div class="grow"></div>'+
-      (need?(done?'<span class="tag green">已标记处理</span>':'<button class="btn-link" onclick="clpImpFix('+i+')">标记已处理</button>'):'')+
-      '</div>'+
-      '<ul class="cip-chk-bd">'+c.rows.map(function(r){return '<li>'+clpImpMd(r)+'</li>';}).join('')+'</ul>'+
-      '</div>';
-  }).join('');
-  h+='<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div><b>存在未处理的阻断项时禁止进入第 5 步。</b>校验只报告结构与格式问题，<b>不判断数据本身是否正确</b> —— 正确性由法规专员对照法规原文在系统外完成。</div></div>';
+  h+='<div class="toolbar cip-check-actions"><b>校验问题明细</b><div class="grow"></div>'+
+    '<button class="btn" onclick="clpImpDownloadIssues()">下载问题明细</button>'+
+    '<button class="btn primary" onclick="clpImpReupload()">上传修正版并重新校验</button></div>';
+  h+='<div class="tbl-wrap cip-check-table"><table class="tbl"><thead><tr>'+
+    '<th style="width:58px">级别</th><th style="width:128px">检查项</th><th style="width:52px">数量</th>'+
+    '<th>问题明细</th><th style="width:174px">处理方式</th><th style="width:112px">当前状态</th>'+
+    '</tr></thead><tbody>'+(M.checks||[]).filter(function(c){return c.lv!=='pass';}).map(function(c){
+      var handling=clpImpHandling(c),status='';
+      if(c.lv==='block')status=_clpImp.rechecked?'<span class="tag green">修正版复检通过</span>':'<span class="tag red">待修正重传</span>';
+      else if(c.lv==='warn')status=_clpImp.rechecked?'<span class="tag orange">复检保留 · 待审核确认</span>':'<span class="tag orange">待确认</span>';
+      else status='<span class="tag blue">提示 · 不阻断</span>';
+      return '<tr class="cip-check-row '+(_clpImp.rechecked&&c.lv==='block'?'is-fixed':'')+'"><td>'+clpImpLvTag(c.lv)+'</td>'+
+        '<td><b>'+esc(c.name)+'</b></td><td class="mono">'+esc(String(c.cnt||0))+' 处</td>'+
+        '<td><div class="cip-check-details">'+c.rows.map(function(r){return '<div>• '+clpImpMd(r)+'</div>';}).join('')+'</div></td>'+
+        '<td>'+esc(handling)+'</td><td>'+status+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  h+='<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div><b>阻断问题不能手工点选放行。</b>法规专员须在线下修正结构化表并重新上传，系统复检通过后才可提交审核；告警项须在发布前结合法规原文确认，提示项不阻断流程。</div></div>';
   return h;
 }
-function clpImpFix(i){
-  _clpImp.done[i]=true;
+function clpImpHandling(c){
+  if(c.lv==='block'&&clpImpMod().key==='rules')return '修正规则或方法编号后重传；仍不支持的规则排除本次发布';
+  if(c.lv==='block')return '在线下表格修正后重新上传';
+  if(c.lv==='warn')return '优先修正后重传；确需保留时在审核说明中确认';
+  return '建议修正，不阻断提交';
+}
+function clpImpDownloadIssues(){
+  var M=clpImpMod(),rows=[['级别','检查项','发现数量','问题明细','处理方式']];
+  (M.checks||[]).filter(function(c){return c.lv!=='pass';}).forEach(function(c){
+    c.rows.forEach(function(r){rows.push([CLP_IMP_LV[c.lv],c.name,c.cnt+' 处',String(r).replace(/\*\*/g,''),clpImpHandling(c)]);});
+  });
+  var csv=rows.map(function(r){return r.map(clpImpCsvCell).join(',');}).join('\r\n')+'\r\n';
+  downloadFile('CLP_'+M.key+'_校验问题明细.csv',csv,'text/csv;charset=utf-8');
+  toast('已下载校验问题明细','ok');
+}
+function clpImpReupload(){
+  var name=_clpImp.file||clpImpMod().demo,p=name.lastIndexOf('.');
+  _clpImp.file=p>0?name.slice(0,p)+'_修正版'+name.slice(p):name+'_修正版';
+  _clpImp.uploadAt=clpImpNow();_clpImp.rechecked=true;
   $('cipT4').innerHTML=clpImpT4Html();
   $('mFoot').innerHTML=clpLImpFoot(4);
-  toast(clpImpBlkN()>0?('已标记 1 项；仍有 '+clpImpBlkN()+' 项阻断待处理'):'全部阻断项已处理，可提交审核','ok');
+  toast('修正版已上传并重新校验：阻断问题 0 处，可提交审核','ok');
 }
 function clpImpTestHtml(){
   var M=clpImpMod(),s=clpImpTestStat();
@@ -550,7 +579,7 @@ function clpLImpHtml5(){
 function clpLImpPublish(){
   var M=clpImpMod();
   if(!$('cipOk1').checked||!$('cipOk2').checked||!$('cipOk3').checked){toast('请先勾选全部三项人工确认','warn');return;}
-  if(clpImpBlkN()>0){toast('仍有 '+clpImpBlkN()+' 项阻断问题未处理，无法发布','warn');return;}
+  if(clpImpBlkN()>0){toast('仍有 '+clpImpSum('block')+' 处阻断问题未修正，无法发布','warn');return;}
   var auditor=($('cipAuditor')&&$('cipAuditor').value.trim())||CLP_TOP.owner;
   var opinion=($('cipOpinion')&&$('cipOpinion').value.trim())||'同意发布';
   var ver=_clpImp.ver||M.ver,eff=_clpImp.eff||M.eff,cut=_clpImp.cut||M.cut;
@@ -588,7 +617,7 @@ function clpLImpPublish(){
   /* ③ 版本变更与影响：新增变更记录（带来源模块） */
   CLP_CHANGES.unshift({mod:M.key,tp:'新增',
     content:ver+' 导入（'+M.label+'）：新增 '+c.add+' 条 / 修改 '+c.mod+' 条 / 废止 '+c.del+' 条'+
-      ((M.excluded||[]).length?('；排除 '+M.excluded.length+' 条（规则测试未通过）'):''),
+      ((M.excluded||[]).length?('；排除 '+M.excluded.length+' 条（需技术处理或规则测试未通过）'):''),
     reason:'法规专员整理稿导入 · 人工审核通过（审核人 '+auditor+'；'+opinion+'）',
     eff:eff,by:auditor,subs:c.add,recipes:'—',sds:'—'});
 
