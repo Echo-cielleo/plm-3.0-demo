@@ -121,6 +121,16 @@ with sync_playwright() as p:
             for k in ['stot', 'carc']:
                 if tri['m'][k]['s'] != 'pending' or tri['m'][k]['n'] != 'confirm':
                     errors.append('[结论诚实性] %s 应标「系统建议·待人工确认」，实际 %s / %s' % (k, tri['m'][k]['s'], tri['m'][k]['n']))
+            sug = page.evaluate("""() => {
+              var i=wz.classItems.findIndex(function(c){return c.id==='carc';});
+              adjClass(i);
+              var txt=$('modal').innerText;
+              closeModal();
+              return {value:wz.classItems[i].sug, text:txt};
+            }""")
+            if sug['value'] != u'类别 1B' or u'系统建议：类别 1B' not in sug['text'] \
+                    or u'系统无法自动判定' in sug['text']:
+                errors.append('[待确认] 致癌性逐条确认弹窗丢失系统建议：%s' % sug)
             print('  三态：引擎自动 %d 项 / 待人工确认 %d 项 / 待人工判断 %d 项' % (len(auto), tri['conf'], tri['judge']))
             if tri['ok4']:
                 errors.append('[阻断] 存在待判定项时 wzCheck(4) 仍放行')
@@ -167,6 +177,15 @@ with sync_playwright() as p:
                 errors.append('[规则包] 规则包没有返回 H 码与 P 码候选')
             # ---- 第三十八轮：第 3 步「一键补充演示数据」真实点击 → 第 4 步恢复自动计算 ----
             page.evaluate('wzGo(3)'); page.wait_for_timeout(250)
+            row_fill = page.locator('#wzBody button:has-text("去组分库补录")')
+            if row_fill.count() == 0:
+                errors.append('[演示补录] 区块④缺少逐条「去组分库补录」入口')
+            else:
+                row_fill.first.click(); page.wait_for_timeout(800)
+                if page.evaluate('() => curPage') != 'bd:comp' or page.locator('#modal').count() != 1:
+                    errors.append('[演示补录] 逐条补录没有跳到组分基础数据并打开维护弹窗')
+                page.evaluate("() => {closeModal();showPage('sds:wizard');wzGo(3);}")
+                page.wait_for_timeout(300)
             btn_txt = page.evaluate("""() => {
               var r=[]; [].slice.call(document.querySelectorAll('#wzBody button')).forEach(function(b){
                 if(b.textContent.indexOf('一键')>=0) r.push(b.textContent.trim()); });

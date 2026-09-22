@@ -851,9 +851,8 @@ function renderStep3(){
       +'<th style="width:150px">组分</th><th style="width:170px">缺失数据项</th><th>当前情况</th>'
       +'<th>影响的危害类别</th><th style="width:96px">操作</th></tr></thead><tbody>'
       +blockers.map(function(b){
-        var idx=DATA_ITEMS.indexOf(b.k);
         return row([esc(b.name),kTerm(b.k),'<span style="color:var(--orange)">'+esc(b.v)+'</span>',
-          esc(b.eff),'<button class="btn sm" onclick="fillData(\''+b.cas+'\','+idx+')">补充</button>']);
+          esc(b.eff),'<button class="btn sm" onclick="gotoCompFill(\''+b.cas+'\')">去组分库补录</button>']);
       }).join('')
       +'</tbody></table></div>'
       +'<div class="src-note"><span class="tag orange">说明</span>这类缺失不会由系统臆测填值 —— 对应危害类别在第 4 步会落到「待人工判断」。</div>'
@@ -1665,8 +1664,8 @@ function buildClassItems(){
         {o:'类别 2',d:'Σ(生殖毒性 Cat.2 组分) ≥ 3% → 判 Cat.2',hit:'乙二醇单丁醚 8.50% ≥ 3%（成员国从严口径）'},
         {o:'不分类（无需分类）',d:'无生殖毒性组分超限，且目标成员国无从严要求',hit:'取决于目标成员国口径'}]}
   ].map(function(c){
-    /* 固化系统原始建议：人工判定不会改写它，供后续「是否改判」比对 */
-    c.sug=(c.status==='pending')?null:c.result;
+    /* 固化系统原始建议：need=confirm 有建议值，need=judge 才是真的无法建议。 */
+    c.sug=(c.status==='pending'&&c.need!=='confirm')?null:c.result;
     return c;
   });
 }
