@@ -23,7 +23,7 @@ var PHYS_SCHEMA='v1';
 var PHYS_USER='王研究员';
 
 function physToday(){
-  var d=new Date();
+  var d=demoNow();
   return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 }
 function physSave(){

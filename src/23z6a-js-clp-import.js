@@ -228,7 +228,7 @@ function clpImpLvTag(lv){
   return '<span class="tag '+c+'">'+esc(CLP_IMP_LV[lv]||lv)+'</span>';
 }
 function clpImpNow(){
-  var d=new Date(),p=function(x){return (x<10?'0':'')+x;};
+  var d=demoNow(),p=function(x){return (x<10?'0':'')+x;};
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
 }
 /* 未处理的阻断类别数（>0 时不允许进入第 5 步）；只有上传修正版并复检后才能清零 */

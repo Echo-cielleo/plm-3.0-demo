@@ -11,6 +11,42 @@ _CHROME_PATH = '/Users/dowell/Library/Caches/ms-playwright/chromium-1223/chrome-
 import pathlib
 from playwright.sync_api import sync_playwright
 
+import datetime
+
+def _wk(off):
+    """镜像 JS demoWeekRange(off)：off=0 上一个完整自然周 / off=1 上上周 / off=-1 本周。
+    演示数据按「本周一 − 数据基准日」整体平移，故这里必须与 JS 用同一规则算出期望值。"""
+    t = datetime.date.today()
+    mon = t - datetime.timedelta(days=t.weekday())          # 本周一
+    start = mon - datetime.timedelta(days=(off + 1) * 7)
+    return start, start + datetime.timedelta(days=6)
+
+def wk_span(off):
+    a, b = _wk(off)
+    return "%s ~ %s" % (a, b)
+
+def wk_zi(off):
+    a, b = _wk(off)
+    return "自 %s 至 %s" % (a, b)
+
+import datetime
+
+def _wk(off):
+    """镜像 JS demoWeekRange(off)：off=0 上一个完整自然周 / off=1 上上周 / off=-1 本周。
+    演示数据按「本周一 − 数据基准日」整体平移，故这里必须与 JS 用同一规则算出期望值。"""
+    t = datetime.date.today()
+    mon = t - datetime.timedelta(days=t.weekday())          # 本周一
+    start = mon - datetime.timedelta(days=(off + 1) * 7)
+    return start, start + datetime.timedelta(days=6)
+
+def wk_span(off):
+    a, b = _wk(off)
+    return "%s ~ %s" % (a, b)
+
+def wk_zi(off):
+    a, b = _wk(off)
+    return "自 %s 至 %s" % (a, b)
+
 F = str(pathlib.Path('PLM3.0全系统演示原型.html').resolve())
 PASS, FAIL = [], []
 
@@ -34,7 +70,7 @@ with sync_playwright() as pw:
     go(pg, 'home')
     card = pg.inner_text('#pageHost')
     ok('周报' in card, "首页出现周报卡片")
-    ok('2026-09-07 ~ 2026-09-13' in card, "统计周期为上周 2026-09-07 ~ 2026-09-13")
+    ok(wk_span(0) in card, "统计周期为上周 %s" % wk_span(0))
     ok('上周' in card, "周期标注为「上周」")
 
     print("\n== 2. 打开完整周报：默认研发人员模板")
@@ -43,7 +79,7 @@ with sync_playwright() as pw:
     t = pg.inner_text('#wrBody')
     ok(pg.evaluate("()=>weeklyDraft.role") == 'staff', "默认角色为研发人员")
     ok('周总结报告' in t, "标题为「周总结报告」")
-    ok('自 2026-09-07 至 2026-09-13' in t, "表头周期正确")
+    ok(wk_zi(0) in t, "表头周期正确（%s）" % wk_zi(0))
     for k in ['姓名', '研究室', '汇报领导']:
         ok(k in t, "表头含「%s」" % k)
     ok('王研究员' in t, "姓名为王研究员（研发人员）")
@@ -130,11 +166,11 @@ with sync_playwright() as pw:
     pg.evaluate("()=>wkSwitchPeriod('1')")
     pg.wait_for_timeout(600)
     t1 = pg.inner_text('#wrBody')
-    ok('自 2026-08-31 至 2026-09-06' in t1, "切到上上周：表头周期正确")
+    ok(wk_zi(1) in t1, "切到上上周：表头周期正确（%s）" % wk_zi(1))
     ok(pg.evaluate("()=>document.querySelectorAll('#wrBody .wr-exp').length") == 0, "上上周无实验，显示空态")
     pg.evaluate("()=>wkSwitchPeriod('-1')")
     pg.wait_for_timeout(600)
-    ok('自 2026-09-14 至 2026-09-20' in pg.inner_text('#wrBody'), "切到本周：表头周期正确")
+    ok(wk_zi(-1) in pg.inner_text('#wrBody'), "切到本周：表头周期正确（%s）" % wk_zi(-1))
     pg.evaluate("()=>wkSwitchPeriod('0')")
     pg.wait_for_timeout(600)
 
@@ -188,6 +224,25 @@ with sync_playwright() as pw:
     ok('一键填充示例数据' in pg.inner_text('#wrDemoBtn'), "footer 提供「一键填充示例数据」按钮")
     ok(pg.evaluate("()=>document.querySelectorAll('#wrBody .wr-exp').length") == 4,
        "人工项置空后，自动带出的 4 组实验仍在")
+    # DEMO_TODAY 锚点：平移量必须是 7 的倍数（保星期对齐，周期成员才恒定）
+    ok(pg.evaluate("()=>typeof demoShiftDays==='function' && demoShiftDays()%7===0"),
+       "演示日期平移量为 7 的整数倍（星期对齐）")
+    # 锚点口径直验：不看渲染，直接复用 wkPeriodExps 查数据层上周窗口内的实验集合
+    ok(pg.evaluate("()=>wkPeriodExps('王研究员', wkPeriod(0)).length") == 4,
+       "数据层：上周窗口内王研究员的实验恰为 4 组（演示数据已锚定，不随真实日期过期）")
+    # 各周期实验数须与「数据编写基准日」当天的口径一致（平移不改变成员关系）
+    ok(pg.evaluate("()=>wkPeriodExps('王研究员', wkPeriod(1)).length") == 0,
+       "上上周窗口内实验为 0（与基准日口径一致）")
+    # DEMO_TODAY 锚点：平移量必须是 7 的倍数（保星期对齐，周期成员才恒定）
+    ok(pg.evaluate("()=>typeof demoShiftDays==='function' && demoShiftDays()%7===0"),
+       "演示日期平移量为 7 的整数倍（星期对齐）")
+    # 锚点口径直验：不看渲染，直接查数据层上周窗口内的实验集合
+    ok(pg.evaluate("""()=>{
+        var p=wkPeriod(0);
+        return experiments.filter(function(e){
+            return e.owner==='王研究员' && e.experimentDate>=p.start && e.experimentDate<=p.end;
+        }).length;}""") == 4,
+       "数据层：上周窗口内王研究员的实验恰为 4 组（演示数据已锚定，不随真实日期过期）")
     ok(pg.evaluate("""()=>{var a=document.querySelectorAll('[data-wk]');
         for(var i=0;i<a.length;i++){ if(a[i].getAttribute('data-wk')==='1.1.2') return a[i].value.length>10; }
         return false;}"""), "1.1.2 仍自动带出实验方案与结果分析")

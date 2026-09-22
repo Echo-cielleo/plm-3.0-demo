@@ -226,6 +226,9 @@ function seedExperiments(){
               doeRuns=doeRuns.concat(runs);
               list.push(schemeExecutionRecord(s,runs));
             });
+  /* 演示数据日期锚定：整体平移到「当前周」，保证周报统计周期内实验集合恒定 */
+  list.forEach(expAnchorDates);
+  doeSchemes.forEach(expAnchorDates);
   experiments=list;
   seedRunData();
 }
@@ -709,6 +712,14 @@ function seedExpSummaries(){
       s.summaryOverall=(s.items||[]).map(function(it){return it.summary||'';}).filter(Boolean).join(' ');
     }
     return s;
+  });
+  /* 演示数据日期锚定：items[].basic.date 是 expDate() 的首要取值来源，必须一并平移 */
+  expSummaries.forEach(function(s){
+    if(s.__anchored)return;
+    (s.items||[]).forEach(function(it){
+      if(it&&it.basic&&it.basic.date)it.basic.date=demoDate(it.basic.date);
+    });
+    s.__anchored=1;
   });
 }
 /* 汇总：报告关联的实验中任一命中即算命中 */

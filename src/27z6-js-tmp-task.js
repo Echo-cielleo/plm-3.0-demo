@@ -90,7 +90,7 @@ function _tmpReset(){
 /* ---------- 3. 数据访问 ---------- */
 function tmpById(id){ return (TMP_TASKS || []).filter(function(t){ return t.id === id; })[0] || null; }
 function tmpNextId(){
-  var y = new Date().getFullYear(), max = 0;
+  var y = demoNow().getFullYear(), max = 0;
   (TMP_TASKS || []).forEach(function(t){
     var m = /^TMP-(\d{4})-(\d+)$/.exec(t.id || '');
     if(m && +m[1] === y) max = Math.max(max, +m[2]);

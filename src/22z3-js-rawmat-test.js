@@ -36,7 +36,7 @@ function _mbReset(){ try{ localStorage.removeItem(_MB_KEY); }catch(e){} }
 
 /* 今天（本地时区，YYYY-MM-DD，不用 toISOString 防时区偏移） */
 function _mbToday(){
-  var d=new Date();
+  var d=demoNow();
   return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
 }
 

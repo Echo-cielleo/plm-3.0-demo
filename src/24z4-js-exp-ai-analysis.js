@@ -41,7 +41,7 @@ var _aiReportDraft=null;          /* 当前生成的报表（待保存 / 丢弃�
 var _AI_CHARTS=['aiChartMat','aiChartStep','aiChartRes'];   /* 需 dispose 的图表容器 */
 
 function _aiToday(){
-  var d=new Date();
+  var d=demoNow();
   return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
 }
 

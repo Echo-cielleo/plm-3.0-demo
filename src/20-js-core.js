@@ -19,15 +19,15 @@ function uid(prefix){
 var _uidN=0;
 function pad(n){return n<10?'0'+n:''+n;}
 function nowStr(){
-  var d=new Date();
+  var d=demoNow();
   return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());
 }
 function todayStr(){
-  var d=new Date();
+  var d=demoNow();
   return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 }
 function daysFromNow(n){
-  var d=new Date(); d.setDate(d.getDate()+n);
+  var d=demoNow(); d.setDate(d.getDate()+n);
   return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 }
 /* 距今天数：正数=未来还有 N 天，负数=已过期 N 天 */
@@ -37,6 +37,83 @@ function daysTo(s){
   if(a.length<3)return 0;
   var d1=new Date(+a[0],+a[1]-1,+a[2]),d2=new Date(+b[0],+b[1]-1,+b[2]);
   return Math.round((d1-d2)/86400000);
+}
+
+/* ---------- 演示时间锚点 DEMO_TODAY（2026-09-22 第三十七轮） ----------
+   全站「今天」的唯一来源。默认跟随真实日期；如需把演示冻结在固定某日，
+   在页面加载前设 window.DEMO_TODAY='YYYY-MM-DD'，或写 localStorage['DEMO_TODAY']。
+
+   ⚠️ 铁律：演示数据里的「相对日期」（实验日期 / 创建时间 / 到期日 …）
+      必须基于本锚点生成或平移，不得写死具体年月日——否则真实日期一推进，
+      数据就会滑出统计周期，演示页出现空白（周报曾因此整页空掉）。 */
+function demoTodayStr(){
+  if(typeof window!=='undefined'&&window.DEMO_TODAY)return window.DEMO_TODAY;
+  try{var v=localStorage.getItem('DEMO_TODAY');if(v)return v;}catch(e){}
+  return '';
+}
+function demoNow(){
+  var s=demoTodayStr();
+  var d=s?new Date(s+'T09:00:00'):new Date();
+  return isNaN(d.getTime())?new Date():d;
+}
+function demoYmd(d){
+  d=d||demoNow();
+  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+}
+/* 两个日期相差天数（b - a） */
+function daysBetween(a,b){
+  var p=String(a||'').split('-'),q=String(b||'').split('-');
+  if(p.length<3||q.length<3)return 0;
+  return Math.round((new Date(+q[0],+q[1]-1,+q[2])-new Date(+p[0],+p[1]-1,+p[2]))/86400000);
+}
+/* 日期加减：dateAdd('2026-09-09',6) → '2026-09-15' */
+function dateAdd(s,n){
+  var a=String(s||'').split('-'); if(a.length<3)return s;
+  var d=new Date(+a[0],+a[1]-1,+a[2]); d.setDate(d.getDate()+n);
+  return demoYmd(d);
+}
+/* 完整自然周区间：off=0 → 上一个完整周（周报默认口径）；off=-1 → 本周 */
+function demoWeekRange(off){
+  off=(off===undefined)?0:off;
+  var n=demoNow(),day=n.getDay()||7;              /* 1=周一 … 7=周日 */
+  var mon=new Date(n); mon.setDate(n.getDate()-day+1);
+  mon.setDate(mon.getDate()-(off+1)*7);
+  var sun=new Date(mon); sun.setDate(mon.getDate()+6);
+  return {start:demoYmd(mon),end:demoYmd(sun)};
+}
+/* 上周第 dow 天（1=周一 … 7=周日）——新增 mock 数据用它生成，永不过期 */
+function lastWeekDate(dow,off){
+  return dateAdd(demoWeekRange(off===undefined?0:off).start,((dow||1)-1));
+}
+
+/* ---------- 演示数据日期平移 ----------
+   DATA_EPOCH = mock 数据编写基准日（当天是周一）。
+   平移量 δ = 本周一 − DATA_EPOCH，必为 7 的整数倍 → 星期几保持不变，
+   于是「周报统计周期内的实验集合」恒定，不会随真实日期推进而变。 */
+var DATA_EPOCH='2026-09-14';
+function demoShiftDays(){
+  return daysBetween(DATA_EPOCH, demoWeekRange(-1).start);
+}
+function demoDate(s){
+  if(!s||!/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+  return dateAdd(s,demoShiftDays());
+}
+/* 实验 / DOE 方案的日期字段整体平移：只改日期，保持彼此相对关系 */
+function expAnchorDates(e){
+  if(!e||e.__anchored)return e;          /* 幂等：同一对象只平移一次（seed 可能被重复调用） */
+  var d=demoShiftDays();
+  if(d){
+    ['experimentDate','dueDate'].forEach(function(k){ if(e[k])e[k]=dateAdd(e[k],d); });
+    ['createTime','analyzedAt'].forEach(function(k){
+      if(!e[k])return;
+      var p=String(e[k]).split(' '); p[0]=dateAdd(p[0],d); e[k]=p.join(' ');
+    });
+    (e.executionProcesses||[]).forEach(function(x){
+      if(x&&x.basic&&x.basic.date)x.basic.date=dateAdd(x.basic.date,d);
+    });
+  }
+  e.__anchored=1;
+  return e;
 }
 
 /* ---------- Toast ---------- */

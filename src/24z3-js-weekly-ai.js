@@ -41,10 +41,8 @@ var weeklyDraft={
 
 /* 兼容保留：文档归档页用它取「当前周」区间，判断是否是本周草稿 */
 function weeklyDateRange(){
-  var now=new Date(),day=now.getDay()||7,start=new Date(now);
-  start.setDate(now.getDate()-day+1);
-  var end=new Date(start);end.setDate(start.getDate()+6);
-  return {start:wkFmt(start),today:wkFmt(now),end:wkFmt(end)};
+  var r=demoWeekRange(-1);
+  return {start:r.start,today:demoYmd(),end:r.end};
 }
 
 /* ---------------- 角色与周期 ---------------- */
@@ -57,11 +55,7 @@ function wkRoleNow(){ return WK_ROLE[weeklyDraft.role]||WK_ROLE.staff; }
 function wkFmt(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
 function wkPeriod(off){
   off=(off===undefined||off===null)?(weeklyDraft.periodOffset||0):off;
-  var n=new Date(), day=n.getDay()||7;
-  var mon=new Date(n); mon.setDate(n.getDate()-day+1);   /* 本周一 */
-  mon.setDate(mon.getDate()-(off+1)*7);                  /* off=0 → 上一个完整自然周 */
-  var sun=new Date(mon); sun.setDate(mon.getDate()+6);
-  return {start:wkFmt(mon),end:wkFmt(sun)};
+  return demoWeekRange(off);
 }
 function wkPeriodLabel(off){
   off=(off===undefined)?weeklyDraft.periodOffset:off;

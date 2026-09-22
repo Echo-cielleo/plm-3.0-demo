@@ -180,7 +180,7 @@ function _eqmReset(){
 
 /* ---------- 5. 编号生成 ---------- */
 function eqNextLogId(){
-  var y=new Date().getFullYear();
+  var y=demoNow().getFullYear();
   var max=0;
   EQ_LOGS.forEach(function(l){
     var m=/^BY-(\d{4})-(\d+)$/.exec(l.id||'');
@@ -189,7 +189,7 @@ function eqNextLogId(){
   return 'BY-'+y+'-'+('000'+(max+1)).slice(-3);
 }
 function eqNextCalId(){
-  var y=new Date().getFullYear(),max=0;
+  var y=demoNow().getFullYear(),max=0;
   EQ_CALS.forEach(function(c){
     var m=/^CAL-(\d{4})-(\d+)$/.exec(c.id||'');
     if(m&&+m[1]===y)max=Math.max(max,+m[2]);
@@ -197,7 +197,7 @@ function eqNextCalId(){
   return 'CAL-'+y+'-'+('000'+(max+1)).slice(-3);
 }
 function eqNextMaintId(){
-  var y=new Date().getFullYear(),max=0;
+  var y=demoNow().getFullYear(),max=0;
   (typeof EQMAINTS!=='undefined'?EQMAINTS:[]).forEach(function(m0){
     var m=/^MT-(\d{4})-(\d+)$/.exec(m0.id||'');
     if(m&&+m[1]===y)max=Math.max(max,+m[2]);
