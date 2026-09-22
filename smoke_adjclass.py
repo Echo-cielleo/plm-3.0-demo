@@ -87,7 +87,13 @@ with sync_playwright() as pw:
 
     print("\n=== ⑥ 数据完整性 ===")
     ok(pg.evaluate("()=>wz.classItems.every(function(c){return 'sug' in c;})"), "所有分类项均已固化 sug 字段")
-    ok(pg.evaluate("()=>wz.classItems.filter(function(c){return c.status==='pending';}).every(function(c){return c.sug===null;})"), "pending 项 sug = null")
+    # 注：第三十六轮起 pending 分两类——need='confirm' 的项是「系统建议·待人工确认」，
+    # 必须保留建议值（否则弹窗里就没法显示「系统建议：xxx」）；只有缺算式/缺输入的
+    # judge 型 pending 项才 sug=null。此处按当前设计分两类断言（同步过时断言，未降标）。
+    ok(pg.evaluate("()=>wz.classItems.filter(function(c){return c.status==='pending'&&c.need!=='confirm';}).every(function(c){return c.sug===null;})"),
+       "judge 型 pending 项 sug = null（系统从未给过建议）")
+    ok(pg.evaluate("()=>wz.classItems.filter(function(c){return c.need==='confirm';}).every(function(c){return !!c.sug&&c.sug===c.result;})"),
+       "confirm 型 pending 项保留系统建议值（第三十六轮设计）")
     ok(pg.evaluate("()=>wz.classItems.filter(function(c){return c.status!=='pending';}).every(function(c){return c.sug===c.result||c.status==='manual';})"), "auto 项 sug = 原始 result")
 
     print("\nJS 错误：", errs)

@@ -1767,7 +1767,9 @@ function renderStep4(){
         :'<button class="btn sm" onclick="adjClass('+i+')">手动调整</button>')
         +'<button class="btn sm" id="evbtn'+i+'" onclick="evToggle('+i+')">查看计算依据 ▾</button></span></div>'
       +'<div class="ev-bd" id="evbd'+i+'" style="display:none">'
-        +(c.packId?'<div class="ev-f"><span class="k">规则包调用</span><span class="v"><b class="mono">'+esc(c.packId)+'</b><br><span class="tag blue">'+esc(c.ruleIds.join(' / '))+'</span> <span class="tag grey">'+esc(c.method)+'</span></span></div>':'')
+        +(c.packId?'<div class="ev-f"><span class="k">规则包调用</span><span class="v"><b class="mono">'+esc(c.packId)+'</b><br><span class="tag blue">'+esc(c.ruleIds.join(' / '))+'</span> <span class="tag grey">'+esc(c.method)+'</span>'+(c.methodVersion?' <span class="tag grey">'+esc(c.methodVersion)+'</span>':'')+'</span></div>':'')
+        +(c.engineStatus&&c.engineStatus!=='AUTO'&&c.engineStatus!=='NO_MATCH'
+          ?'<div class="ev-f"><span class="k">执行状态</span><span class="v"><span class="tag orange">'+esc(c.engineStatus)+'</span> '+esc(c.engineMessage||'')+'</span></div>':'')
         +'<div class="ev-f"><span class="k">计算规则版本</span><span class="v">'+c.rule+'</span></div>'
         +'<div class="ev-f"><span class="k">数据来源</span><span class="v">'+srcs+'</span></div>'
         +'<div class="ev-f span2" style="grid-column:span 2"><span class="k">输入参数</span><span class="v">'+esc(c.input)+'</span></div>'

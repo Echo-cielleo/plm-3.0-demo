@@ -119,19 +119,36 @@ function clpNextRuleId(){
   var max=CLP_RULES.reduce(function(n,r){var m=String(r.id||'').match(/^CLP-R-(\d{4})$/);return m?Math.max(n,parseInt(m[1],10)):n;},0);
   return 'CLP-R-'+('0000'+(max+1)).slice(-4);
 }
+/* 活动规则包（第三十九轮重构）：**不再用固定规则编号决定算法**，改为按
+   规则自身状态 + 所引用的计算方法是否已登记且已实现来筛选：
+     ① 规则状态为「已审核」或「已发布」；
+     ② 规则测试状态为「通过」；
+     ③ 规则存在运行参数 run（没有参数的计算无从执行）；
+     ④ rule.method 已在计算方法注册表中登记；
+     ⑤ 方法实现状态为 implemented 且具备可执行函数。
+   因此「展示字典里标了已支持」不等于「真的能算」——未登记 / 未实现 / 无参数 /
+   测试未通过的规则一律进不了活动包（CLP-R-0005/0006/0007 即在此被排除）。 */
 function clpActivePack(){
-  var ids=['CLP-R-0001','CLP-R-0002','CLP-R-0003','CLP-R-0004'];
-  var rules=ids.map(clpRuleById).filter(function(r){
-    return r&&r.engine==='已支持'&&r.test==='通过'&&(r.status==='已审核'||r.status==='已发布');
+  var candidates=CLP_RULES.filter(function(r){
+    return !!r.method&&complianceHasMethod(r.method)&&complianceMethodImplemented(r.method)
+      &&(r.status==='已审核'||r.status==='已发布');
+  });
+  var rules=candidates.filter(function(r){return r.test==='通过'&&!!r.run;});
+  var methodVersions={};
+  rules.forEach(function(r){
+    var m=complianceGetMethod(r.method);
+    methodVersions[r.method]=m?m.version:'';
   });
   return {
     id:'CLP-EU-'+clpPackToken(CLP_MODULES.vi.ver)+'-'+clpPackToken(CLP_MODULES.rules.ver)+'-'+clpPackToken(CLP_MODULES.labels.ver),
-    market:'EU',status:rules.length===ids.length?'已发布':'不可调用',
+    market:'EU',status:rules.length&&rules.length===candidates.length?'已发布':'不可调用',
     modules:{vi:CLP_MODULES.vi.ver,rules:CLP_MODULES.rules.ver,labels:CLP_MODULES.labels.ver},
     ruleIds:rules.map(function(r){return r.id;}),
+    rules:rules.slice(),
     methods:rules.map(function(r){return r.method;}),
+    methodVersions:methodVersions,
     effectiveFrom:CLP_MODULES.rules.eff,
-    tested:rules.length===ids.length
+    tested:rules.length>0&&rules.length===candidates.length
   };
 }
 
@@ -139,122 +156,43 @@ function clpCalcNum(n,d){
   var s=(+n).toFixed(d==null?2:d);
   return s.replace(/\.0+$|(?:(\.\d*?)0+)$/,'$1');
 }
-function clpCalcRows(formula){
-  return (formula||[]).map(function(f){
-    var p=COMP_CLP[f.cas]||{};
-    return {cas:f.cas,name:f.name||p.name||f.cas,conc:parseFloat(f.conc)||0,p:p,haz:p.haz||{}};
-  });
-}
 function clpCalcInput(rows,label){
   return rows.map(function(r){return r.name+' '+clpCalcNum(r.conc)+'%'+(label?'（'+label(r)+'）':'');}).join('；')||'无适用组分';
 }
 
-/* CLP 规则包运行时：只实现演示闭环所需的四种已支持方法。
-   规则参数来自 CLP_RULES.run；物质分类参数来自组分基础数据 COMP_CLP.haz。 */
+/* CLP 规则包运行时（第三十九轮重构）：
+   本函数已由「计算函数」改为「**规则包调度器**」——不再包含任何法规计算细节。
+   执行链路：获取活动规则包 → 标准化配方输入 → 按 rule.method 查找执行器
+            → 执行计算方法（见 src/23z6b-js-clp-engine.js）→ 汇总统一结果
+            → 转换为现有 SDS 页面兼容结构。
+   四类已实现计算（ATE / GCL / SCL / M 因子）**不在此处**，一律走方法注册表；
+   规则编号不再参与算法分派，只作为审计信息。
+   返回：{pack, items, executions, warnings, labels}
+        · executions 保存每次执行的方法版本、规则版本、输入、中间值、结果与证据；
+        · warnings 汇总被拦截 / 失败的执行，供页面给出人类可读提示（不暴露堆栈）。 */
 function clpEvaluateMixture(formula){
-  var pack=clpActivePack(),rows=clpCalcRows(formula),items=[];
+  var pack=clpActivePack();
   if(!pack.tested)throw new Error('当前 CLP 规则包未通过发布门禁');
-
-  /* CLP-M-ATE-SUM · 经口急性毒性 */
-  var ateRule=clpRuleById('CLP-R-0001'),ateRows=rows.filter(function(r){return r.haz.acuteOral;});
-  var ateMissing=ateRows.filter(function(r){return r.p.ateState!=='known'||!(r.p.ateO>0);});
-  var ateInv=0;
-  ateRows.forEach(function(r){if(r.p.ateO>0)ateInv+=r.conc/r.p.ateO;});
-  var ateMix=ateInv>0?100/ateInv:0,ateHit=null;
-  if(ateMix)ateRule.run.thresholds.some(function(t){if(ateMix<=t.max){ateHit=t;return true;}return false;});
-  items.push({id:'acuteOral',name:'急性毒性（经口）',
-    result:ateMissing.length?'—':(ateHit?ateHit.cat:'不分类'),
-    code:ateMissing.length?'待人工判定':(ateHit?(ateHit.h+' '+(ateHit.h==='H301'?'吞咽中毒':(ateHit.h==='H302'?'吞咽有害':'吞咽致命'))):('ATE_mix '+clpCalcNum(ateMix,0)+' mg/kg')),
-    status:ateMissing.length?'pending':'auto',packId:pack.id,ruleIds:['CLP-R-0001'],method:'CLP-M-ATE-SUM',
-    rule:'CLP Annex I 3.1.3.6 · ATE 加和法',
-    input:clpCalcInput(ateRows,function(r){return 'ATE '+clpCalcNum(r.p.ateO,0)+' mg/kg';}),
-    formula:ateMissing.length
-      ? '缺少可用 ATE：'+ateMissing.map(function(r){return r.name;}).join('、')+' → 转人工判定'
-      : 'ATE_mix = 100 / Σ(Ci / ATEi) = '+clpCalcNum(ateMix,0)+' mg/kg → '+(ateHit?ateHit.cat:'未达到类别 4'),
-    src:[['reg','CLP 规则包 '+pack.id],['sup','组分基础数据 · ATE']],
-    opts:ateRule.run.thresholds.map(function(t){return{o:t.cat,d:'ATE_mix ≤ '+t.max+' mg/kg',hit:ateHit&&ateHit.cat===t.cat?'✓ 系统建议':'未命中'};})
-      .concat([{o:'不分类（无需分类）',d:'ATE_mix > 2 000 mg/kg',hit:!ateHit&&!ateMissing.length?'✓ 当前结果':'未命中'}])});
-
-  /* CLP-M-GCL-SUM · 皮肤腐蚀 / 刺激 */
-  var gclRule=clpRuleById('CLP-R-0002'),g=gclRule.run;
-  var skinCorr=rows.filter(function(r){return !!r.haz.skinCorr;}),skinIrr=rows.filter(function(r){return !!r.haz.skinIrrit;});
-  var corrSum=skinCorr.reduce(function(n,r){return n+r.conc;},0),irrSum=skinIrr.reduce(function(n,r){return n+r.conc;},0);
-  var skinWeighted=g.weight*corrSum+irrSum;
-  var skinResult=corrSum>=g.skinCorr?'腐蚀 类别 1A/1B/1C':(skinWeighted>=g.skinIrrit?'类别 2':'不分类');
-  items.push({id:'skin',name:'皮肤腐蚀/刺激',result:skinResult,
-    code:skinResult.indexOf('腐蚀 类别 1')===0?'H314 造成严重皮肤灼伤和眼损伤':(skinResult==='类别 2'?'H315 造成皮肤刺激':'未达到分类阈值'),
-    status:'auto',packId:pack.id,ruleIds:['CLP-R-0002'],method:'CLP-M-GCL-SUM',rule:'CLP Annex I 3.2.3 · 通用浓度限值加和法',
-    input:clpCalcInput(skinCorr.concat(skinIrr),function(r){return r.haz.skinCorr?'Skin Corr. '+r.haz.skinCorr:'Skin Irrit. 2';}),
-    formula:'Σ(Skin Corr. 1) = '+clpCalcNum(corrSum)+'%；10×Σ(Cat.1) + Σ(Cat.2) = '+clpCalcNum(skinWeighted)+'% → '+skinResult,
-    src:[['reg','CLP 规则包 '+pack.id],['reg','Annex VI / 物质分类数据']],
-    opts:[{o:'腐蚀 类别 1A/1B/1C',d:'Σ(Skin Corr. 1) ≥ '+g.skinCorr+'%',hit:corrSum>=g.skinCorr?'✓ 系统建议':'当前 '+clpCalcNum(corrSum)+'%'},
-      {o:'类别 2',d:g.weight+'×Σ(Cat.1) + Σ(Cat.2) ≥ '+g.skinIrrit+'%',hit:skinResult==='类别 2'?'✓ 系统建议':'当前 '+clpCalcNum(skinWeighted)+'%'},
-      {o:'不分类（无需分类）',d:'低于上述阈值',hit:skinResult==='不分类'?'✓ 当前结果':'未命中'}]});
-
-  /* CLP-M-SCL · 特定浓度限值优先，当前演示用于皮肤致敏 */
-  var sclRule=clpRuleById('CLP-R-0003'),sensRows=rows.filter(function(r){return !!r.haz.skinSens;});
-  var sensHit=sensRows.filter(function(r){return r.conc>=(r.haz.skinSens.scl||sclRule.run.skinSensGcl);});
-  items.push({id:'sens',name:'皮肤致敏',result:sensHit.length?'类别 1':'不分类',
-    code:sensHit.length?'H317 可能导致皮肤过敏反应':'未达到分类阈值',status:'auto',packId:pack.id,ruleIds:['CLP-R-0003'],method:'CLP-M-SCL',
-    rule:'CLP Annex VI SCL + Annex I 1.2 · SCL 优先替代法',
-    input:clpCalcInput(sensRows,function(r){return 'SCL '+clpCalcNum(r.haz.skinSens.scl||sclRule.run.skinSensGcl)+'%';}),
-    formula:(sensRows.length?sensRows.map(function(r){var t=r.haz.skinSens.scl||sclRule.run.skinSensGcl;return r.name+' '+clpCalcNum(r.conc)+'% '+(r.conc>=t?'≥':'<')+' '+clpCalcNum(t)+'%';}).join('；'):'无 Skin Sens. 组分')+' → '+(sensHit.length?'类别 1':'不分类'),
-    src:[['reg','CLP 规则包 '+pack.id],['reg','Annex VI · SCL']],
-    opts:[{o:'类别 1',d:'组分浓度达到该物质 SCL；无 SCL 时使用 GCL',hit:sensHit.length?'✓ 系统建议':'未命中'},
-      {o:'不分类（无需分类）',d:'所有致敏组分均低于适用限值',hit:sensHit.length?'未命中':'✓ 当前结果'}]});
-
-  /* CLP-M-GCL-SUM · 严重眼损伤 / 眼刺激 */
-  var eyeDam=rows.filter(function(r){return !!r.haz.eyeDamage;}),eyeIrr=rows.filter(function(r){return !!r.haz.eyeIrrit;});
-  var damSum=eyeDam.reduce(function(n,r){return n+r.conc;},0),eyeIrrSum=eyeIrr.reduce(function(n,r){return n+r.conc;},0);
-  var eyeWeighted=g.weight*damSum+eyeIrrSum;
-  var eyeResult=damSum>=g.eyeDamage?'类别 1':(eyeWeighted>=g.eyeIrrit?'类别 2':'不分类');
-  items.push({id:'eye',name:'严重眼损伤/眼刺激',result:eyeResult,
-    code:eyeResult==='类别 1'?'H318 造成严重眼损伤':(eyeResult==='类别 2'?'H319 造成严重眼刺激':'未达到分类阈值'),
-    status:'auto',packId:pack.id,ruleIds:['CLP-R-0002'],method:'CLP-M-GCL-SUM',rule:'CLP Annex I 3.3.3.3 · 通用浓度限值加和法',
-    input:clpCalcInput(eyeDam.concat(eyeIrr),function(r){return r.haz.eyeDamage?'Eye Dam. 1':'Eye Irrit. 2';}),
-    formula:'Σ(Eye Dam. 1) = '+clpCalcNum(damSum)+'%；10×Σ(Cat.1) + Σ(Cat.2) = '+clpCalcNum(eyeWeighted)+'% → '+eyeResult,
-    src:[['reg','CLP 规则包 '+pack.id],['reg','Annex VI / 物质分类数据']],
-    opts:[{o:'类别 1',d:'Σ(Eye Dam. 1) ≥ '+g.eyeDamage+'%',hit:eyeResult==='类别 1'?'✓ 系统建议':'当前 '+clpCalcNum(damSum)+'%'},
-      {o:'类别 2',d:g.weight+'×Σ(Cat.1) + Σ(Cat.2) ≥ '+g.eyeIrrit+'%',hit:eyeResult==='类别 2'?'✓ 系统建议':'当前 '+clpCalcNum(eyeWeighted)+'%'},
-      {o:'不分类（无需分类）',d:'低于上述阈值',hit:eyeResult==='不分类'?'✓ 当前结果':'未命中'}]});
-
-  /* CLP-M-MFACTOR · 水生环境长期危害 */
-  var mfRule=clpRuleById('CLP-R-0004'),mf=mfRule.run;
-  var aqRows=rows.filter(function(r){return !!r.haz.aquaticChronic;});
-  /* 第 38 轮 · 加和法输入可靠性门禁：组分的水生慢性分类若缺少可靠来源依据
-     （aqState!=='known'），不得返回「自动」结论 —— 必须与 SDS 向导第 3 步
-     「对应危害类别在第 4 步会落到待人工判断」的承诺一致，否则同一条数据两处说法相反。 */
-  var aqBad=aqRows.filter(function(r){return r.p.aqState!=='known';});
-  var aq1=0,aq1m=0,aq2=0,aq3=0,aq4=0;
-  aqRows.forEach(function(r){var c=String(r.haz.aquaticChronic),m=r.p.mC||1;
-    if(c==='1'){aq1+=r.conc;aq1m+=m*r.conc;}else if(c==='2')aq2+=r.conc;else if(c==='3')aq3+=r.conc;else if(c==='4')aq4+=r.conc;});
-  var aqScore2=mf.chronic2Weight*aq1m+aq2;
-  var aqScore3=mf.chronic3Weight*aq1m+mf.chronic2Weight*aq2+aq3;
-  var aqScore4=aq1+aq2+aq3+aq4;
-  var aqResult='不分类',aqCode='未达到分类阈值';
-  if(aq1m>=mf.limit){aqResult='类别 1';aqCode='H410 对水生生物毒性极大并具有长期持续影响';}
-  else if(aqScore2>=mf.limit){aqResult='类别 2';aqCode='H411 对水生生物有毒并具有长期持续影响';}
-  else if(aqScore3>=mf.limit){aqResult='类别 3';aqCode='H412 对水生生物有害并具有长期持续影响';}
-  else if(aqScore4>=mf.limit){aqResult='类别 4';aqCode='H413 可能对水生生物造成长期持续的有害影响';}
-  if(aqBad.length){
-    items.push({id:'aqua',name:'危害水生环境（长期）',result:'—',code:'待人工判断',status:'pending',need:'judge',packId:pack.id,ruleIds:['CLP-R-0004'],method:'CLP-M-MFACTOR',
-      rule:'CLP Annex I 4.1.3.5 · M 因子加权求和法',
-      input:clpCalcInput(aqBad,function(r){return 'Chronic '+r.haz.aquaticChronic+' · 来源依据未归档';}),
-      formula:'加和法未执行 —— '+aqBad.map(function(r){return r.name;}).join('、')+' 的水生慢性分类缺少可靠来源依据（未归档实测报告 / NOEC），输入不可靠 → 不产出结论，转人工判断',
-      src:[['reg','CLP 规则包 '+pack.id],['lab','待补录实测报告 / NOEC']],
-      opts:[{o:'加和法未执行',d:'补录 '+aqBad.length+' 项水生毒性来源依据后，本项可恢复自动计算',hit:'当前状态'}]});
-  } else {
-      items.push({id:'aqua',name:'危害水生环境（长期）',result:aqResult,code:aqCode,status:'auto',packId:pack.id,ruleIds:['CLP-R-0004'],method:'CLP-M-MFACTOR',
-        rule:'CLP Annex I 4.1.3.5 · M 因子加权求和法',
-        input:clpCalcInput(aqRows,function(r){return 'Chronic '+r.haz.aquaticChronic+(String(r.haz.aquaticChronic)==='1'?'，M='+(r.p.mC||1):'');}),
-        formula:'Chronic 1='+clpCalcNum(aq1m)+'%；Chronic 2 判定和='+clpCalcNum(aqScore2)+'%；Chronic 3 判定和='+clpCalcNum(aqScore3)+'%；总和='+clpCalcNum(aqScore4)+'% → '+aqResult,
-        src:[['reg','CLP 规则包 '+pack.id],['reg','Annex VI / 物质分类数据']],
-        opts:[{o:'类别 1',d:'Σ(M×Chronic 1) ≥ '+mf.limit+'%',hit:aqResult==='类别 1'?'✓ 系统建议':'未命中'},
-          {o:'类别 2',d:'Σ(10×M×Chronic 1)+Σ(Chronic 2) ≥ '+mf.limit+'%',hit:aqResult==='类别 2'?'✓ 系统建议':'未命中'},
-          {o:'类别 3',d:'Σ(100×M×Chronic 1)+10×Σ(Chronic 2)+Σ(Chronic 3) ≥ '+mf.limit+'%',hit:aqResult==='类别 3'?'✓ 系统建议':'未命中'},
-          {o:'类别 4',d:'Σ(Chronic 1~4) ≥ '+mf.limit+'%',hit:aqResult==='类别 4'?'✓ 系统建议':'未命中'},
-          {o:'不分类（无需分类）',d:'所有逐级判定和均低于 '+mf.limit+'%',hit:aqResult==='不分类'?'✓ 当前结果':'未命中'}]});
-  }
+  var items=[],executions=[],warnings=[];
+  pack.rules.forEach(function(rule){
+    var ctx=complianceBuildContext(formula,rule,pack);
+    var exec=complianceExecuteMethod(rule.method,ctx);
+    exec.items.forEach(function(raw){items.push(complianceAdaptItem(exec,raw,pack.id));});
+    if(exec.status==='ERROR'||exec.status==='BLOCKED'||exec.status==='UNSUPPORTED_METHOD'){
+      warnings.push({ruleId:rule.id,method:rule.method,status:exec.status,
+        message:exec.messages.join('')||complianceUiMessage(exec.status)});
+    }
+    executions.push({
+      methodCode:exec.method.code,methodVersion:exec.method.version,
+      ruleId:rule.id,ruleVersion:rule.ver||'',
+      inputs:exec.inputs,intermediates:exec.intermediates,
+      result:exec.items.map(function(it){return {id:it.id,result:it.result};}),
+      status:exec.status,evidence:exec.evidence,messages:exec.messages,
+      debug:exec.debug||null
+    });
+  });
+  /* 兼容：保持重构前的分类项展示顺序（详见 23z6b 的 COMPLIANCE_ITEM_ORDER） */
+  items=complianceSortItems(items);
 
   var hCodes=[],pCodes=[],pictograms=[],signal='warning';
   items.forEach(function(item){
@@ -269,7 +207,8 @@ function clpEvaluateMixture(formula){
     if(row.signal==='危险')signal='danger';
     (P_BY_H[row.code]||[]).forEach(function(p){if(pCodes.indexOf(p)<0)pCodes.push(p);});
   });
-  return {pack:pack,items:items,labels:{hCodes:hCodes,pCodes:pCodes,pictograms:pictograms,signal:signal}};
+  return {pack:pack,items:items,executions:executions,warnings:warnings,
+    labels:{hCodes:hCodes,pCodes:pCodes,pictograms:pictograms,signal:signal}};
 }
 
 /* Annex V 危险象形图（GHS01–GHS09，9 个，固定编号）
