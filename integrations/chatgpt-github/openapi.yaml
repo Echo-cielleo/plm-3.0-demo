@@ -1,0 +1,254 @@
+openapi: 3.1.0
+info:
+  title: PLM GitHub Issue Collaboration
+  version: 1.0.0
+  description: >-
+    Read and manage GitHub Issues only in Echo-cielleo/plm-3.0-demo.
+    Use issues as the handoff channel between ChatGPT and coding agents.
+servers:
+  - url: https://api.github.com
+paths:
+  /repos/Echo-cielleo/plm-3.0-demo/issues:
+    get:
+      operationId: listPlmIssues
+      summary: List PLM collaboration issues
+      parameters:
+        - name: state
+          in: query
+          schema:
+            type: string
+            enum: [open, closed, all]
+            default: open
+        - name: labels
+          in: query
+          description: Comma-separated label names.
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [created, updated, comments]
+            default: updated
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 30
+            default: 20
+      responses:
+        "200":
+          description: Issue list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Issue"
+    post:
+      operationId: createPlmIssue
+      summary: Create a PLM collaboration issue
+      description: >-
+        Create an issue only after the user has approved the final title and body.
+        Prefer the gpt-pro and needs-triage labels for new requests.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [title, body]
+              properties:
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 120
+                body:
+                  type: string
+                  minLength: 1
+                labels:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 5
+      responses:
+        "201":
+          description: Issue created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+  /repos/Echo-cielleo/plm-3.0-demo/issues/{issue_number}:
+    get:
+      operationId: getPlmIssue
+      summary: Read one PLM issue
+      parameters:
+        - $ref: "#/components/parameters/IssueNumber"
+      responses:
+        "200":
+          description: Issue details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+    patch:
+      operationId: updatePlmIssue
+      summary: Update or close one PLM issue
+      description: >-
+        Update title, body, labels, or state only after user confirmation.
+      parameters:
+        - $ref: "#/components/parameters/IssueNumber"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 120
+                body:
+                  type: string
+                state:
+                  type: string
+                  enum: [open, closed]
+                labels:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 10
+      responses:
+        "200":
+          description: Updated issue.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+  /repos/Echo-cielleo/plm-3.0-demo/issues/{issue_number}/comments:
+    get:
+      operationId: listPlmIssueComments
+      summary: List comments on one PLM issue
+      parameters:
+        - $ref: "#/components/parameters/IssueNumber"
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 30
+      responses:
+        "200":
+          description: Comment list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+    post:
+      operationId: commentOnPlmIssue
+      summary: Add a comment to one PLM issue
+      description: Add the comment only after the user has approved its final text.
+      parameters:
+        - $ref: "#/components/parameters/IssueNumber"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [body]
+              properties:
+                body:
+                  type: string
+                  minLength: 1
+      responses:
+        "201":
+          description: Comment created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+components:
+  parameters:
+    IssueNumber:
+      name: issue_number
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+  schemas:
+    User:
+      type: object
+      properties:
+        login:
+          type: string
+        html_url:
+          type: string
+          format: uri
+    Label:
+      type: object
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+    Issue:
+      type: object
+      properties:
+        number:
+          type: integer
+        title:
+          type: string
+        body:
+          type: [string, "null"]
+        state:
+          type: string
+        html_url:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        user:
+          $ref: "#/components/schemas/User"
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Label"
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+        body:
+          type: string
+        html_url:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        user:
+          $ref: "#/components/schemas/User"

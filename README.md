@@ -53,6 +53,10 @@ python3 smoke_oel.py
 - 按受影响模块运行对应 smoke；涉及公共能力时运行 `bash run_smoke.sh`。
 - 原型能力与规划能力要明确区分，不把 mock 数据或静态结论表述成真实自动计算结果。
 
+### ChatGPT 网页协作
+
+`integrations/chatgpt-github/` 提供仅针对本仓库的 GitHub Issue Action。配置后，网页 ChatGPT 可以读取需求、创建 Issue、补充评论和更新 Issue 状态；详细步骤见该目录的说明。
+
 ## 当前合规管理主线
 
 CLP 法规库与 SDS 分类演示链路已经建立；REACH、OEL 已有维护页面。下一阶段重点是统一法规数据来源，并依次打通 REACH 名单匹配、OEL 第 8 章取数、国内法规路径和运输法规第 14 章取数。
