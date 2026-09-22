@@ -127,9 +127,14 @@ function clpNextRuleId(){
      ④ rule.method 已在计算方法注册表中登记；
      ⑤ 方法实现状态为 implemented 且具备可执行函数。
    因此「展示字典里标了已支持」不等于「真的能算」——未登记 / 未实现 / 无参数 /
-   测试未通过的规则一律进不了活动包（CLP-R-0005/0006/0007 即在此被排除）。 */
-function clpActivePack(){
-  var candidates=CLP_RULES.filter(function(r){
+   测试未通过的规则一律进不了活动包（CLP-R-0005/0006/0007 即在此被排除）。
+
+   [第四十轮 · 阶段 2] 支持按日期取规则：clpActivePack(asOfDate) 优先取
+   「按日期解析出的活动规则版本」（见 23z6c 生命周期）的规则集，未传日期时
+   取当前活动版本。规则编号依旧不参与算法分派，只作为审计信息。 */
+function clpActivePack(asOfDate){
+  var src=(typeof clpRuleVersionRulesFor==='function')?clpRuleVersionRulesFor(asOfDate):CLP_RULES;
+  var candidates=src.filter(function(r){
     return !!r.method&&complianceHasMethod(r.method)&&complianceMethodImplemented(r.method)
       &&(r.status==='已审核'||r.status==='已发布');
   });
@@ -148,7 +153,13 @@ function clpActivePack(){
     methods:rules.map(function(r){return r.method;}),
     methodVersions:methodVersions,
     effectiveFrom:CLP_MODULES.rules.eff,
-    tested:rules.length>0&&rules.length===candidates.length
+    tested:rules.length>0&&rules.length===candidates.length,
+    /* 阶段 2：规则版本追溯（新增字段，不改变既有字段与计算结果） */
+    ruleSetVersion:(function(){
+      if(typeof clpRuleVersionResolve!=='function')return '';
+      var v=clpRuleVersionResolve(asOfDate);return v?v.version:'';
+    })(),
+    asOfDate:asOfDate||(typeof clpRuleAsOfDate==='function'?clpRuleAsOfDate():'')
   };
 }
 
@@ -170,8 +181,10 @@ function clpCalcInput(rows,label){
    返回：{pack, items, executions, warnings, labels}
         · executions 保存每次执行的方法版本、规则版本、输入、中间值、结果与证据；
         · warnings 汇总被拦截 / 失败的执行，供页面给出人类可读提示（不暴露堆栈）。 */
-function clpEvaluateMixture(formula){
-  var pack=clpActivePack();
+/* asOfDate 可选：SDS 传入投放日期（wz.project.date），未传时回落到演示当前日期，
+   用于按日期解析活动规则版本（未来生效的规则不会提前影响当前 SDS）。 */
+function clpEvaluateMixture(formula,asOfDate){
+  var pack=clpActivePack(asOfDate);
   if(!pack.tested)throw new Error('当前 CLP 规则包未通过发布门禁');
   var items=[],executions=[],warnings=[];
   pack.rules.forEach(function(rule){

@@ -1602,7 +1602,8 @@ function clpParamTable(){
     +'标「不适用」的是已确认不达分类阈值的组分，属已知安全，不计入。</div></div></div>';
 }
 function buildClassItems(){
-  var run=clpEvaluateMixture(wz.formula),byId={};
+  /* 阶段 2：按 SDS 投放日期解析活动规则版本（未来生效的规则不会提前参与计算） */
+  var run=clpEvaluateMixture(wz.formula,(wz.project&&wz.project.date)||''),byId={};
   run.items.forEach(function(item){byId[item.id]=item;});
   wz.classPack=run.pack;
   return [

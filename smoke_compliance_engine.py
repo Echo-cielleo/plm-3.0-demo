@@ -252,30 +252,37 @@ with sync_playwright() as pw:
     ok(pack['tested'] and pack['status'] == '已发布', "规则包通过发布门禁")
 
     filt = pg.evaluate("""() => {
-      var R=clpRuleById, out={}, bak={};
-      var save=function(id,k){ bak[id+'.'+k]=R(id)[k]; };
+      /* 阶段 2 起 CLP_RULES 是「活动规则版本的兼容投影」，
+         改规则要改到活动版本上再同步投影，不能直接改投影变量（会被同步覆盖）。 */
+      var ver = clpRuleVersionResolve();
+      var bak = clpRuleDeepClone(ver.rules);
+      var setRule = function(id, k, v){
+        var r = null; ver.rules.forEach(function(x){ if(x.id === id) r = x; });
+        r[k] = v; clpSyncActiveRulesProjection();
+      };
+      var restore = function(){ ver.rules = clpRuleDeepClone(bak); clpSyncActiveRulesProjection(); };
+      var R = clpRuleById, out = {};
       try{
         /* ① 测试未通过 */
-        save('CLP-R-0001','test'); R('CLP-R-0001').test='未通过';
-        out.testFail=clpActivePack().ruleIds.indexOf('CLP-R-0001')<0;
-        R('CLP-R-0001').test=bak['CLP-R-0001.test'];
+        setRule('CLP-R-0001', 'test', '未通过');
+        out.testFail = clpActivePack().ruleIds.indexOf('CLP-R-0001') < 0;
+        restore();
         /* ② 待审核 */
-        save('CLP-R-0002','status'); R('CLP-R-0002').status='待审核';
-        out.pending=clpActivePack().ruleIds.indexOf('CLP-R-0002')<0;
-        R('CLP-R-0002').status=bak['CLP-R-0002.status'];
+        setRule('CLP-R-0002', 'status', '待审核');
+        out.pending = clpActivePack().ruleIds.indexOf('CLP-R-0002') < 0;
+        restore();
         /* ③ 无运行参数 */
-        out.noRun=clpActivePack().ruleIds.indexOf('CLP-R-0005')<0 && !R('CLP-R-0005').run;
+        out.noRun = clpActivePack().ruleIds.indexOf('CLP-R-0005') < 0 && !R('CLP-R-0005').run;
         /* ④ 无执行器（未实现方法） */
-        out.noExec=clpActivePack().ruleIds.indexOf('CLP-R-0006')<0 && clpActivePack().ruleIds.indexOf('CLP-R-0007')<0;
+        out.noExec = clpActivePack().ruleIds.indexOf('CLP-R-0006') < 0 && clpActivePack().ruleIds.indexOf('CLP-R-0007') < 0;
         /* ⑤ 展示字典标「已支持」但未登记实现 → 仍不得入包 */
-        out.fake=R('CLP-R-0005').engine==='已支持' && clpActivePack().ruleIds.indexOf('CLP-R-0005')<0;
+        out.fake = R('CLP-R-0005').engine === '已支持' && clpActivePack().ruleIds.indexOf('CLP-R-0005') < 0;
         /* ⑥ 还原后回到 4 条 */
-        out.restored=clpActivePack().ruleIds.length===4;
+        out.restored = clpActivePack().ruleIds.length === 4;
       } finally {
-        R('CLP-R-0001').test=bak['CLP-R-0001.test'];
-        R('CLP-R-0002').status=bak['CLP-R-0002.status'];
+        restore();
       }
-      out.final=clpActivePack().ruleIds;
+      out.final = clpActivePack().ruleIds;
       return out;
     }""")
     ok(filt['testFail'], "测试未通过的规则不进入活动规则包")

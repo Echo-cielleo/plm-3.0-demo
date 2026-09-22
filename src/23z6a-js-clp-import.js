@@ -204,7 +204,9 @@ var CLP_IMP_KEYS=['vi','rules','labels'];
 var CLP_IMP_LV={block:'阻断',warn:'告警',info:'提示',pass:'通过'};
 
 /* ---------- 2. 向导状态 ---------- */
-var _clpImp={step:1,mod:'vi',t4:'chk',rechecked:false,file:'',origFile:'',uploadAt:''};
+/* draftId / draftError / deactivationConfirmed：仅 Annex I 规则分支使用（阶段 2） */
+var _clpImp={step:1,mod:'vi',t4:'chk',rechecked:false,file:'',origFile:'',uploadAt:'',
+  draftId:'',draftError:'',deactivationConfirmed:false};
 
 function clpImpCsvCell(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}
 function clpImpDownloadTemplate(key){
@@ -233,6 +235,7 @@ function clpImpNow(){
 }
 /* 未处理的阻断类别数（>0 时不允许进入第 5 步）；只有上传修正版并复检后才能清零 */
 function clpImpBlkN(){
+  if(_clpImp.draftError)return 1;      /* Annex I：版本号与已发布版本冲突等版本级错误 */
   if(_clpImp.rechecked)return 0;
   var c=clpImpMod().checks||0,n=0;
   for(var i=0;i<c.length;i++){if(c[i].lv==='block')n++;}
@@ -269,6 +272,104 @@ function clpImpPublishCount(){
   return {add:add,mod:M.diffs.mod,del:M.diffs.del};
 }
 
+/* ---------- 2b. Annex I 规则分支：真实内存草稿版本（第四十轮 · 阶段 2） ----------
+   ⚠️ 原型不做真实 XLSX 解析：第 3 步上传后形成的是**演示整理稿的内存对象**，
+      页面明确标注「演示数据」；第 4 步的 Diff / 引擎支持状态 / 参数校验 /
+      测试结果 / 发布清单全部由 23z6c 生命周期基于该对象**实时计算**，
+      不再是写死的检查结果。 */
+function clpImpIsRules(){return clpImpMod().key==='rules';}
+/* 演示整理稿：以当前活动规则版本为底稿施加本次修订，并带两条演示条目 */
+function clpImpDemoDraftRows(){
+  var base=clpRuleVersionBaseline();
+  if(!base)return [];
+  var byId={};
+  base.rules.forEach(function(r){byId[r.id]=clpRuleDeepClone(r);});
+  var ver=_clpImp.ver||CLP_IMP_MODS.rules.ver,out=[];
+  function push(r){if(r){r.ver=ver;out.push(r);}return r;}
+  var r1=byId['CLP-R-0001'];
+  if(r1)r1.det.src=r1.det.src+'（ATEi 单位统一为 mg/kg；Ci 单位统一为 %）';   /* 文案或来源变更 */
+  push(r1);
+  var r2=byId['CLP-R-0002'];
+  if(r2)r2.run.skinCorr=3;                                                    /* 皮肤腐蚀阈值 5% → 3% */
+  push(r2);
+  var r3=byId['CLP-R-0003'];
+  if(r3)r3.det.except='SCL 高于 GCL 时按 SCL 放宽、低于 GCL 时按 SCL 收紧；同一组分多类别 SCL 分别适用，多类别并存时按各危害类别独立判断';
+  push(r3);
+  var r4=byId['CLP-R-0004'];
+  if(r4)r4.det.formula='按 Table 4.1.2 逐级计算：Σ(M×Chronic 1)；10×前项+Σ(Chronic 2)；100×前项+10×Σ(Chronic 2)+Σ(Chronic 3)；总和，均与 25% 比较（慢性折算系数按 Table 4.1.4 修订）';
+  push(r4);
+  push(byId['CLP-R-0005']);   /* 未变化 —— 但计算方法未实现 */
+  push(byId['CLP-R-0006']);   /* 未变化 —— 但计算方法未实现 */
+  /* CLP-R-0007 本次未收录 → 候选停用（须法规专员统一确认，未确认则旧规则继续有效） */
+  out.push({id:'CLP-R-0008',name:'新危害类别判定规则（演示条目）',cat:'附加危害类别',target:'物质与混合物',
+    gcl:'—',add:'否—逐案评估',ref:'Annex I，Part 5（演示条目）',ver:ver,status:'待审核',
+    /* 演示：上传表里由整理稿预填的「引擎支持状态 / 测试通过状态」属于系统字段，一律忽略 */
+    engine:'已支持',test:'通过',
+    method:'CLP-M-NEWTOX',checker:'质管-杨工',checkDate:'2026-09-16',h:'',
+    run:{limit:0.1},
+    det:{inputs:'组分的危害判定要素与评估数据',cond:'演示条目：用于验证「计算方法尚未开发」时的发布门禁',
+      formula:'逐案评估（无可执行公式）',except:'—',prio:'低（3）',output:'待定',label:'—',
+      src:'Regulation (EC) No 1272/2008，Annex I，Part 5（演示条目）'}});
+  out.push({id:'CLP-R-0009',name:'急性毒性—吸入—混合物 ATE 计算规则（演示条目）',cat:'急性毒性（吸入）',target:'混合物',
+    gcl:'按 ATE_mix 落入 Cat.1 / 2 / 3 / 4 区间',add:'是',ref:'Annex I，Part 3，3.1.3.6（演示条目）',ver:ver,status:'待审核',
+    engine:'已支持',test:'通过',
+    method:'CLP-M-ATE-SUM',checker:'质管-杨工',checkDate:'2026-09-16',h:'',
+    run:{},                    /* 缺「急性毒性分类阈值区间」→ 需要配置参数 */
+    det:{inputs:'各组分浓度 Ci（%）与各组分吸入 ATEi',cond:'混合物中含 ≥ 1 个已分类急性毒性（吸入）组分',
+      formula:'ATE_mix = 100 / Σ( Ci / ATEi )',except:'组分无可靠 ATE 时记录数据缺口并转人工判定',
+      prio:'中（2）',output:'按 ATE_mix 所落区间输出 Acute Tox. 1 / 2 / 3 / 4（吸入）',label:'以对应 H 码与标签结果为准',
+      src:'Regulation (EC) No 1272/2008，Annex I，Part 3，第 3.1.3.6 条（演示条目）'}});
+  return out;
+}
+function clpImpBuildDraft(){
+  _clpImp.draftError='';
+  if(!clpImpIsRules()||typeof clpRuleVersionCreateDraft!=='function')return null;
+  var M=clpImpMod();
+  try{
+    var v=clpRuleVersionCreateDraft({
+      version:_clpImp.ver||M.ver,
+      effectiveFrom:_clpImp.eff||M.eff,
+      cutoff:_clpImp.cut||M.cut,
+      createdBy:CLP_TOP.owner,
+      file:_clpImp.file||M.demo,
+      source:{regulation:_clpImp.src||M.srcName,annex:'Annex I',
+        sourceVersion:_clpImp.srcCode||M.srcCode,sourceDate:_clpImp.srcDate||'2026-09-10'},
+      rows:clpImpDemoDraftRows()
+    });
+    _clpImp.draftId=v.id;
+    return v;
+  }catch(e){
+    _clpImp.draftError=String((e&&e.message)||e||'');
+    return null;
+  }
+}
+function clpImpDraft(){
+  if(!clpImpIsRules())return null;
+  var v=_clpImp.draftId?clpRuleVersionGet(_clpImp.draftId):null;
+  if(!v||v.version!==(_clpImp.ver||clpImpMod().ver))v=clpImpBuildDraft();
+  return v;
+}
+function clpImpGates(){var v=clpImpDraft();return v?clpRuleVersionRunGates(v):null;}
+function clpImpManifest(){var v=clpImpDraft();return v?clpRuleVersionBuildReleaseManifest(v):null;}
+function clpImpRuleName(id){
+  var v=clpImpDraft(),rs=v?v.rules:[],r=rs.filter(function(x){return x.id===id;})[0];
+  if(r)return r.name;
+  var cur=CLP_RULES.filter(function(x){return x.id===id;})[0];
+  return cur?cur.name:id;
+}
+function clpImpGateTag(st){
+  var c=st==='可发布'?'green':(st==='未变化'?'grey':(st==='测试失败'?'red':(st==='待研发实现'?'orange':'blue')));
+  return '<span class="tag '+c+'">'+esc(st)+'</span>';
+}
+function clpImpSupportTag(st){
+  var c=st==='已支持'?'green':(st==='需要配置参数'?'orange':'red');
+  return '<span class="tag '+c+'">'+esc(st)+'</span>';
+}
+function clpImpChangeTag(tp){
+  var c=(tp==='新增规则')?'green':((tp==='候选停用')?'grey':((tp==='未变化')?'grey':'orange'));
+  return '<span class="tag '+c+'">'+esc(tp)+'</span>';
+}
+
 /* ---------- 3. 五步步骤条 ---------- */
 function clpLMini(n){
   var t=['登记来源','创建版本','上传结构化数据','数据校验与版本比较','审核发布'];
@@ -291,7 +392,8 @@ function clpImpRestore(){
     body:clpLImpHtml(_clpImp.step),footer:clpLImpFoot(_clpImp.step)});
 }
 function clpLImport(){
-  _clpImp={step:1,mod:'vi',t4:'chk',rechecked:false,file:'',origFile:'',uploadAt:''};
+  _clpImp={step:1,mod:'vi',t4:'chk',rechecked:false,file:'',origFile:'',uploadAt:'',
+    draftId:'',draftError:'',deactivationConfirmed:false};
   clpImpRestore();
 }
 function clpLImpGo(n){
@@ -335,6 +437,13 @@ function clpLImpFoot(n){
       '<button class="btn" onclick="clpLImpImpact()">查看影响范围</button>'+
       '<button class="btn primary" id="cipNext4"'+(blk>0?' disabled':'')+' onclick="clpLImpNext(5)">提交审核</button>';
   }
+  if(n===5&&clpImpIsRules()){
+    var m=clpImpManifest(),cnt=m?(m.summary.deferred+m.summary.pendingDeactivation):0;
+    var label=(m&&cnt>0)?'审核并发布可用规则':'审核通过并发布';
+    return '<div class="left">第 5 步 / 共 5 步'+(m?(' · 将发布 '+m.summary.publishable+' 条，'+cnt+' 条暂不发布'):'')+'</div>'+
+      '<button class="btn" onclick="clpLImpGo(4)">上一步</button>'+
+      '<button class="btn primary" onclick="clpLImpPublish()">'+esc(label)+'</button>';
+  }
   return '<div class="left">第 5 步 / 共 5 步</div><button class="btn" onclick="clpLImpGo(4)">上一步</button>'+
     '<button class="btn primary" onclick="clpLImpPublish()">发布版本</button>';
 }
@@ -376,6 +485,7 @@ function clpLImpModSwitch(){
   var sel=$('cipMod');if(!sel)return;
   _clpImp.mod=sel.value;_clpImp.rechecked=false;_clpImp.t4='chk';_clpImp.file='';_clpImp.origFile='';
   _clpImp.src='';_clpImp.srcCode='';_clpImp.link='';
+  _clpImp.draftId='';_clpImp.draftError='';_clpImp.deactivationConfirmed=false;
   clpLImpGo(1);
   toast('已切换到「'+CLP_IMP_MODS[_clpImp.mod].label+'」，后续步骤的字段 / 条数 / 校验 / 变更预览将同步变化','ok');
 }
@@ -421,6 +531,8 @@ function clpImpFileRow(){
 }
 function clpImpPick(){
   _clpImp.file=clpImpMod().demo;_clpImp.uploadAt=clpImpNow();_clpImp.rechecked=false;
+  /* Annex I：上传后立即在系统内形成真实的草稿版本对象（供第 4 步实时比较） */
+  if(clpImpIsRules())clpImpBuildDraft();
   var r=$('cipFileRow');if(r)r.innerHTML=clpImpFileRow();
   var b=$('cipNext3');if(b){b.disabled=false;b.classList.remove('disabled');}
 }
@@ -446,6 +558,8 @@ function clpLImpHtml4(){
   out+='<div class="clpimp-seg">'+subs.map(function(s){
     return '<button class="'+(s[0]===_clpImp.t4?'on':'')+'" onclick="clpImpT4(\''+s[0]+'\')">'+esc(s[1])+'</button>';
   }).join('')+'</div>';
+  /* Annex I：先给出系统实时计算的变更计数，再进入三个子 Tab */
+  if(clpImpIsRules())out+=clpImpRulesStatHtml();
   out+='<div id="cipT4">'+clpImpT4Html()+'</div>';
   return out;
 }
@@ -481,6 +595,7 @@ function clpImpChkHtml(){
         '<td>'+esc(handling)+'</td><td>'+status+'</td></tr>';
     }).join('')+'</tbody></table></div>';
   h+='<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div><b>阻断问题不能手工点选放行。</b>法规专员须在线下修正结构化表并重新上传，系统复检通过后才可提交审核；告警项须在发布前结合法规原文确认，提示项不阻断流程。</div></div>';
+  if(clpImpIsRules())h+=clpImpSysHtml();
   return h;
 }
 function clpImpHandling(c){
@@ -506,7 +621,151 @@ function clpImpReupload(){
   $('mFoot').innerHTML=clpLImpFoot(4);
   toast('修正版已上传并重新校验：阻断问题 0 处，可提交审核','ok');
 }
+/* ---------- 8b. Annex I 第 4 步：系统实时判断（阶段 2） ---------- */
+function clpImpRulesStatHtml(){
+  var g=clpImpGates(),d=clpImpDraft();
+  if(!g||!d)return '<div class="notice red" style="margin-bottom:10px"><div class="ni">!</div><div>'+
+    esc(_clpImp.draftError||'草稿版本尚未生成，请返回第 3 步重新上传结构化规则表。')+'</div></div>';
+  var df=d.diffSummary||{},s=g.summary||{};
+  function st(n,t,c){return '<div class="stat"><b'+(c?' style="color:var(--'+c+')"':'')+'>'+n+'</b><span>'+t+'</span></div>';}
+  return '<div class="stat-row">'+
+    st(df.summary.added,'新增规则','green')+st(df.summary.modified,'修改规则','orange')+
+    st(df.summary.unchanged,'未变化')+st(df.summary.deactivated,'候选停用')+
+    st(s.publishable,'可发布','green')+st(s.needInput,'待补充','orange')+
+    st(s.needDev,'待研发实现','red')+st(s.testFailed,'测试失败','red')+
+    '</div>'+
+    '<div class="notice grey" style="margin-bottom:10px"><div class="ni">§</div><div>以上计数由系统对<b>内存草稿版本</b>（'+esc(d.version)+'）与当前活动版本（'+esc(g.baseVersion)+'）实时比较并执行规则测试得出；'+
+    '其中「引擎支持状态 / 测试是否通过 / 是否可发布」<b>全部由系统计算</b>，法规专员不填写、也不得修改。</div></div>';
+}
+/* chk 子 Tab：系统自动生成的引擎支持状态 + 参数与必填校验 + 上传字段忽略提示 */
+function clpImpSysHtml(){
+  var g=clpImpGates(),d=clpImpDraft();
+  if(!g||!d)return '';
+  var h='<div style="font-size:12.5px;font-weight:650;margin:12px 0 7px">系统自动判断 · 引擎支持状态与参数校验</div>';
+  var ig=(d.ignoredUploadFields||[]);
+  if(ig.length){
+    h+='<div class="notice warn" style="margin-bottom:10px"><div class="ni">!</div><div>「'+
+      ig.map(function(k){return esc(k);}).join('」「')+'」由系统自动判断，上传文件中的该列已忽略。</div></div>';
+  }
+  h+='<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px"><table class="tbl"><thead><tr>'+
+    '<th style="width:120px">规则编号</th><th style="width:250px">规则名称</th><th style="width:120px">变化类型</th>'+
+    '<th style="width:120px">引擎支持状态</th><th>系统判断说明</th></tr></thead><tbody>'+
+    g.entries.map(function(e){
+      return '<tr><td class="mono">'+esc(e.ruleId)+'</td><td><b>'+esc(e.name||'')+'</b></td>'+
+        '<td>'+clpImpChangeTag(e.changeType)+'</td><td>'+clpImpSupportTag(e.engineSupport)+'</td>'+
+        '<td>'+(e.issues.length?e.issues.map(function(x){return '<div>• '+esc(x);}).join('</div>')
+          :'<span class="muted">必填字段、来源条款与参数完整</span>')+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  var val=(g.validate||{});
+  if(val.errors&&val.errors.length){
+    h+='<div class="notice red" style="margin-top:10px"><div class="ni">!</div><div><b>版本级校验未通过：</b><br>'+
+      val.errors.map(function(x){return '• '+esc(x);}).join('<br>')+'</div></div>';
+  }
+  return h;
+}
+/* test 子 Tab：真实执行引擎得到的规则测试结果（含测试复用） */
+function clpImpRulesTestHtml(){
+  var g=clpImpGates();
+  if(!g)return '<div class="notice red"><div class="ni">!</div><div>'+esc(_clpImp.draftError||'草稿版本尚未生成。')+'</div></div>';
+  var ran=g.entries.filter(function(e){return e.testResult.ran;}),
+      reused=g.entries.filter(function(e){return e.testResult.reused;});
+  var h='<div class="stat-row">'+
+    '<div class="stat" style="border-color:var(--green-b);background:var(--green-bg)"><b style="color:var(--green)">'+g.summary.publishable+'</b><span>通过门禁 · 可发布</span></div>'+
+    '<div class="stat" style="border-color:var(--red-b,#f3c6c6);background:var(--red-bg,#fdecec)"><b style="color:var(--red,#c0392b)">'+g.summary.testFailed+'</b><span>测试未通过</span></div>'+
+    '<div class="stat"><b>'+reused.length+'</b><span>沿用上版测试结果</span></div>'+
+    '<div class="stat"><b>'+ran.length+'</b><span>本次实际执行</span></div></div>';
+  h+='<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px;max-height:320px;overflow:auto"><table class="tbl" style="min-width:1180px"><thead><tr>'+
+    '<th style="width:110px">规则编号</th><th style="width:230px">测试用例</th><th style="width:210px">测试组分 / 浓度</th>'+
+    '<th style="width:150px">预期分类</th><th style="width:150px">实测分类</th><th style="width:90px">测试结果</th><th>说明</th></tr></thead><tbody>'+
+    g.entries.map(function(e){
+      if(e.testResult.reused){
+        return '<tr><td class="mono">'+esc(e.ruleId)+'</td><td><b>沿用上版测试结果</b></td><td class="muted">—</td>'+
+          '<td class="muted">—</td><td class="muted">—</td><td><span class="tag grey">沿用</span></td>'+
+          '<td>执行指纹未变化、计算方法版本未变化，且上版（'+esc(e.testResult.fromVersion)+'）测试通过 → 本次不重复执行计算测试；文本差异仍在第 3 个 Tab 展示供核对。</td></tr>';
+      }
+      if(!e.testResult.cases.length){
+        return '<tr><td class="mono">'+esc(e.ruleId)+'</td><td><b>无代表性测试用例</b></td><td class="muted">—</td>'+
+          '<td class="muted">—</td><td class="muted">—</td><td><span class="tag blue">待补充</span></td>'+
+          '<td>'+esc(e.issues[0]||'')+'</td></tr>';
+      }
+      return e.testResult.cases.map(function(c){
+        return '<tr'+(c.pass?'':' class="cip-row-bad"')+'><td class="mono">'+esc(e.ruleId)+'</td><td><b>'+esc(c.name)+'</b>'+
+          '<div class="muted" style="font-size:11px">'+esc(c.id)+'</div></td>'+
+          '<td>'+esc(((CLP_RULE_TEST_CASES[e.ruleId]||[]).filter(function(t){return t.id===c.id;})[0]||{input:{}})
+            .input.components.map(function(x){return x.name+' '+x.conc+'%';}).join('；'))+'</td>'+
+          '<td>'+esc(c.expected)+'</td><td>'+esc(c.actual)+'</td>'+
+          '<td><span class="tag '+(c.pass?'green':'red')+'">'+(c.pass?'通过':'未通过')+'</span></td>'+
+          '<td>'+esc(c.note||'')+'</td></tr>';
+      }).join('');
+    }).join('')+'</tbody></table></div>';
+  h+='<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div>测试未通过的规则<b>不进入本次发布清单</b>，其旧版规则继续生效；'+
+     '测试方法由系统直接调用规则引擎执行，不接受人工填写的测试结果。</div></div>';
+  return h;
+}
+/* diff 子 Tab：字段级 Diff + 发布清单 + 暂不发布清单 + 候选停用 */
+function clpImpRulesDiffHtml(){
+  var g=clpImpGates(),d=clpImpDraft(),m=clpImpManifest();
+  if(!g||!d||!m)return '<div class="notice red"><div class="ni">!</div><div>'+esc(_clpImp.draftError||'草稿版本尚未生成。')+'</div></div>';
+  var df=d.diffSummary||{};
+  var h='<div style="font-size:12.5px;font-weight:650;margin:6px 0 7px">字段级差异（使用业务字段名，共 '+df.fieldDiffs.length+' 处）</div>';
+  h+='<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px;max-height:260px;overflow:auto"><table class="tbl" style="min-width:1100px"><thead><tr>'+
+    '<th style="width:110px">规则编号</th><th style="width:170px">业务字段</th><th style="width:140px">变化类型</th>'+
+    '<th style="width:230px">变更前</th><th style="width:230px">变更后</th><th style="width:110px">影响计算</th></tr></thead><tbody>'+
+    (df.fieldDiffs.length?df.fieldDiffs.map(function(f){
+      return '<tr><td class="mono">'+esc(f.ruleId)+'</td><td><b>'+esc(f.label)+'</b></td>'+
+        '<td>'+clpImpChangeTag(f.changeType)+'</td>'+
+        '<td class="oel-old">'+esc(clpRuleDiffText(f.before))+'</td><td class="oel-new">'+esc(clpRuleDiffText(f.after))+'</td>'+
+        '<td>'+(f.affectsExecution?'<span class="tag orange">需重新测试</span>':'<span class="tag grey">不影响</span>')+'</td></tr>';
+    }).join(''):'<tr><td colspan="6" class="muted">无字段级差异</td></tr>')+'</tbody></table></div>';
+  h+='<div class="notice grey" style="margin:10px 0"><div class="ni">§</div><div>规则名称、来源说明、法规公式描述等纯文本变化<b>不会</b>触发重新测试；'+
+     '阈值、权重、方法映射、前置 / 例外条件、优先级、输出分类与 H 码变化<b>必须</b>重新测试。</div></div>';
+  /* 发布清单 */
+  h+='<div style="font-size:12.5px;font-weight:650;margin:12px 0 7px">发布清单（本次将发布 '+m.summary.publishable+' 条）</div>';
+  h+='<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px"><table class="tbl"><thead><tr>'+
+    '<th style="width:120px">规则编号</th><th style="width:250px">规则名称</th><th style="width:130px">变化类型</th>'+
+    '<th style="width:110px">门禁结果</th><th>系统说明</th></tr></thead><tbody>'+
+    (m.publishableRules.length?m.publishableRules.map(function(id){
+      var e=g.entries.filter(function(x){return x.ruleId===id;})[0]||{};
+      return '<tr><td class="mono">'+esc(id)+'</td><td><b>'+esc(clpImpRuleName(id))+'</b></td>'+
+        '<td>'+clpImpChangeTag(e.changeType||'')+'</td><td>'+clpImpGateTag(e.gateStatus||'')+'</td>'+
+        '<td>'+esc(e.testResult&&e.testResult.reused?('沿用上版（'+e.testResult.fromVersion+'）测试结果'):'本次执行测试并通过')+'</td></tr>';
+    }).join(''):'<tr><td colspan="5" class="muted">本次没有可发布的规则</td></tr>')+'</tbody></table></div>';
+  /* 暂不发布清单 */
+  h+='<div style="font-size:12.5px;font-weight:650;margin:12px 0 7px">暂不发布清单（旧版继续生效 / 本次不入库，共 '+m.summary.deferred+' 条）</div>';
+  h+='<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px"><table class="tbl"><thead><tr>'+
+    '<th style="width:120px">规则编号</th><th style="width:250px">规则名称</th><th style="width:120px">门禁结果</th>'+
+    '<th style="width:120px">引擎支持状态</th><th>处理方式</th></tr></thead><tbody>'+
+    (m.deferredRules.length?m.deferredRules.map(function(x){
+      var old=m.retainedOldRules.indexOf(x.ruleId)>=0;
+      return '<tr class="cip-row-bad"><td class="mono">'+esc(x.ruleId)+'</td><td><b>'+esc(clpImpRuleName(x.ruleId))+'</b></td>'+
+        '<td>'+clpImpGateTag(x.gateStatus)+'</td><td>'+clpImpSupportTag(x.engineSupport)+'</td>'+
+        '<td>'+esc(x.reason||'')+'<div class="muted" style="font-size:11.5px">'+
+        (old?'旧版规则继续生效，不因本次导入失效。':'本次不加入活动规则集，保存在延后清单。')+'</div></td></tr>';
+    }).join(''):'<tr><td colspan="5" class="muted">无</td></tr>')+'</tbody></table></div>';
+  /* 候选停用 */
+  if(m.pendingDeactivationRules.length){
+    h+='<div style="font-size:12.5px;font-weight:650;margin:12px 0 7px">候选停用规则（上传文件未收录 '+m.pendingDeactivationRules.length+' 条）</div>';
+    h+='<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px"><table class="tbl"><thead><tr>'+
+      '<th style="width:120px">规则编号</th><th style="width:300px">规则名称</th><th>当前状态</th></tr></thead><tbody>'+
+      m.pendingDeactivationRules.map(function(id){
+        return '<tr><td class="mono">'+esc(id)+'</td><td><b>'+esc(clpImpRuleName(id))+'</b></td>'+
+          '<td>'+(m.deactivationConfirmed?'<span class="tag grey">已确认停用</span>':'<span class="tag orange">未停用，沿用旧版</span>')+
+          '<div class="muted" style="font-size:11.5px">须在第 5 步统一确认；未确认时旧规则继续有效。</div></td></tr>';
+      }).join('')+'</tbody></table></div>';
+  }
+  h+='<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div>系统<b>不判断</b>变更属于「更严格」还是「更宽松」，'+
+     '也不自动生成受影响配方 / SDS 数量（单一事实源与物料关联尚未接通）。</div></div>';
+  return h;
+}
+function clpImpToggleDeactivation(on){
+  _clpImp.deactivationConfirmed=!!on;
+  var v=clpImpDraft();
+  if(v){v.deactivationConfirmed=!!on;clpImpManifest();}
+  if(_clpImp.step===5)$('mBody').innerHTML=clpLImpHtml5();
+}
+
 function clpImpTestHtml(){
+  if(clpImpIsRules())return clpImpRulesTestHtml();
   var M=clpImpMod(),s=clpImpTestStat();
   var h='<div class="stat-row">'+
     '<div class="stat" style="border-color:var(--green-b);background:var(--green-bg)"><b style="color:var(--green)">'+s.pass+'</b><span>测试通过</span></div>'+
@@ -527,6 +786,7 @@ function clpImpTestHtml(){
   return h;
 }
 function clpImpDiffHtml(){
+  if(clpImpIsRules())return clpImpRulesDiffHtml();
   var M=clpImpMod(),c=clpImpPublishCount();
   var h='<div class="stat-row">'+
     '<div class="stat" style="border-color:var(--green-b);background:var(--green-b)"><b style="color:var(--green)">'+c.add+'</b><span>新增'+(M.key==='rules'?'规则（已扣除排除项）':'')+'</span></div>'+
@@ -547,7 +807,77 @@ function clpImpDiffHtml(){
 }
 
 /* ---------- 9. 第 5 步：审核发布 ---------- */
+/* Annex I：单一法规专员审核 —— 只有一次审核发布动作，没有第二审核人 */
+function clpLImpHtml5Rules(){
+  var M=clpImpMod(),d=clpImpDraft(),g=clpImpGates(),m=clpImpManifest();
+  if(!d||!g||!m)return clpLMini(5)+
+    '<div class="notice red" style="margin-top:12px"><div class="ni">!</div><div>'+
+    esc(_clpImp.draftError||'草稿版本尚未生成，请返回第 3 步重新上传结构化规则表。')+'</div></div>';
+  var s=m.summary,today=clpRuleAsOfDate();
+  var future=!!(d.effectiveFrom&&d.effectiveFrom>today);
+  function ids(arr){return arr.length?arr.map(function(x){return '<span class="tag grey mono" style="margin-right:4px">'+esc(x)+'</span>';}).join(''):'<span class="muted">无</span>';}
+  var h=clpLMini(5)+
+    '<dl class="desc-list" style="grid-template-columns:130px 1fr 130px 1fr">'+
+    '<dt>导入模块</dt><dd><b>'+esc(M.label)+'</b></dd><dt>版本号</dt><dd class="mono">'+esc(d.version)+'</dd>'+
+    '<dt>来源文件</dt><dd>'+esc(d.source.sourceFile||_clpImp.file||M.demo)+'</dd>'+
+    '<dt>官方来源</dt><dd>'+esc(d.source.regulation)+' · '+esc(d.source.annex)+'</dd>'+
+    '<dt>生效日期</dt><dd>'+esc(d.effectiveFrom)+' '+(future?'<span class="tag blue">待生效</span>':'<span class="tag green">已生效</span>')+'</dd>'+
+    '<dt>数据截止日期</dt><dd>'+esc(d.cutoff||'—')+'</dd>'+
+    '<dt>可发布规则</dt><dd><b>'+s.publishable+'</b> 条</dd>'+
+    '<dt>未变化沿用</dt><dd><b>'+s.unchanged+'</b> 条</dd>'+
+    '<dt>旧版继续生效</dt><dd>'+ids(m.retainedOldRules)+'</dd>'+
+    '<dt>本次不发布</dt><dd>'+ids(m.deferredRules.map(function(x){return x.ruleId;}))+'</dd>'+
+    '<dt>候选停用</dt><dd style="grid-column:span 3">'+ids(m.pendingDeactivationRules)+
+      (m.pendingDeactivationRules.length?'<div class="muted" style="font-size:11.5px">未勾选确认时，这些规则<b>不停用</b>，旧版继续有效。</div>':'')+'</dd>'+
+    '</dl>';
+  if(future)h+='<div class="notice info" style="margin-top:10px"><div class="ni">i</div><div>生效日期（'+esc(d.effectiveFrom)+
+    '）晚于当前日期（'+esc(today)+'），发布后版本状态为<b>待生效</b>，当前活动规则版本<b>不改变</b>，也不会影响现有 SDS 结论。</div></div>';
+  h+='<div class="form-grid" style="margin-top:12px">'+
+    '<div class="field"><label class="req">审核人（法规专员）</label><input class="ctrl" id="cipAuditor" value="'+esc(CLP_TOP.owner)+'"></div>'+
+    '<div class="field"><label>审核日期</label><input class="ctrl" id="cipAuditDate" value="'+esc(clpImpNow())+'"></div>'+
+    '<div class="field span2"><label>审核意见</label><input class="ctrl" id="cipNote5" value="已对照原文核对发布清单、参数变化与停用项，同意发布"></div>'+
+    '</div>'+
+    '<div class="field" style="margin-top:10px"><label class="req">审核确认（单次确认，不另设审核层级）</label>'+
+      '<label class="inline-chk" style="display:flex;margin:6px 0"><input type="checkbox" class="chk" id="cipDecl"> '+esc(CLP_REVIEW_DECLARATION)+'</label>'+
+      (m.pendingDeactivationRules.length?'<label class="inline-chk" style="display:flex;margin:6px 0"><input type="checkbox" class="chk" id="cipDeact"'+
+        (_clpImp.deactivationConfirmed?' checked':'')+' onchange="clpImpToggleDeactivation(this.checked)"> 我已确认本次停用的 '+m.pendingDeactivationRules.length+' 条规则（不勾选则旧规则继续有效）</label>':'')+
+    '</div>'+
+    '<div class="notice grey" style="margin-top:12px"><div class="ni">§</div><div>发布后保存完整规则快照、方法版本快照、差异、测试结果、发布清单与审核人时间；'+
+    '<b>已发布版本不可再编辑</b>，再次修改须复制为新草稿版本。</div></div>';
+  return h;
+}
+function clpImpPublishRules(){
+  var d=clpImpDraft();
+  if(!d){toast(_clpImp.draftError||'草稿版本尚未生成，请返回第 3 步重新上传','warn');return;}
+  var m=clpImpManifest()||{summary:{}};
+  var decl=$('cipDecl'),by=$('cipAuditor'),note=$('cipNote5');
+  var res=clpRuleVersionPublish(d,{
+    reviewedBy:by?by.value.trim():'',
+    reviewedAt:clpImpNow(),
+    declarationAccepted:!!(decl&&decl.checked),
+    reviewNote:note?note.value.trim():''
+  });
+  if(!res.ok){toast(res.errors[0]||'发布未通过发布门禁','warn');return;}
+  var v=res.version,man=res.manifest;
+  if(v.status==='已生效'){
+    var mod=CLP_MODULES.rules;
+    mod.ver=v.version;mod.eff=v.effectiveFrom;mod.cutoff=v.cutoff;mod.status='已生效';
+    CLP_TOP.lastUpdate=clpImpNow();CLP_TOP.cutoff=v.cutoff;
+  }
+  CLP_CHANGES.unshift({mod:'rules',tp:'新增',
+    content:v.version+' 导入（Annex I 分类规则）：发布 '+man.summary.publishable+' 条 / 未变化沿用 '+man.summary.unchanged+
+      ' 条 / 旧版继续生效 '+man.summary.retained+' 条 / 本次不发布 '+man.summary.deferred+' 条'+
+      (man.summary.deactivated?(' / 停用 '+man.summary.deactivated+' 条'):''),
+    reason:'法规专员整理稿导入 · 审核通过并发布（审核人 '+v.reviewedBy+'）',
+    eff:v.effectiveFrom,by:v.reviewedBy,subs:man.summary.publishable,recipes:'—',sds:'—'});
+  closeModal();
+  clpLGoTab('rules');
+  toast(v.status==='已生效'
+    ? ('已发布并生效：'+v.version+'（发布 '+man.summary.publishable+' 条，'+man.summary.deferred+' 条暂不发布）')
+    : ('已发布，状态待生效：'+v.version+'（'+v.effectiveFrom+' 生效，当前活动版本不变）'),'ok');
+}
 function clpLImpHtml5(){
+  if(clpImpIsRules())return clpLImpHtml5Rules();
   var M=clpImpMod(),c=clpImpPublishCount(),s=clpImpTestStat();
   var chkSum='阻断 '+clpImpSum('block')+' 项 · 告警 '+clpImpSum('warn')+' 项 · 提示 '+clpImpSum('info')+' 项';
   var testRow=M.tests?('<dt>测试结果</dt><dd><span class="tag green">通过 '+s.pass+' 例</span> <span class="tag red" style="margin-left:6px">未通过 '+s.fail+' 例</span>'+
@@ -578,6 +908,7 @@ function clpLImpHtml5(){
 /* ---------- 10. 发布落库 ---------- */
 function clpLImpPublish(){
   var M=clpImpMod();
+  if(clpImpIsRules()){clpImpPublishRules();return;}
   if(!$('cipOk1').checked||!$('cipOk2').checked||!$('cipOk3').checked){toast('请先勾选全部三项人工确认','warn');return;}
   if(clpImpBlkN()>0){toast('仍有 '+clpImpSum('block')+' 处阻断问题未修正，无法发布','warn');return;}
   var auditor=($('cipAuditor')&&$('cipAuditor').value.trim())||CLP_TOP.owner;

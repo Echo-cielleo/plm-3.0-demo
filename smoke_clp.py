@@ -401,58 +401,71 @@ with sync_playwright() as pw:
     ok(page.evaluate('()=>CLP_CHANGES.length') == n_chg + 1 and page.evaluate("()=>CLP_CHANGES[0].mod") == 'vi',
        '变更记录 +1 且来源模块为 Annex VI')
 
-    print('\n=== 导入向导 · Annex I 分支：规则测试与排除项 ===')
+    print('\n=== 导入向导 · Annex I 分支：系统实时 Diff 与发布门禁 ===')
     fill_and_upload(page, 'rules')
     ok(page.locator('#mBody .cip-check-table tbody tr').count() == 7, 'Annex I 的 7 类问题使用二维表格（内容与 VI 不同）')
     chk = page.locator('#mBody').inner_text()
     ok('规则引擎方法未匹配' in chk and '规则测试未通过' in chk, 'Annex I 规则专属校验项出现')
-    ok('CLP-R-0006 内分泌干扰物' in chk, '规则测试未通过项点名 CLP-R-0006')
-    ok('CLP-R-0008（演示）' in chk and '需创建研发任务后重新测试' in chk,
-       '数据校验展示明确的「需研发开发」演示明细')
+    ok('引擎支持状态' in chk and '由系统自动判断' in chk and '已忽略' in chk,
+       '数据校验页展示系统自动判断的引擎支持状态，并提示上传文件中的该列已忽略')
     ok(page.evaluate('()=>clpImpBlkN()') == 2, 'Annex I 同样 2 项阻断（引擎未匹配 / 测试未通过）')
     segs = page.locator('#mBody .clpimp-seg button').all_text_contents()
     ok(len(segs) == 3 and '规则测试' in segs[1], 'Annex I 才有子 Tab：%s' % ' / '.join(segs))
+    gs = page.evaluate("()=>clpImpGates().summary")
+    ok(gs['publishable'] == 3 and gs['testFailed'] == 1 and gs['needDev'] == 3 and gs['needInput'] == 1,
+       '系统实时统计：可发布 %d / 测试失败 %d / 待研发 %d / 待补充 %d' % (gs['publishable'], gs['testFailed'], gs['needDev'], gs['needInput']))
     page.locator('#mBody .clpimp-seg button').get_by_text('规则测试').click()
     page.wait_for_timeout(220)
     tt = page.locator('#mBody').inner_text()
     ok('规则测试' in page.locator('#mBody .clpimp-seg button.on').inner_text(), 'Annex I 点击后选中态切换到「规则测试」')
-    st = page.evaluate('()=>clpImpTestStat()')
-    ok(st == {'pass': 3, 'fail': 1, 'total': 4}, '规则测试统计 4 例：通过 3 / 未通过 1 → %s' % st)
-    ok(page.locator('#mBody tbody tr').count() == 4, '规则测试列出 4 个用例')
-    ok(page.locator('#mBody tr.cip-row-bad').count() == 1, '未通过的用例行单独标色（1 行）')
-    ok('测试未通过' in tt and '本次排除规则' in tt, '测试概览含未通过数与排除数')
-    ok('本次排除' in tt and 'CLP-R-0006' in tt and 'CLP-R-0008' in tt and '不计入发布数量' in tt,
-       '标注排除 CLP-R-0006 / CLP-R-0008 且不计入发布数量')
-    ok(page.evaluate("()=>[].map.call($('cipT4').querySelectorAll('td'),x=>x.textContent).join('|').indexOf('未执行')>=0"),
-       '未执行过程如实展示在计算过程列')
-    ok(page.evaluate('()=>CLP_IMP_MODS.rules.excluded') == ['CLP-R-0006', 'CLP-R-0008'],
-       '两条排除规则落在数据层（excluded）')
+    ok('沿用上版测试结果' in tt, '未变化规则沿用上版测试结果（不重复执行计算测试）')
+    ok('CLP-R-0002' in tt and '未通过' in tt, '测试失败的规则点名 CLP-R-0002 并标注未通过')
+    ok(page.locator('#mBody tr.cip-row-bad').count() >= 1, '未通过的用例行单独标色')
     page.locator('#mBody .clpimp-seg button').get_by_text('版本比较').click()
     page.wait_for_timeout(220)
     d = page.locator('#mBody').inner_text()
     ok('版本比较' in page.locator('#mBody .clpimp-seg button.on').inner_text(), 'Annex I 点击后选中态切换到「版本比较」')
-    ok('已扣除排除项' in d, '版本比较：新增数已扣除排除项')
-    ok('需研发实现' in d and 'CLP-R-0008（演示）' in d and '创建研发任务后重新测试' in d,
-       '版本比较展示「需研发实现」类型及示例明细')
-    add_stat = page.evaluate("()=>clpImpPublishCount().add")
-    ok(add_stat == 1, '发布新增数 = 3 − 2（排除 CLP-R-0006 / 0008） = %s' % add_stat)
-    page.locator('#mBody .clpimp-seg button').get_by_text('数据校验').click()
-    page.wait_for_timeout(180)
-    ok('数据校验' in page.locator('#mBody .clpimp-seg button.on').inner_text(), 'Annex I 可切回「数据校验」选中态')
+    ok('字段级差异' in d and '皮肤腐蚀阈值' in d, '版本比较给出字段级差异并使用业务字段名')
+    ok('发布清单' in d and '暂不发布清单' in d, '版本比较给出发布清单与暂不发布清单')
+    man = page.evaluate("()=>clpImpManifest()")
+    ok(man['publishableRules'] == ['CLP-R-0001', 'CLP-R-0003', 'CLP-R-0004'],
+       '可发布规则 = %s' % '/'.join(man['publishableRules']))
+    ok('CLP-R-0002' in man['retainedOldRules'] and 'CLP-R-0005' in man['retainedOldRules'],
+       '未通过门禁的已有规则记为旧版继续生效：%s' % '/'.join(man['retainedOldRules']))
+    ok(man['pendingDeactivationRules'] == ['CLP-R-0007'] and man['deactivatedRules'] == [],
+       '未确认的候选停用规则不进入停用清单（旧规则继续有效）')
+    ok(sorted([x['ruleId'] for x in man['deferredRules']]) == ['CLP-R-0002', 'CLP-R-0005', 'CLP-R-0006', 'CLP-R-0008', 'CLP-R-0009'],
+       '延后清单含测试失败与计算方法未实现的规则，不静默丢弃')
     ok(reupload_fixed(page), 'Annex I 上传修正版并复检后清空 2 类阻断')
     page.wait_for_timeout(160)
     page.evaluate("()=>clpLImpNext(5)")
     page.wait_for_timeout(220)
-    ok('测试结果' in page.locator('#mBody').inner_text(), '规则模块第 5 步展示测试结果行')
+    body5 = page.locator('#mBody').inner_text()
+    ok('可发布规则' in body5 and '旧版继续生效' in body5 and '候选停用' in body5,
+       '第 5 步展示可发布 / 旧版继续生效 / 候选停用')
+    ok(page.locator('#mBody .chk').count() == 2, '第 5 步只有审核确认与停用统一确认两项（单一审核）')
+    ok('内部审核' not in body5 and '外部审核' not in body5 and '专业复核' not in body5,
+       '第 5 步不出现多级审核类表述')
     n_chg = page.evaluate('()=>CLP_CHANGES.length')
-    n_ru = page.evaluate('()=>CLP_RULES.length')
-    confirm_and_publish(page)
-    ok(page.evaluate('()=>CLP_MODULES.rules.ver') == 'R2027.1', '发布后 Annex I 模块版本 → R2027.1')
-    ok(page.evaluate('()=>CLP_RULES.length') == n_ru, '规则表条数不变（按编号 upsert，不产生重复行）')
-    ok(page.evaluate("()=>CLP_RULES.filter(r=>r.id==='CLP-R-0007')[0].status") == '已发布', 'CLP-R-0007 状态转为「已发布」')
-    ok(page.evaluate("()=>CLP_RULES.filter(r=>r.id==='CLP-R-0006')[0].status") == '待审核', 'CLP-R-0006 保持「待审核」（被排除）')
-    ok(page.evaluate('()=>CLP_CHANGES[0].mod') == 'rules' and '排除 2 条' in page.evaluate("()=>CLP_CHANGES[0].content"),
-       '变更记录标注来源模块与排除条数')
+    page.evaluate("()=>clpLImpPublish()")
+    page.wait_for_timeout(220)
+    st27 = page.evaluate("()=>CLP_RULE_VERSION_STORE.filter(v=>v.version==='R2027.1')[0].status")
+    ok(st27 in ('草稿', '待审核'),
+       '未勾选审核确认时发布被拦截（版本仍为「%s」，未进入待生效/已生效）' % st27)
+    page.evaluate("()=>{$('cipDecl').checked=true;}")
+    page.evaluate("()=>clpLImpPublish()")
+    page.wait_for_timeout(260)
+    v27 = page.evaluate("()=>{var v=CLP_RULE_VERSION_STORE.filter(x=>x.version==='R2027.1')[0];return {st:v.status,by:v.reviewedBy,frozen:v.frozen,def:v.deferredRules.length,decl:v.declarationAccepted};}")
+    ok(v27['st'] == '待生效' and v27['frozen'] and v27['by'] == '质管-杨工',
+       '生效日期 2027-01-01 晚于当前日期 → 版本「待生效」且已冻结、留痕审核人')
+    ok(v27['def'] == 5, '发布快照保存延后规则 %d 条' % v27['def'])
+    ok(page.evaluate("()=>clpRuleVersionResolve(clpRuleAsOfDate()).version") == 'R2026.2',
+       '待生效版本不改变当前活动规则版本（仍 R2026.2）')
+    ok(page.evaluate('()=>CLP_MODULES.rules.ver') == 'R2026.2', '待生效版本的模块版本号暂不更新')
+    ok(page.evaluate('()=>CLP_CHANGES.length') == n_chg + 1 and page.evaluate("()=>CLP_CHANGES[0].mod") == 'rules',
+       '变更记录 +1 且来源模块为 Annex I 分类规则')
+    ok(page.evaluate("()=>CLP_RULE_VERSION_STORE.filter(v=>v.version==='R2026.2')[0].status") == '已生效',
+       '基线版本仍为已生效（未被待生效版本挤掉）')
 
     print('\n=== 导入向导 · Annex III/IV/V 分支 ===')
     fill_and_upload(page, 'labels')
@@ -484,8 +497,12 @@ with sync_playwright() as pw:
     page.wait_for_timeout(220)
     page.select_option('#clpRuSt', '已发布')
     page.wait_for_timeout(160)
-    ok(page.locator('#clpTable tbody tr').count() == 1 and '桥接原则' in page.locator('#clpTable tbody').inner_text(),
-       '规则表按「已发布」筛出桥接原则')
+    ok('没有匹配的记录' in page.locator('#clpTable tbody').inner_text(),
+       'R2027.1 为待生效，当前规则表（活动版本 R2026.2 快照）尚无「已发布」规则')
+    page.select_option('#clpRuSt', '待审核')
+    page.wait_for_timeout(160)
+    ok(page.locator('#clpTable tbody tr').count() == 2 and '桥接原则' in page.locator('#clpTable tbody').inner_text(),
+       'R-0006 / R-0007 仍为「待审核」（未通过门禁的规则不会被待生效版本改写）')
     page.select_option('#clpRuSt', '')
     page.evaluate("()=>clpLGoTab('chg')")
     page.wait_for_timeout(220)
