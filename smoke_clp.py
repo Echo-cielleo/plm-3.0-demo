@@ -183,11 +183,13 @@ with sync_playwright() as pw:
     print('\n=== Tab2 Annex I：8 列业务视图 + 自动化状态筛选 ===')
     page.evaluate("()=>{_clpF.rules={kw:'',tgt:'',st:'',eng:''};clpLGoTab('rules');}")
     page.wait_for_timeout(200)
-    ok(page.evaluate('()=>CLP_RULES.length') == 7, '规则库 7 条（CLP-R-0001 ~ CLP-R-0007）')
+    ok(page.evaluate('()=>CLP_RULES.length') == 5,
+       '当前生效规则集 5 条（R-0006 / R-0007 已归 R2027.1 候选草稿版本）')
     rules_text = page.locator('#clpTabBody').inner_text()
     ok('法规专员只需核对规则内容' not in rules_text and page.locator('#clpTabBody .notice.info').count() == 0,
        'Annex I 不再平铺维护提示文本框')
-    ok(page.evaluate('()=>clpNextRuleId()') == 'CLP-R-0008', '新规则内部编号按现有最大序号由系统生成')
+    ok(page.evaluate('()=>clpNextRuleId()') == 'CLP-R-0008',
+       '新规则编号扫描所有版本取最大序号（含候选草稿的 R-0007），不会撞号')
     head = page.locator('#clpTable thead').inner_text()
     for c in ['规则名称', '适用危害类别', '适用对象', '主要判断条件', '自动化状态', '规则校验', '规则版本', '发布状态']:
         ok(c in head, '规则列表含「%s」列' % c)
@@ -195,22 +197,35 @@ with sync_playwright() as pw:
     ok('可自动计算' in page.locator('#clpTable tbody').inner_text(), '主列表以业务语言展示自动化状态')
     page.select_option('#clpRuTgt', '混合物')
     page.wait_for_timeout(140)
-    ok(page.locator('#clpTable tbody tr').count() == 4, '按适用对象（混合物）筛选出 4 条')
+    ok(page.locator('#clpTable tbody tr').count() == 3, '按适用对象（混合物）筛选出 3 条')
     page.select_option('#clpRuTgt', '')
     page.select_option('#clpRuEng', '需要研发实现')
     page.wait_for_timeout(140)
-    ok(page.locator('#clpTable tbody tr').count() == 1 and '内分泌干扰物' in page.locator('#clpTable tbody').inner_text(),
-       '按「需技术处理」筛出未实现规则')
+    ok(page.locator('#clpTable tbody tr').count() == 1 and '分层与优先级' in page.locator('#clpTable tbody').inner_text(),
+       '按「需技术处理」筛出方法未实现的规则（CLP-R-0005 / CLP-M-LAYER）')
     page.select_option('#clpRuEng', '需要配置参数')
     page.wait_for_timeout(140)
-    ok(page.locator('#clpTable tbody tr').count() == 1 and '桥接原则' in page.locator('#clpTable tbody').inner_text(),
-       '按「待配置」筛出桥接规则')
+    ok('没有匹配的记录' in page.locator('#clpTable tbody').inner_text(),
+       '当前生效规则集无「待配置」规则（BRIDGE 实为方法未实现 → 归「需技术处理」；'
+       '「已实现但缺参数」的场景由导入向导 R-0009 覆盖）')
     page.select_option('#clpRuEng', '')
     page.select_option('#clpRuSt', '待审核')
     page.wait_for_timeout(140)
-    ok(page.locator('#clpTable tbody tr').count() == 2, '按审核状态「待审核」筛出 2 条（CLP-R-0006 / CLP-R-0007）')
+    ok('没有匹配的记录' in page.locator('#clpTable tbody').inner_text(),
+       '生效规则集无待审核规则（R-0006 / R-0007 已移入候选草稿版本）')
     page.select_option('#clpRuSt', '')
     page.wait_for_timeout(120)
+    # 切到候选草稿版本，可查看「下一版准备纳入什么」
+    cand_id = page.evaluate("()=>{var v=clpRuleVersionCandidate();return v?v.id:'';}")
+    ok(cand_id != '', '存在独立的 R2027.1 候选草稿版本')
+    page.select_option('#clpRuVer', cand_id)
+    page.wait_for_timeout(200)
+    cand_txt = page.locator('#clpTable tbody').inner_text()
+    ok(page.locator('#clpTable tbody tr').count() == 2 and '桥接原则' in cand_txt and '内分泌干扰物' in cand_txt,
+       '切到候选草稿版本可看到 2 条下一版候选规则（ED/PBT 与桥接原则）')
+    ok('需技术处理' in cand_txt, '候选规则同样按注册表真实状态标为「需技术处理」')
+    page.select_option('#clpRuVer', '')
+    page.wait_for_timeout(160)
 
     print('\n=== Tab3 Annex III/IV/V：Annex V 象形图素材管理 + 字段适用性 ===')
     page.evaluate("()=>{_clpF.labels={kw:'',tp:'',st:''};clpLGoTab('labels');}")
@@ -412,7 +427,7 @@ with sync_playwright() as pw:
     segs = page.locator('#mBody .clpimp-seg button').all_text_contents()
     ok(len(segs) == 3 and '规则测试' in segs[1], 'Annex I 才有子 Tab：%s' % ' / '.join(segs))
     gs = page.evaluate("()=>clpImpGates().summary")
-    ok(gs['publishable'] == 3 and gs['testFailed'] == 1 and gs['needDev'] == 3 and gs['needInput'] == 1,
+    ok(gs['publishable'] == 3 and gs['testFailed'] == 1 and gs['needDev'] == 2 and gs['needInput'] == 1,
        '系统实时统计：可发布 %d / 测试失败 %d / 待研发 %d / 待补充 %d' % (gs['publishable'], gs['testFailed'], gs['needDev'], gs['needInput']))
     page.locator('#mBody .clpimp-seg button').get_by_text('规则测试').click()
     page.wait_for_timeout(220)
@@ -430,11 +445,11 @@ with sync_playwright() as pw:
     man = page.evaluate("()=>clpImpManifest()")
     ok(man['publishableRules'] == ['CLP-R-0001', 'CLP-R-0003', 'CLP-R-0004'],
        '可发布规则 = %s' % '/'.join(man['publishableRules']))
-    ok('CLP-R-0002' in man['retainedOldRules'] and 'CLP-R-0005' in man['retainedOldRules'],
+    ok('CLP-R-0002' in man['retainedOldRules'],
        '未通过门禁的已有规则记为旧版继续生效：%s' % '/'.join(man['retainedOldRules']))
-    ok(man['pendingDeactivationRules'] == ['CLP-R-0007'] and man['deactivatedRules'] == [],
+    ok(man['pendingDeactivationRules'] == ['CLP-R-0005'] and man['deactivatedRules'] == [],
        '未确认的候选停用规则不进入停用清单（旧规则继续有效）')
-    ok(sorted([x['ruleId'] for x in man['deferredRules']]) == ['CLP-R-0002', 'CLP-R-0005', 'CLP-R-0006', 'CLP-R-0008', 'CLP-R-0009'],
+    ok(sorted([x['ruleId'] for x in man['deferredRules']]) == ['CLP-R-0002', 'CLP-R-0006', 'CLP-R-0008', 'CLP-R-0009'],
        '延后清单含测试失败与计算方法未实现的规则，不静默丢弃')
     ok(reupload_fixed(page), 'Annex I 上传修正版并复检后清空 2 类阻断')
     page.wait_for_timeout(160)
@@ -458,7 +473,7 @@ with sync_playwright() as pw:
     v27 = page.evaluate("()=>{var v=CLP_RULE_VERSION_STORE.filter(x=>x.version==='R2027.1')[0];return {st:v.status,by:v.reviewedBy,frozen:v.frozen,def:v.deferredRules.length,decl:v.declarationAccepted};}")
     ok(v27['st'] == '待生效' and v27['frozen'] and v27['by'] == '质管-杨工',
        '生效日期 2027-01-01 晚于当前日期 → 版本「待生效」且已冻结、留痕审核人')
-    ok(v27['def'] == 5, '发布快照保存延后规则 %d 条' % v27['def'])
+    ok(v27['def'] == 4, '发布快照保存延后规则 %d 条' % v27['def'])
     ok(page.evaluate("()=>clpRuleVersionResolve(clpRuleAsOfDate()).version") == 'R2026.2',
        '待生效版本不改变当前活动规则版本（仍 R2026.2）')
     ok(page.evaluate('()=>CLP_MODULES.rules.ver') == 'R2026.2', '待生效版本的模块版本号暂不更新')
@@ -501,8 +516,15 @@ with sync_playwright() as pw:
        'R2027.1 为待生效，当前规则表（活动版本 R2026.2 快照）尚无「已发布」规则')
     page.select_option('#clpRuSt', '待审核')
     page.wait_for_timeout(160)
-    ok(page.locator('#clpTable tbody tr').count() == 2 and '桥接原则' in page.locator('#clpTable tbody').inner_text(),
-       'R-0006 / R-0007 仍为「待审核」（未通过门禁的规则不会被待生效版本改写）')
+    ok('没有匹配的记录' in page.locator('#clpTable tbody').inner_text(),
+       '当前生效规则集（R2026.2 快照）无待审核规则')
+    def6 = page.evaluate("""() => {
+      var v = CLP_RULE_VERSION_STORE.filter(function(x){ return x.version === 'R2027.1'; })[0];
+      var d = null; (v.deferredRules || []).forEach(function(x){ if(x.ruleId === 'CLP-R-0006') d = x; });
+      return d ? d.gateStatus : 'missing';
+    }""")
+    ok(def6 == '待研发实现',
+       '未通过门禁的规则留在待生效版本的延后清单（R-0006 门禁状态「%s」，不被待生效版本改写为已发布）' % def6)
     page.select_option('#clpRuSt', '')
     page.evaluate("()=>clpLGoTab('chg')")
     page.wait_for_timeout(220)

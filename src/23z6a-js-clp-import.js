@@ -298,9 +298,15 @@ function clpImpDemoDraftRows(){
   var r4=byId['CLP-R-0004'];
   if(r4)r4.det.formula='按 Table 4.1.2 逐级计算：Σ(M×Chronic 1)；10×前项+Σ(Chronic 2)；100×前项+10×Σ(Chronic 2)+Σ(Chronic 3)；总和，均与 25% 比较（慢性折算系数按 Table 4.1.4 修订）';
   push(r4);
-  push(byId['CLP-R-0005']);   /* 未变化 —— 但计算方法未实现 */
-  push(byId['CLP-R-0006']);   /* 未变化 —— 但计算方法未实现 */
-  /* CLP-R-0007 本次未收录 → 候选停用（须法规专员统一确认，未确认则旧规则继续有效） */
+  /* CLP-R-0005 本次未收录 → **候选停用**（须法规专员统一确认；未确认则旧规则继续有效）。
+     注：R-0006 / R-0007 已不属于当前生效版本 R2026.2，它们归 R2027.1 候选草稿版本，
+     因此不能再拿它们来演示「候选停用」——基线与版本归属必须自洽。 */
+  /* CLP-R-0006：由「R2027.1 候选草稿版本」带入本次整理稿的**拟新增**规则；
+     其计算方法 CLP-M-ED-PBT 在引擎中 not_implemented → 待研发实现，本次不发布。 */
+  var cand=clpRuleVersionCandidate(),r6=null;
+  if(cand)cand.rules.forEach(function(x){if(x.id==='CLP-R-0006')r6=clpRuleDeepClone(x);});
+  if(r6){r6.ver=ver;r6.status='待审核';out.push(r6);}
+  /* CLP-R-0007 仍留在候选草稿版本中，本次整理稿未纳入，不参与本次发布判断 */
   out.push({id:'CLP-R-0008',name:'新危害类别判定规则（演示条目）',cat:'附加危害类别',target:'物质与混合物',
     gcl:'—',add:'否—逐案评估',ref:'Annex I，Part 5（演示条目）',ver:ver,status:'待审核',
     /* 演示：上传表里由整理稿预填的「引擎支持状态 / 测试通过状态」属于系统字段，一律忽略 */
@@ -935,7 +941,8 @@ function clpLImpPublish(){
     CLP_RULES.forEach(function(r){if(r.id==='CLP-R-0007')hit=r;});
     var draft={name:'桥接原则（Bridging）—相似混合物分类沿用规则',cat:'分类与标签一般原则',target:'混合物',
       gcl:'—',add:'否—逐案评估',ref:'Annex I，Part 1，1.5（桥接原则）',ver:ver,status:'已发布',
-      method:'CLP-M-BRIDGE',engine:'需要配置参数',test:'通过',checker:auditor,checkDate:clpImpNow().slice(0,10),h:'',
+      /* 支持状态由计算方法注册表实时派生，不写死；BRIDGE 实际为 not_implemented → 需要研发实现 */
+      method:'CLP-M-BRIDGE',engine:clpRuleEngineStatusText({id:'CLP-R-0007',method:'CLP-M-BRIDGE'}),test:'通过',checker:auditor,checkDate:clpImpNow().slice(0,10),h:'',
       det:{inputs:'相似混合物（稀释 / 浓度变化 / 同族组分替换）的已有分类结论与组分对照表',cond:'混合物由已分类混合物经稀释、浓度调整或同族组分替换得到，且危害类别不变时触发',formula:'按桥接场景逐案调用（不适用统一公式）：桥接表与判定参数需在规则引擎中配置后启用',except:'桥接不得用于致癌 / 生殖毒性 / 致突变等无阈值危害；桥接结论须由法规专员确认并留痕',prio:'低（3）——在常规规则之后应用',output:'沿用被桥接混合物的分类结论',label:'以沿用分类对应的 H 码与标签结果为准',src:'Regulation (EC) No 1272/2008，Annex I，Part 1，第 1.5 条（桥接原则）'}};
     if(hit){for(var k in draft){if(draft.hasOwnProperty(k))hit[k]=draft[k];}}
     else{draft.id=clpNextRuleId();CLP_RULES.push(draft);}

@@ -87,26 +87,45 @@ var CLP_RULES=[
   {id:'CLP-R-0004',name:'慢性水生毒性—M 因子加权求和规则',cat:'危害水生环境（慢性）',target:'混合物',gcl:'按 Table 4.1.2 的 M 因子加权和与 25% 阈值逐级判断',add:'是',ref:'Annex I，Part 4，4.1.3.5（求和法）',ver:'R2026.2',status:'已审核',method:'CLP-M-MFACTOR',engine:'已支持',test:'通过',checker:'质管-杨工',checkDate:'2026-06-18',h:'H410',
     run:{limit:25,chronic2Weight:10,chronic3Weight:100},
     det:{inputs:'各组分的慢性水生分类与 M 因子（Annex VI 统一 M 或企业自评估 M）',cond:'混合物含 Aquatic Chronic 1 / 2 / 3 / 4 组分',formula:'按 Table 4.1.2 逐级计算：Σ(M×Chronic 1)；10×前项+Σ(Chronic 2)；100×前项+10×Σ(Chronic 2)+Σ(Chronic 3)；总和，均与 25% 比较',except:'无统一 M 的 Chronic 1 组分须依法设定 M 后参与求和；未分类组分不参与但需记录',prio:'中（2）',output:'Aquatic Chronic 1 / 2 / 3 / 4',label:'对应 H410 / H411 / H412 / H413；类别 1 / 2 使用 GHS09',src:'Regulation (EC) No 1272/2008，Annex I，Part 4，第 4.1.3.5 条（危害水生环境—混合物求和法；长期危害加和见 Table 4.1.2）'}},
-  {id:'CLP-R-0005',name:'同一危害类别的分层与优先级原则',cat:'全部危害类别',target:'物质与混合物',gcl:'—',add:'否—逐案评估',ref:'Annex I，Part 1，1.2（分层原则）',ver:'R2026.2',status:'已审核',method:'CLP-M-LAYER',engine:'已支持',test:'通过',checker:'质管-杨工',checkDate:'2026-06-18',h:'',
-    det:{inputs:'同一健康危害路径下的多个候选分类结果',cond:'同一路径（如口服急性毒性）出现多个可选类别时',formula:'取证据支持的最严类别；上位类别覆盖下位类别（如 Carc. 1B 与 Carc. 2 并存时输出 1B）',except:'不同路径（口服/皮肤/吸入）互不覆盖，分别输出；物理危害按各 Hazard 类别独立规则执行',prio:'低（3）——在其他规则产出结果后应用',output:'每个危害路径的最终唯一分类',label:'以最终分类对应的 H 码与标签结果为准',src:'Regulation (EC) No 1272/2008，Annex I，Part 1，第 1.2 条（分类与标签一般原则）'}},
+  {id:'CLP-R-0005',name:'同一危害类别的分层与优先级原则',cat:'全部危害类别',target:'物质与混合物',gcl:'—',add:'否—逐案评估',ref:'Annex I，Part 1，1.2（分层原则）',ver:'R2026.2',status:'已审核',method:'CLP-M-LAYER',engine:'需要研发实现',test:'通过',checker:'质管-杨工',checkDate:'2026-06-18',h:'',
+    det:{inputs:'同一健康危害路径下的多个候选分类结果',cond:'同一路径（如口服急性毒性）出现多个可选类别时',formula:'取证据支持的最严类别；上位类别覆盖下位类别（如 Carc. 1B 与 Carc. 2 并存时输出 1B）',except:'不同路径（口服/皮肤/吸入）互不覆盖，分别输出；物理危害按各 Hazard 类别独立规则执行',prio:'低（3）——在其他规则产出结果后应用',output:'每个危害路径的最终唯一分类',label:'以最终分类对应的 H 码与标签结果为准',src:'Regulation (EC) No 1272/2008，Annex I，Part 1，第 1.2 条（分类与标签一般原则）'}}
+];
+/* ---------- R2027.1 候选草稿规则（**不属于当前生效版本 R2026.2**） ----------
+   CLP-R-0006（ED / PBT / vPvB / PMT / vPvM）与 CLP-R-0007（桥接原则）是下一版准备纳入的
+   规则，二者引用的计算方法在引擎中均为 not_implemented，因此：
+     · 它们**不在** R2026.2 已生效规则集内 —— 避免「已生效版本里混着未来版本的待审核规则」；
+     · 单独作为一个**候选草稿版本**存在，演示时可清楚对照三件事：
+         当前生效有什么 / 下一版准备加什么 / 哪些因计算方法未实现而暂不发布。
+   版本对象由 clpRuleVersionSeedCandidate() 建立，见 src/23z6c-js-clp-lifecycle.js。 */
+var CLP_RULES_NEXT_CANDIDATE=[
   {id:'CLP-R-0006',name:'内分泌干扰物（ED）与 PBT / vPvB / PMT / vPvM 判定规则',cat:'附加危害类别（欧盟特有）',target:'物质与混合物',gcl:'ED（人类健康 / 环境）：≥ 0.1%（按组分）；PBT / vPvB / PMT / vPvM：按 Annex I Part 5 判定要素',add:'否—逐案评估',ref:'Annex I，Part 5（(EU) 2024/2865 引入的附加危害）',ver:'R2027.1',status:'待审核',method:'CLP-M-ED-PBT',engine:'需要研发实现',test:'未执行',checker:'质管-杨工',checkDate:'2026-09-16',h:'',
     det:{inputs:'组分的持久性（P）/ 生物累积性（B）/ 毒性（T）测试与评估数据；内分泌活性证据（人体健康 / 环境）',cond:'组分同时满足 P / B / T 判定要素，或存在内分泌干扰活性证据时触发',formula:'按 Annex I Part 5 要素逐项判定（不适用浓度加和公式）：ED → 分类为 ED（人类健康）/ ED（环境）；PBT / vPvB / PMT / vPvM 分别按各自要素判定',except:'无完整测试数据时按 Annex I Part 5 的「证据权重」途径评估；UVCB 物质与金属化合物另有专门判定要素',prio:'中（2）——在常规危害类别判定完成后附加',output:'ED（人类健康）/ ED（环境）/ PBT / vPvB / PMT / vPvM',label:'对应 EUH380 / EUH381（内分泌干扰）与 EUH430 / EUH431 / EUH440 / EUH441 / EUH450 / EUH451（环境）等补充说明',src:'Regulation (EC) No 1272/2008，Annex I，Part 5（由 (EU) 2024/2865 引入；配套危害类别由 (EU) 2023/707 建立）'}},
-  {id:'CLP-R-0007',name:'桥接原则（Bridging）—相似混合物分类沿用规则',cat:'分类与标签一般原则',target:'混合物',gcl:'—',add:'否—逐案评估',ref:'Annex I，Part 1，1.5（桥接原则）',ver:'R2027.1',status:'待审核',method:'CLP-M-BRIDGE',engine:'需要配置参数',test:'通过',checker:'质管-杨工',checkDate:'2026-09-17',h:'',
+  {id:'CLP-R-0007',name:'桥接原则（Bridging）—相似混合物分类沿用规则',cat:'分类与标签一般原则',target:'混合物',gcl:'—',add:'否—逐案评估',ref:'Annex I，Part 1，1.5（桥接原则）',ver:'R2027.1',status:'待审核',method:'CLP-M-BRIDGE',engine:'需要研发实现',test:'通过',checker:'质管-杨工',checkDate:'2026-09-17',h:'',
     det:{inputs:'相似混合物（稀释 / 浓度变化 / 同族组分替换）的已有分类结论与组分对照表',cond:'混合物由已分类混合物经稀释、浓度调整或同族组分替换得到，且危害类别不变时触发',formula:'按桥接场景逐案调用（不适用统一公式）：桥接表与判定参数需在规则引擎中配置后启用',except:'桥接不得用于致癌 / 生殖毒性 / 致突变等无阈值危害；桥接结论须由法规专员确认并留痕',prio:'低（3）——在常规规则之后应用',output:'沿用被桥接混合物的分类结论',label:'以沿用分类对应的 H 码与标签结果为准',src:'Regulation (EC) No 1272/2008，Annex I，Part 1，第 1.5 条（桥接原则）'}}
 ];
 
 
-/* 计算方法字典（规则表的「规则引擎方法」在此登记；规则引擎支持状态挂在方法上，规则引用后继承）
-   口径：一条规则可调用多个方法，支持状态若逐规则存会出现同方法自相矛盾，故以方法为唯一口径。 */
+/* 计算方法字典：**只负责「方法叫什么、做什么」的展示文案**。
+   一条规则可调用多个方法，支持状态若逐方法手工存会出现同方法自相矛盾。
+
+   ⚠️ 本字典**不再包含任何支持状态字段**（原 `engine` 字段已删除）：
+   引擎支持状态一律由 `clpRuleEngineSupport()` / `clpRuleEngineStatusText()`
+   从 `COMPLIANCE_METHOD_REGISTRY` 实时派生 —— 见 src/23z6c-js-clp-lifecycle.js。
+   此前 LAYER 标「已支持」、BRIDGE 标「需要配置参数」而引擎实际均为 not_implemented，
+   正是手工字段与注册表脱节导致的，现已消除该事实源分裂。 */
 var CLP_METHODS=[
-  {code:'CLP-M-ATE-SUM',name:'ATE 加和法',engine:'已支持',note:'ATE_mix = 100 / Σ( Ci / ATEi )，输出急性毒性类别 1 / 2 / 3'},
-  {code:'CLP-M-GCL-SUM',name:'通用浓度限值加和法',engine:'已支持',note:'皮肤：Corr. ≥ 5%；否则 10×Corr. + Irrit. ≥ 10%'},
-  {code:'CLP-M-SCL',name:'SCL 优先替代法',engine:'已支持',note:'以 Annex VI Table 3 的 SCL 替换同类别通用限值'},
-  {code:'CLP-M-MFACTOR',name:'M 因子加权求和法',engine:'已支持',note:'按长期危害 Table 4.1.2 逐级加权并与 25% 比较'},
-  {code:'CLP-M-LAYER',name:'分层与优先级裁决',engine:'已支持',note:'同路径多类别并存时取证据支持的最严类别'},
-  {code:'CLP-M-ED-PBT',name:'ED / PBT / vPvB / PMT / vPvM 判定法',engine:'需要研发实现',note:'按 Annex I Part 5 要素逐项判定，不适用浓度加和公式'},
-  {code:'CLP-M-BRIDGE',name:'桥接原则（Bridging）',engine:'需要配置参数',note:'按桥接场景逐案调用；桥接表与判定参数需在引擎中配置后启用'}
+  {code:'CLP-M-ATE-SUM',name:'ATE 加和法',note:'ATE_mix = 100 / Σ( Ci / ATEi )，输出急性毒性类别 1 / 2 / 3'},
+  {code:'CLP-M-GCL-SUM',name:'通用浓度限值加和法',note:'皮肤：Corr. ≥ 5%；否则 10×Corr. + Irrit. ≥ 10%'},
+  {code:'CLP-M-SCL',name:'SCL 优先替代法',note:'以 Annex VI Table 3 的 SCL 替换同类别通用限值'},
+  {code:'CLP-M-MFACTOR',name:'M 因子加权求和法',note:'按长期危害 Table 4.1.2 逐级加权并与 25% 比较'},
+  {code:'CLP-M-LAYER',name:'分层与优先级裁决',note:'同路径多类别并存时取证据支持的最严类别'},
+  {code:'CLP-M-ED-PBT',name:'ED / PBT / vPvB / PMT / vPvM 判定法',note:'按 Annex I Part 5 要素逐项判定，不适用浓度加和公式'},
+  {code:'CLP-M-BRIDGE',name:'桥接原则（Bridging）',note:'按桥接场景逐案调用；桥接表与判定参数需在引擎中配置后启用'}
 ];
+/* 兼容：历史代码可能按方法代码读支持状态，统一返回系统派生值，杜绝再拿到手工值 */
+function clpMethodEngineStatus(code){
+  return clpRuleEngineStatusText({id:'(方法字典)', method: code});
+}
 
 /* 当前生效规则包：三个独立维护模块在发布后组成一个只读调用快照。
    SDS 向导生成分类结论时保存当时的快照；后续法规版本变化不会改写已生成结论。 */
@@ -115,8 +134,20 @@ function clpPackToken(v){
   return (m?m[0]:s).replace(/[^A-Za-z0-9.]+/g,'');
 }
 function clpRuleById(id){return CLP_RULES.filter(function(r){return r.id===id;})[0];}
+/* 新规则编号必须扫描**所有规则版本**（当前生效 + 候选草稿 + 历史版本），
+   不能只看 CLP_RULES（它只是活动版本投影）——否则新建规则会与候选草稿里的
+   CLP-R-0006 / CLP-R-0007 撞号。 */
 function clpNextRuleId(){
-  var max=CLP_RULES.reduce(function(n,r){var m=String(r.id||'').match(/^CLP-R-(\d{4})$/);return m?Math.max(n,parseInt(m[1],10)):n;},0);
+  var max=0;
+  function scan(rules){
+    (rules||[]).forEach(function(r){
+      var m=String(r.id||'').match(/^CLP-R-(\d{4})$/);
+      if(m)max=Math.max(max,parseInt(m[1],10));
+    });
+  }
+  scan(CLP_RULES);
+  if(typeof CLP_RULES_NEXT_CANDIDATE!=='undefined')scan(CLP_RULES_NEXT_CANDIDATE);
+  if(typeof CLP_RULE_VERSION_STORE!=='undefined')CLP_RULE_VERSION_STORE.forEach(function(v){scan(v.rules);});
   return 'CLP-R-'+('0000'+(max+1)).slice(-4);
 }
 /* 活动规则包（第三十九轮重构）：**不再用固定规则编号决定算法**，改为按
@@ -399,6 +430,7 @@ function clpLRenderTab(){
   }else if(_clpTab==='rules'){
     var f=_clpF.rules;
     h+='<div class="search" style="width:260px"><i class="si">⌕</i><input id="clpRuKw" placeholder="内部规则编号 / 名称 / 危害类别…" value="'+esc(f.kw)+'" oninput="clpLFill()"></div>'+
+       '<select class="ctrl" id="clpRuVer" style="width:210px" onchange="clpLFill()">'+clpRuleVerOptions(f.ver)+'</select>'+
        '<select class="ctrl" id="clpRuTgt" style="width:150px" onchange="clpLFill()"><option value="">全部适用对象</option><option>物质</option><option>混合物</option><option>物质与混合物</option></select>'+
        '<select class="ctrl" id="clpRuSt" style="width:140px" onchange="clpLFill()"><option value="">全部审核状态</option><option>已发布</option><option>已审核</option><option>待审核</option><option>审核中</option></select>'+
        '<select class="ctrl" id="clpRuEng" style="width:150px" onchange="clpLFill()"><option value="">全部自动化状态</option>'+
@@ -443,15 +475,19 @@ function clpLFill(){
     });
   }else if(_clpTab==='rules'){
     var kw=($('clpRuKw').value||'').trim().toLowerCase(),tgt=$('clpRuTgt').value,st=$('clpRuSt').value,eng=$('clpRuEng').value;
-    _clpF.rules={kw:$('clpRuKw').value,tgt:tgt,st:st,eng:eng};
-    rows=CLP_RULES.filter(function(r){
+    var vsel=$('clpRuVer')?$('clpRuVer').value:'';
+    _clpF.rules={kw:$('clpRuKw').value,tgt:tgt,st:st,eng:eng,ver:vsel};
+    /* 数据源：默认当前生效规则集；切换后可查看候选草稿版本「下一版准备纳入什么」 */
+    var pool=vsel?clpRuleVersionRules(clpRuleVersionGet(vsel)):CLP_RULES;
+    rows=pool.filter(function(r){
       if(tgt&&r.target!==tgt)return false;
       if(st&&r.status!==st)return false;
-      if(eng&&r.engine!==eng)return false;
+      /* 支持状态按注册表实时派生，不读规则上的手工 engine 字段 */
+      if(eng&&clpRuleEngineStatusText(r)!==eng)return false;
       return !kw||(r.id+' '+r.name+' '+r.cat+' '+r.ref).toLowerCase().indexOf(kw)>=0;
     });
     clpLTable([['规则名称','name',240],['适用危害类别','cat',170],['适用对象','target',120],['主要判断条件','gcl',240],['自动化状态','engine',120],['规则校验','test',100],['规则版本','ver',90],['发布状态','status',90]],rows,function(r){
-      return '<tr><td><b>'+esc(r.name)+'</b></td><td>'+esc(r.cat)+'</td><td><span class="tag '+(r.target==='混合物'?'blue':(r.target==='物质'?'orange':'grey'))+'">'+esc(r.target)+'</span></td><td>'+esc(r.gcl)+'</td><td>'+clpLAutoTag(r.engine)+'</td><td>'+clpLTestTag(r.test)+'</td><td class="mono">'+esc(r.ver)+'</td><td>'+clpLRuStTag(r.status)+'</td>'+
+      return '<tr><td><b>'+esc(r.name)+'</b></td><td>'+esc(r.cat)+'</td><td><span class="tag '+(r.target==='混合物'?'blue':(r.target==='物质'?'orange':'grey'))+'">'+esc(r.target)+'</span></td><td>'+esc(r.gcl)+'</td><td>'+clpLAutoTag(clpRuleEngineStatusText(r))+'</td><td>'+clpLTestTag(r.test)+'</td><td class="mono">'+esc(r.ver)+'</td><td>'+clpLRuStTag(r.status)+'</td>'+
         '<td class="acts"><button class="btn-link" onclick="clpLRuleDrawer(\''+esc(r.id)+'\')">详情</button>'+(r.h?'<button class="btn-link" onclick="clpLRuleToLabel(\''+esc(r.id)+'\')">标签字典</button>':'')+'</td></tr>';
     });
   }else if(_clpTab==='labels'){
@@ -591,7 +627,7 @@ function clpLDrawerRuleOpen(id){
   var d=r.det,m=CLP_MODULES.rules;
   clpLDrawer('分类规则 · '+r.name,
     clpLStrip(m)+
-    '<span style="margin:10px 0 10px;display:inline-block">'+clpLAutoTag(r.engine)+'</span>'+
+    '<span style="margin:10px 0 10px;display:inline-block">'+clpLAutoTag(clpRuleEngineStatusText(r))+'</span>'+
     '<span class="muted" style="font-size:12px;display:inline;margin-left:8px">系统根据结构化规则自动匹配计算能力</span>'+
     '<dl class="desc-list" style="grid-template-columns:130px 1fr">'+
     '<dt>规则名称</dt><dd>'+esc(r.name)+'</dd>'+
@@ -616,7 +652,7 @@ function clpLDrawerRuleOpen(id){
     '<dl class="desc-list" style="grid-template-columns:130px 1fr;margin-top:12px">'+
     '<dt>内部规则编号</dt><dd class="mono">'+esc(r.id)+'<span class="muted" style="margin-left:8px;font-size:12px">系统生成 · 只读</span></dd>'+
     '<dt>规则引擎方法</dt><dd class="mono">'+esc(r.method||'—')+(clpLMethod(r.method)?'<span class="muted" style="margin-left:8px;font-size:12px">'+esc(clpLMethod(r.method).name)+'</span>':'')+'</dd>'+
-    '<dt>引擎支持状态</dt><dd>'+clpLEngineTag(r.engine)+(r.engine==='需要研发实现'?'<span class="muted" style="margin-left:8px;font-size:12px">需登记研发需求后另行开发</span>':(r.engine==='需要配置参数'?'<span class="muted" style="margin-left:8px;font-size:12px">参数配置完成后即可启用</span>':''))+'</dd>'+
+    '<dt>引擎支持状态</dt><dd>'+clpLEngineTag(clpRuleEngineStatusText(r))+(clpRuleEngineStatusText(r)==='需要研发实现'?'<span class="muted" style="margin-left:8px;font-size:12px">需登记研发需求后另行开发</span>':(clpRuleEngineStatusText(r)==='需要配置参数'?'<span class="muted" style="margin-left:8px;font-size:12px">参数配置完成后即可启用</span>':''))+'<span class="muted" style="margin-left:8px;font-size:12px">（由计算方法注册表实时生成，不可人工填写）</span></dd>'+
     '<dt>数据来源类型</dt><dd><span class="tag grey">结构化规则表</span>——法规专员核对规则内容；系统负责结构校验、版本比较、计算能力匹配与审核发布</dd>'+
     '</dl></details>',
     '<button class="btn" onclick="clpLDrawerClose()">关闭</button>'+

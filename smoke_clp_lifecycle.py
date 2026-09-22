@@ -107,7 +107,9 @@ with sync_playwright() as pw:
     }""")
     ok(r['n1'] == 1 and r['n2'] == 1, "基线只初始化一次（重复 seed 后仍为 %d 个版本）" % r['n2'])
     ok(r['st'] == '已生效' and r['ver'] == 'R2026.2', "基线版本 %s 状态为「%s」" % (r['ver'], r['st']))
-    ok(r['rules'] == r['curRules'] and r['rules'] == 7, "基线规则数正确（%d 条，与 CLP_RULES 投影一致）" % r['rules'])
+    ok(r['rules'] == r['curRules'] and r['rules'] == 5,
+       "基线 R2026.2 只含实际生效的 5 条（R-0006/0007 已归 R2027.1 候选草稿）" % () if False else
+       "基线 R2026.2 只含实际生效的 %d 条，与 CLP_RULES 投影一致（R-0006/0007 已归 R2027.1 候选草稿）" % r['rules'])
     ok(r['before'] == r['after'], "修改草稿不影响基线规则")
     ok(r['sameObj'] is False, "草稿规则为深拷贝，不与基线共享对象引用")
     ok(r['fpSame'], "历史版本不会因活动投影同步而改变")
@@ -123,26 +125,41 @@ with sync_playwright() as pw:
       row('CLP-R-0001').method = 'CLP-M-GCL-SUM';                          /* 方法映射变化 */
       row('CLP-R-0004').det.cond = '混合物含 Chronic 1/2/3/4 组分（补充测试）'; /* 前置条件变化 */
       row('CLP-R-0003').det.except = '同一组分多类别 SCL 分别适用（补充）';   /* 例外变化 */
-      row('CLP-R-0005').h = 'H360';                                        /* H 码变化 */
-      row('CLP-R-0006').name = '内分泌干扰物判定规则（名称修订）';            /* 文案变化 */
-      row('CLP-R-0007').name = '  桥接原则（Bridging）—相似混合物分类沿用规则  ';      /* 首尾空格 */
-      row('CLP-R-0006').det.src = row('CLP-R-0006').det.src
-        .replace('Regulation (EC) No', 'Regulation  (EC)   No') + '   ';                 /* 连续空格 + 尾空格 */
+      row('CLP-R-0002').h = 'H360';                                        /* H 码变化（与参数变化并存） */
+      /* 归一化：首尾空格 / 连续空格 / 尾随空格都不算业务变化 */
+      row('CLP-R-0005').name = '  同一危害类别的分层与优先级原则  ';          /* 首尾空格 */
+      row('CLP-R-0005').det.src = row('CLP-R-0005').det.src
+        .replace('Regulation (EC) No', 'Regulation  (EC)   No') + '   ';    /* 连续空格 + 尾空格 */
       rows.push({id:'CLP-R-0010', name:'新增演示规则', cat:'演示', target:'混合物', gcl:'—',
         add:'否', ref:'Annex I（演示）', ver:'R2027.1', status:'待审核', method:'CLP-M-ATE-SUM', h:'',
         run:{thresholds:[{max:5,cat:'类别 1',h:'H300'}]},
         det:{inputs:'', cond:'', formula:'', except:'', prio:'', output:'', label:'', src:'Annex I（演示）'}});
       var d = LF.draft('R2099-B', '2027-01-01', rows);
       var cmp = clpRuleVersionCompare(LF.base(), d);
-      function fd(ruleId){ var o=null; cmp.fieldDiffs.forEach(function(f){ if(f.ruleId===ruleId) o=f; }); return o; }
+      function fd(ruleId, field){ var o=null; cmp.fieldDiffs.forEach(function(f){ if(f.ruleId===ruleId && (!field || f.field===field)) o=f; }); return o; }
       function ct(id){ var o=null; cmp.modified.concat(cmp.unchanged).forEach(function(x){ if(x.ruleId===id) o=x.changeType; }); return o; }
       return {
         added: cmp.added.map(function(x){return x.ruleId;}),
         unchanged: cmp.unchanged.map(function(x){return x.ruleId;}),
         deact: cmp.deactivated.map(function(x){return x.ruleId;}),
         f2: fd('CLP-R-0002'), f1: fd('CLP-R-0001'), f4: fd('CLP-R-0004'),
-        f3: fd('CLP-R-0003'), f5: fd('CLP-R-0005'), f6: fd('CLP-R-0006'),
-        ct1: ct('CLP-R-0001'), ct4: ct('CLP-R-0004'), ct6: ct('CLP-R-0006'), ct7: ct('CLP-R-0007'),
+        f3: fd('CLP-R-0003'), f5: fd('CLP-R-0002', 'h'), f6: fd('CLP-R-0005'),
+        ct1: ct('CLP-R-0001'), ct4: ct('CLP-R-0004'), ct5: ct('CLP-R-0005'),
+        /* 独立的「纯文本变化」Diff：只改规则名称，不得触发重新测试 */
+        ctTxt: (function(){
+          var rows2 = LF.cloneRules();
+          rows2.forEach(function(x){ if(x.id === 'CLP-R-0005') x.name = '同一危害类别的分层与优先级原则（名称修订）'; });
+          var c2 = clpRuleVersionCompare(LF.base(), LF.draft('R2099-B2', '2027-01-01', rows2));
+          var t = null; c2.modified.concat(c2.unchanged).forEach(function(x){ if(x.ruleId === 'CLP-R-0005') t = x.changeType; });
+          return t;
+        })(),
+        fTxt: (function(){
+          var rows2 = LF.cloneRules();
+          rows2.forEach(function(x){ if(x.id === 'CLP-R-0005') x.name = '同一危害类别的分层与优先级原则（名称修订）'; });
+          var c2 = clpRuleVersionCompare(LF.base(), LF.draft('R2099-B3', '2027-01-01', rows2));
+          var f = null; c2.fieldDiffs.forEach(function(x){ if(x.ruleId === 'CLP-R-0005') f = x; });
+          return f;
+        })(),
         sum: cmp.summary
       };
     }""")
@@ -154,10 +171,10 @@ with sync_playwright() as pw:
     ok(r['ct4'] == '适用条件变更', "前置条件变化识别为「%s」" % r['ct4'])
     ok(r['f3'] and r['f3']['changeType'] == '例外条件变更', "例外条件变化识别为「例外条件变更」")
     ok(r['f5'] and r['f5']['changeType'] == 'H 码或标签要素变更', "H 码变化识别为「H 码或标签要素变更」")
-    ok(r['ct6'] == '文案或来源变更' and r['f6'] and r['f6']['affectsExecution'] is False,
-       "文案变化识别为「文案或来源变更」且不触发重新测试")
-    ok(r['ct7'] == '未变化', "首尾空格变化不误报（CLP-R-0007 判为未变化）")
-    ok(r['ct6'] == '文案或来源变更', "连续空格与尾随空格不误报为文本内容变化（CLP-R-0006 仅名称变更）")
+    ok(r['ct5'] == '未变化', "首尾空格与连续空格不误报（CLP-R-0005 判为「%s」）" % r['ct5'])
+    ok(not r['f6'], "归一化后不产生字段级差异（空格变化被折叠）")
+    ok(r['ctTxt'] == '文案或来源变更' and r['fTxt'] and r['fTxt']['affectsExecution'] is False,
+       "文本变化识别为「文案或来源变更」且**不**触发重新测试（可与计算变化区分）")
     ok(r['sum']['deactivated'] == 0, "全部现行规则都在候选版本中时不产生候选停用")
 
     print("\n=== 三、引擎支持状态由系统生成 ===")
@@ -278,9 +295,10 @@ with sync_playwright() as pw:
     ok('CLP-R-0002' in r['m1ret'], "未通过门禁的修改规则记为「旧版继续生效」")
     ok('CLP-R-0008' not in r['after1'] and 'CLP-R-0009' not in r['after1'], "不合格的新增规则不进入活动规则集")
     ok(r['skin1'] == 5, "不合格的修改规则保留旧版参数（skinCorr 仍为 5%）")
-    ok('CLP-R-0007' in r['after1'] and r['m1pend'] == ['CLP-R-0007'], "未确认停用时旧规则继续有效")
-    ok(r['m2deact'] == ['CLP-R-0007'] and 'CLP-R-0007' not in r['after2'], "明确确认停用后规则才会移除")
-    ok('CLP-R-0001' in r['after2'] and 'CLP-R-0002' in r['after2'] and 'CLP-R-0006' in r['after2'],
+    ok('CLP-R-0005' in r['after1'] and r['m1pend'] == ['CLP-R-0005'],
+       "未确认停用时旧规则继续有效（候选停用=%s）" % '/'.join(r['m1pend']))
+    ok(r['m2deact'] == ['CLP-R-0005'] and 'CLP-R-0005' not in r['after2'], "明确确认停用后规则才会移除")
+    ok('CLP-R-0001' in r['after2'] and 'CLP-R-0002' in r['after2'] and 'CLP-R-0004' in r['after2'],
        "部分发布不会破坏原有规则集（发布后仍含 %d 条）" % len(r['after2']))
     ok(sorted(r['packIds']) == ['CLP-R-0001', 'CLP-R-0002', 'CLP-R-0003', 'CLP-R-0004'],
        "发布后活动规则包仍只纳入 4 条可执行规则")
@@ -412,6 +430,51 @@ with sync_playwright() as pw:
     ok(not r['tech'], "阻断提示不使用技术黑话（schema invalid / fingerprint mismatch…）")
     ok(r['footCnt'], "按钮旁显示发布与暂不发布数量")
     ok(r['viOk'], "Annex VI / 标签字典导入流程不受影响")
+
+    print("\n=== 十一、引擎支持状态：页面展示必须以方法注册表为唯一真源 ===")
+    r = pg.evaluate("""() => {
+      var out = {mismatch: [], fakeSupported: [], rendered: [], methEngine: 0, reg: {}};
+      /* ① 每条规则：页面取值 == 系统派生值 == 规则上写回的 engine 字段 */
+      CLP_RULES.forEach(function(r){
+        var shown = clpRuleEngineStatusText(r);
+        out.rendered.push({id: r.id, shown: shown, cached: r.engine, src: r.engineSource});
+        if(shown !== r.engine) out.mismatch.push(r.id);
+      });
+      /* ② 红线：不得存在「方法未实现却显示已支持」的规则 */
+      out.fakeSupported = CLP_RULES.filter(function(r){
+        return clpRuleEngineStatusText(r) === '已支持' && !complianceMethodImplemented(r.method);
+      }).map(function(r){ return r.id; });
+      /* ③ LAYER / BRIDGE 必须「需要研发实现」 */
+      out.layer  = clpRuleEngineStatusText({method: 'CLP-M-LAYER'});
+      out.bridge = clpRuleEngineStatusText({method: 'CLP-M-BRIDGE'});
+      /* ④ 方法字典不得再带手工 engine 字段 */
+      out.methEngine = CLP_METHODS.filter(function(m){ return typeof m.engine !== 'undefined'; }).length;
+      /* ⑤ 注册表真实状态对照 */
+      ['CLP-M-LAYER','CLP-M-BRIDGE','CLP-M-ED-PBT','CLP-M-ATE-SUM'].forEach(function(c){
+        out.reg[c] = COMPLIANCE_METHOD_REGISTRY[c] ? COMPLIANCE_METHOD_REGISTRY[c].implementationStatus : 'missing';
+      });
+      /* ⑥ 强红线：临时把 ATE 方法改成未实现，页面必须立刻跟着变（证明确为实时派生，非读缓存）。
+            必须用真实规则（带 run 参数），否则会先被「参数缺失」判为需要配置参数。 */
+      var rule = clpRuleById('CLP-R-0001');
+      out.base = clpRuleEngineStatusText(rule);
+      var bak = COMPLIANCE_METHOD_REGISTRY['CLP-M-ATE-SUM'].implementationStatus;
+      COMPLIANCE_METHOD_REGISTRY['CLP-M-ATE-SUM'].implementationStatus = 'not_implemented';
+      out.flipTo = clpRuleEngineStatusText(rule);
+      COMPLIANCE_METHOD_REGISTRY['CLP-M-ATE-SUM'].implementationStatus = bak;
+      out.flipBack = clpRuleEngineStatusText(rule);
+      return out;
+    }""")
+    ok(not r['mismatch'], "每条规则：页面展示状态 == 系统派生值 == 写回字段（%s）" % ('/'.join(r['mismatch']) or '全部一致'))
+    ok(r['fakeSupported'] == [], "红线：不存在「方法未实现却显示已支持」的规则（%s）" % ('/'.join(r['fakeSupported']) or '无'))
+    ok(r['layer'] == '需要研发实现' and r['bridge'] == '需要研发实现',
+       "LAYER / BRIDGE 一律「需要研发实现」（%s / %s）" % (r['layer'], r['bridge']))
+    ok(r['layer'] != '已支持' and r['bridge'] != '已支持', "LAYER / BRIDGE 不得再显示「已支持」")
+    ok(r['methEngine'] == 0, "CLP_METHODS 已删除手工 engine 字段（残留 %d 条）" % r['methEngine'])
+    ok(r['reg']['CLP-M-LAYER'] == 'not_implemented' and r['reg']['CLP-M-BRIDGE'] == 'not_implemented',
+       "注册表真实状态确为 not_implemented（LAYER=%s / BRIDGE=%s）" % (r['reg']['CLP-M-LAYER'], r['reg']['CLP-M-BRIDGE']))
+    ok(all(x['src'] == '系统生成' for x in r['rendered']), "所有规则的支持状态均标记「系统生成」，非人工填写")
+    ok(r['base'] == '已支持' and r['flipTo'] == '需要研发实现' and r['flipBack'] == '已支持',
+       "强红线：改注册表实现状态，页面立刻随之变化（%s → %s → 还原 %s）" % (r['base'], r['flipTo'], r['flipBack']))
 
     print("\n=== 十、无动态求值 ===")
     r = pg.evaluate("""() => {

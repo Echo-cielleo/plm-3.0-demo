@@ -164,6 +164,58 @@ function clpRuleVersionGet(id){
   return CLP_RULE_VERSION_STORE.filter(function(v){return v.id === id;})[0] || null;
 }
 function clpRuleVersionRules(v){return (v && v.rules) ? v.rules : [];}
+/* ---------- 候选草稿版本：下一版准备纳入、但尚未发布的规则 ----------
+   R-0006 / R-0007 不属于当前生效版本 R2026.2（二者 ver 本就是 R2027.1）。
+   若塞进基线，就会出现「R2026.2 已生效规则集里混着 R2027.1 的待审核规则」，
+   让版本快照与历史含义变得模糊。故单独建一个**候选草稿版本**承载它们：
+     当前生效有什么（R2026.2，5 条）
+     下一版准备加什么（R2027.1 候选，2 条）
+     哪些因计算方法未实现而暂不发布（两者的 method 均为 not_implemented）
+   注意：本函数只做**数据组织**，不改动任何法规结论或阈值。 */
+function clpRuleVersionCandidate(){
+  var id = 'CLP-RULESET-R2027.1', hit = null;
+  CLP_RULE_VERSION_STORE.forEach(function(v){ if(v.id === id)hit = v; });
+  return hit;
+}
+function clpRuleVersionSeedCandidate(){
+  var c = clpRuleVersionCandidate();
+  if(c)return c;
+  var owner = (CLP_MODULES && CLP_MODULES.rules) ? CLP_MODULES.rules.owner : '';
+  c = {
+    id: 'CLP-RULESET-R2027.1',
+    version: 'R2027.1',
+    status: '草稿',
+    isCandidate: true,
+    frozen: false,
+    source: {
+      regulation: 'Regulation (EC) No 1272/2008',
+      annex: 'Annex I',
+      sourceFile: 'CLP_AnnexI_规则表_R2027.1_候选草稿.xlsx',
+      sourceVersion: 'R2027.1',
+      sourceDate: ''
+    },
+    createdBy: owner, createdAt: clpRuleNowStamp(),
+    reviewedBy: '', reviewedAt: '', publishedAt: '',
+    effectiveFrom: '2027-01-01', effectiveTo: '', cutoff: '',
+    supersedesVersionId: '',
+    rules: clpSyncRuleEngineStatus(clpRuleDeepClone(CLP_RULES_NEXT_CANDIDATE)),
+    diffSummary: {}, gateSummary: {}, releaseManifest: {}, deferredRules: [],
+    methodVersions: clpRuleMethodVersions()
+  };
+  CLP_RULE_VERSION_STORE.push(c);
+  return c;
+}
+
+/* 规则库页面的「规则版本」下拉选项：默认读当前生效规则集（CLP_RULES 投影），
+   也可切到任一版本（含候选草稿）查看「下一版准备纳入什么」。 */
+function clpRuleVerOptions(sel){
+  var h = '<option value="">当前生效规则集</option>';
+  CLP_RULE_VERSION_STORE.forEach(function(v){
+    h += '<option value="' + esc(v.id) + '"' + (sel === v.id ? ' selected' : '') + '>'
+       + esc(v.version + '（' + v.status + '）') + '</option>';
+  });
+  return h;
+}
 function clpRuleVersionBaseline(){
   return CLP_RULE_VERSION_STORE.filter(function(v){return v.isBaseline;})[0] || null;
 }
@@ -193,7 +245,7 @@ function clpRuleVersionSeedBaseline(){
     publishedAt: clpRuleNowStamp(),
     effectiveFrom: eff, effectiveTo: '', cutoff: (CLP_MODULES && CLP_MODULES.rules) ? CLP_MODULES.rules.cutoff : '',
     supersedesVersionId: '',
-    rules: clpRuleDeepClone(CLP_RULES),
+    rules: clpSyncRuleEngineStatus(clpRuleDeepClone(CLP_RULES)),
     diffSummary: {}, gateSummary: {}, releaseManifest: {}, deferredRules: [],
     methodVersions: clpRuleMethodVersions()
   };
@@ -363,6 +415,25 @@ function clpRuleEngineSupport(rule){
     return {status: '需要配置参数', reason: '规则 ' + rule.id + ' 缺少「' + missing.map(function(p){return p[1];}).join('、') + '」，请补充后重新校验。'};
   return {status: '已支持', reason: ''};
 }
+/* ---------- 10.5 规则「引擎支持状态」的唯一取值入口 ----------
+   合同口径：**引擎支持状态由系统生成，非人工填写**。
+   因此页面渲染、规则筛选、发布门禁一律只能走本函数，从计算方法注册表实时派生；
+   规则对象上的 `engine` 字段只是「上一次同步写回的缓存值」，不是事实源。 */
+function clpRuleEngineStatusText(rule){
+  if(!rule)return '需要研发实现';
+  return clpRuleEngineSupport(rule).status;
+}
+/* 把派生状态写回规则对象：让 `engine` 字段始终等于注册表真实状态，
+   避免「手工填写的已支持」与「引擎实际未实现」长期并存。
+   写回时同时留下 systemGenerated 标记，页面可据此提示「该状态由系统生成」。 */
+function clpSyncRuleEngineStatus(rules){
+  (rules || []).forEach(function(r){
+    r.engine = clpRuleEngineStatusText(r);
+    r.engineSource = '系统生成';
+  });
+  return rules;
+}
+
 /* 规则测试：走真实引擎，只比对引擎自己给出的结果 */
 function clpRuleTestRun(rule, cases){
   var out = [];
@@ -703,10 +774,11 @@ function clpSyncActiveRulesProjection(asOfDate){
   clpRuleVersionSeedBaseline();
   var v = clpRuleVersionResolve(asOfDate || clpRuleAsOfDate());
   if(!v)return null;
-  CLP_RULES = clpRuleDeepClone(v.rules);
+  CLP_RULES = clpSyncRuleEngineStatus(clpRuleDeepClone(v.rules));
   return v;
 }
 
-/* ---------- 11. 启动：种子基线 + 同步兼容投影 ---------- */
+/* ---------- 11. 启动：种子基线 + 候选草稿 + 同步兼容投影 ---------- */
 clpRuleVersionSeedBaseline();
+clpRuleVersionSeedCandidate();
 clpSyncActiveRulesProjection();

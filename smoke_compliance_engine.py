@@ -273,10 +273,16 @@ with sync_playwright() as pw:
         restore();
         /* ③ 无运行参数 */
         out.noRun = clpActivePack().ruleIds.indexOf('CLP-R-0005') < 0 && !R('CLP-R-0005').run;
-        /* ④ 无执行器（未实现方法） */
-        out.noExec = clpActivePack().ruleIds.indexOf('CLP-R-0006') < 0 && clpActivePack().ruleIds.indexOf('CLP-R-0007') < 0;
-        /* ⑤ 展示字典标「已支持」但未登记实现 → 仍不得入包 */
-        out.fake = R('CLP-R-0005').engine === '已支持' && clpActivePack().ruleIds.indexOf('CLP-R-0005') < 0;
+        /* ④ 无执行器（未实现方法）：R-0006 / R-0007 属 R2027.1 候选草稿版本，
+              既不在当前生效规则集，也不得进入活动规则包 */
+        out.noExec = !clpRuleById('CLP-R-0006') && !clpRuleById('CLP-R-0007')
+          && clpActivePack().ruleIds.indexOf('CLP-R-0006') < 0
+          && clpActivePack().ruleIds.indexOf('CLP-R-0007') < 0;
+        /* ⑤ 方法未实现 → 支持状态由系统标为「需要研发实现」，不得再显示「已支持」，且不得入包 */
+        out.fake = R('CLP-R-0005').engine === '需要研发实现'
+          && clpRuleEngineStatusText(R('CLP-R-0005')) === '需要研发实现'
+          && complianceMethodImplemented(R('CLP-R-0005').method) === false
+          && clpActivePack().ruleIds.indexOf('CLP-R-0005') < 0;
         /* ⑥ 还原后回到 4 条 */
         out.restored = clpActivePack().ruleIds.length === 4;
       } finally {
@@ -288,8 +294,8 @@ with sync_playwright() as pw:
     ok(filt['testFail'], "测试未通过的规则不进入活动规则包")
     ok(filt['pending'], "待审核的规则不进入活动规则包")
     ok(filt['noRun'], "没有运行参数的规则不进入活动规则包（CLP-R-0005）")
-    ok(filt['noExec'], "没有可执行方法的规则不进入活动规则包（CLP-R-0006 / 0007）")
-    ok(filt['fake'], "展示字典标「已支持」但方法未实现，仍不得入包（CLP-R-0005）")
+    ok(filt['noExec'], "R-0006 / 0007 归 R2027.1 候选草稿，不在生效规则集也不入活动包")
+    ok(filt['fake'], "方法未实现 → 系统标「需要研发实现」且不得入包（CLP-R-0005）")
     ok(filt['restored'] and filt['final'] == ['CLP-R-0001', 'CLP-R-0002', 'CLP-R-0003', 'CLP-R-0004'],
        "临时改动已还原，活动包恢复 4 条")
 
