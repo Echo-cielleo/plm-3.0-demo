@@ -90,10 +90,31 @@ with sync_playwright() as p:
                       conf:wz.classItems.filter(function(c){return c.status==='pending'&&c.need==='confirm';}).length,
                       judge:wz.classItems.filter(function(c){return c.status==='pending'&&c.need!=='confirm';}).length};
             }""")
-            auto = ['acuteOral', 'skin', 'sens', 'eye', 'aqua']
+            auto = ['acuteOral', 'skin', 'sens', 'eye']
             bad = [k for k in auto if tri['m'][k]['s'] == 'pending']
             if bad:
                 errors.append('[结论诚实性] 规则引擎可算的类别被置为待判定：%s' % ' / '.join(bad))
+            # ---------- 输入可靠性门禁（第三十八轮）----------
+            # aqua 依赖组分的水生慢性分类来源依据：存在 aqState!=known 的组分时必须转「待人工判断」
+            # （兑现 SDS 第 3 步的承诺），补录依据后又必须能恢复自动计算 —— 两端都要验
+            aq = tri['m']['aqua']
+            if aq['s'] != 'pending' or aq['n'] == 'confirm' or aq['r'] != u'—':
+                errors.append('[输入可靠性] aqua 在存在 aqState!=known 组分时应为「待人工判断」，'
+                              '实际 %s / %s / %s' % (aq['s'], aq['n'], aq['r']))
+            recov = page.evaluate("""() => {
+              var tgt=['50-00-0','111-76-2'],bak={};
+              tgt.forEach(function(c){bak[c]=COMP_CLP[c].aqState;COMP_CLP[c].aqState='known';});
+              var it=clpEvaluateMixture(wz.formula).items.filter(function(x){return x.id==='aqua';})[0];
+              var got={s:it.status,r:String(it.result),f:String(it.formula||'')};
+              tgt.forEach(function(c){COMP_CLP[c].aqState=bak[c];});
+              return got;
+            }""")
+            if recov['s'] != 'auto' or recov['r'] == u'—':
+                errors.append('[输入可靠性] 补录水生毒性来源依据后 aqua 应恢复自动计算，实际 %s / %s'
+                              % (recov['s'], recov['r']))
+            if u'加和法未执行' in recov['f']:
+                errors.append('[输入可靠性] 补录后 aqua 的计算过程仍停留在「加和法未执行」')
+            print('  aqua 门禁：补录前 待人工判断 / 补录后 %s（%s）' % (recov['s'], recov['r']))
             for k in ['ed', 'pmt', 'resp', 'repr']:
                 if tri['m'][k]['s'] != 'pending' or tri['m'][k]['n'] == 'confirm':
                     errors.append('[结论诚实性] %s 应标「待人工判断」，实际 %s / %s' % (k, tri['m'][k]['s'], tri['m'][k]['n']))
@@ -144,6 +165,43 @@ with sync_playwright() as p:
                 errors.append('[规则包] SDS 未保留生成时的规则包版本快照')
             if not run['labels']['hCodes'] or not run['labels']['pCodes']:
                 errors.append('[规则包] 规则包没有返回 H 码与 P 码候选')
+            # ---- 第三十八轮：第 3 步「一键补充演示数据」真实点击 → 第 4 步恢复自动计算 ----
+            page.evaluate('wzGo(3)'); page.wait_for_timeout(250)
+            btn_txt = page.evaluate("""() => {
+              var r=[]; [].slice.call(document.querySelectorAll('#wzBody button')).forEach(function(b){
+                if(b.textContent.indexOf('一键')>=0) r.push(b.textContent.trim()); });
+              return r.join(','); }""")
+            miss_n = page.evaluate('() => wzMissCount()')
+            if miss_n and u'一键填充演示数据' not in btn_txt:
+                errors.append('[演示补录] 存在 %d 项缺失数据，但区块①缺少「一键填充演示数据」按钮' % miss_n)
+            if u'一键补充演示数据' not in btn_txt:
+                errors.append('[演示补录] 第 3 步区块④未找到「一键补充演示数据」按钮')
+            else:
+                # 区块①：一键填充 → 缺失数据归零
+                if miss_n:
+                    page.click('#wzBody button:has-text("一键填充演示数据")')
+                    page.wait_for_timeout(300)
+                    if page.evaluate('() => wzMissCount()') != 0:
+                        errors.append('[演示补录] 点击「一键填充演示数据」后缺失项未归零')
+                # 区块④：一键补充 → 阻止项归零，且第 4 步 aqua 恢复自动计算
+                page.click('#wzBody button:has-text("一键补充演示数据")')
+                page.wait_for_timeout(300)
+                if page.evaluate('() => wzBlockers().length') != 0:
+                    errors.append('[演示补录] 点击后第 3 步阻止项未归零')
+                page.evaluate('wzGo(4)'); page.wait_for_timeout(300)
+                aq2 = page.evaluate("""() => {
+                  var c=wz.classItems.filter(function(x){return x.id==='aqua';})[0];
+                  return {s:c.status,r:String(c.result)}; }""")
+                if aq2['s'] != 'auto' or aq2['r'] == u'—':
+                    errors.append('[演示补录] 补录后 aqua 未恢复自动计算：%s / %s' % (aq2['s'], aq2['r']))
+                if page.evaluate('() => wzMissCount()') != 0:
+                    errors.append('[演示补录] 补录后仍有缺失数据项未清零')
+                # 复位：保证后续第 5/6 步与「未补录」的初始条件一致
+                page.evaluate("""() => {
+                  ['50-00-0','111-76-2'].forEach(function(c){COMP_CLP[c].aqState='unknown';delete COMP_CLP[c].aqRef;});
+                  wz.classItems=null;wz.classPack=null; }""")
+                page.evaluate('wzGo(4)'); page.wait_for_timeout(250)
+                print('  演示补录：一键补充 → 阻止项归零且 aqua 恢复自动（随后复位）')
         page.screenshot(path=str(SS / ('_ss_sds_step%d.png' % s)))
     # ---- 本轮新增：一键采纳系统建议 → H 码落到标签要素；缺输入的项仍阻断 ----
     print('\n--- 采纳全部系统建议 / 阻断放行 ---')

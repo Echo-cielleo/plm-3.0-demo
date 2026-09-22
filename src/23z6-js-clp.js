@@ -221,6 +221,10 @@ function clpEvaluateMixture(formula){
   /* CLP-M-MFACTOR · 水生环境长期危害 */
   var mfRule=clpRuleById('CLP-R-0004'),mf=mfRule.run;
   var aqRows=rows.filter(function(r){return !!r.haz.aquaticChronic;});
+  /* 第 38 轮 · 加和法输入可靠性门禁：组分的水生慢性分类若缺少可靠来源依据
+     （aqState!=='known'），不得返回「自动」结论 —— 必须与 SDS 向导第 3 步
+     「对应危害类别在第 4 步会落到待人工判断」的承诺一致，否则同一条数据两处说法相反。 */
+  var aqBad=aqRows.filter(function(r){return r.p.aqState!=='known';});
   var aq1=0,aq1m=0,aq2=0,aq3=0,aq4=0;
   aqRows.forEach(function(r){var c=String(r.haz.aquaticChronic),m=r.p.mC||1;
     if(c==='1'){aq1+=r.conc;aq1m+=m*r.conc;}else if(c==='2')aq2+=r.conc;else if(c==='3')aq3+=r.conc;else if(c==='4')aq4+=r.conc;});
@@ -232,16 +236,25 @@ function clpEvaluateMixture(formula){
   else if(aqScore2>=mf.limit){aqResult='类别 2';aqCode='H411 对水生生物有毒并具有长期持续影响';}
   else if(aqScore3>=mf.limit){aqResult='类别 3';aqCode='H412 对水生生物有害并具有长期持续影响';}
   else if(aqScore4>=mf.limit){aqResult='类别 4';aqCode='H413 可能对水生生物造成长期持续的有害影响';}
-  items.push({id:'aqua',name:'危害水生环境（长期）',result:aqResult,code:aqCode,status:'auto',packId:pack.id,ruleIds:['CLP-R-0004'],method:'CLP-M-MFACTOR',
-    rule:'CLP Annex I 4.1.3.5 · M 因子加权求和法',
-    input:clpCalcInput(aqRows,function(r){return 'Chronic '+r.haz.aquaticChronic+(String(r.haz.aquaticChronic)==='1'?'，M='+(r.p.mC||1):'');}),
-    formula:'Chronic 1='+clpCalcNum(aq1m)+'%；Chronic 2 判定和='+clpCalcNum(aqScore2)+'%；Chronic 3 判定和='+clpCalcNum(aqScore3)+'%；总和='+clpCalcNum(aqScore4)+'% → '+aqResult,
-    src:[['reg','CLP 规则包 '+pack.id],['reg','Annex VI / 物质分类数据']],
-    opts:[{o:'类别 1',d:'Σ(M×Chronic 1) ≥ '+mf.limit+'%',hit:aqResult==='类别 1'?'✓ 系统建议':'未命中'},
-      {o:'类别 2',d:'Σ(10×M×Chronic 1)+Σ(Chronic 2) ≥ '+mf.limit+'%',hit:aqResult==='类别 2'?'✓ 系统建议':'未命中'},
-      {o:'类别 3',d:'Σ(100×M×Chronic 1)+10×Σ(Chronic 2)+Σ(Chronic 3) ≥ '+mf.limit+'%',hit:aqResult==='类别 3'?'✓ 系统建议':'未命中'},
-      {o:'类别 4',d:'Σ(Chronic 1~4) ≥ '+mf.limit+'%',hit:aqResult==='类别 4'?'✓ 系统建议':'未命中'},
-      {o:'不分类（无需分类）',d:'所有逐级判定和均低于 '+mf.limit+'%',hit:aqResult==='不分类'?'✓ 当前结果':'未命中'}]});
+  if(aqBad.length){
+    items.push({id:'aqua',name:'危害水生环境（长期）',result:'—',code:'待人工判断',status:'pending',need:'judge',packId:pack.id,ruleIds:['CLP-R-0004'],method:'CLP-M-MFACTOR',
+      rule:'CLP Annex I 4.1.3.5 · M 因子加权求和法',
+      input:clpCalcInput(aqBad,function(r){return 'Chronic '+r.haz.aquaticChronic+' · 来源依据未归档';}),
+      formula:'加和法未执行 —— '+aqBad.map(function(r){return r.name;}).join('、')+' 的水生慢性分类缺少可靠来源依据（未归档实测报告 / NOEC），输入不可靠 → 不产出结论，转人工判断',
+      src:[['reg','CLP 规则包 '+pack.id],['lab','待补录实测报告 / NOEC']],
+      opts:[{o:'加和法未执行',d:'补录 '+aqBad.length+' 项水生毒性来源依据后，本项可恢复自动计算',hit:'当前状态'}]});
+  } else {
+      items.push({id:'aqua',name:'危害水生环境（长期）',result:aqResult,code:aqCode,status:'auto',packId:pack.id,ruleIds:['CLP-R-0004'],method:'CLP-M-MFACTOR',
+        rule:'CLP Annex I 4.1.3.5 · M 因子加权求和法',
+        input:clpCalcInput(aqRows,function(r){return 'Chronic '+r.haz.aquaticChronic+(String(r.haz.aquaticChronic)==='1'?'，M='+(r.p.mC||1):'');}),
+        formula:'Chronic 1='+clpCalcNum(aq1m)+'%；Chronic 2 判定和='+clpCalcNum(aqScore2)+'%；Chronic 3 判定和='+clpCalcNum(aqScore3)+'%；总和='+clpCalcNum(aqScore4)+'% → '+aqResult,
+        src:[['reg','CLP 规则包 '+pack.id],['reg','Annex VI / 物质分类数据']],
+        opts:[{o:'类别 1',d:'Σ(M×Chronic 1) ≥ '+mf.limit+'%',hit:aqResult==='类别 1'?'✓ 系统建议':'未命中'},
+          {o:'类别 2',d:'Σ(10×M×Chronic 1)+Σ(Chronic 2) ≥ '+mf.limit+'%',hit:aqResult==='类别 2'?'✓ 系统建议':'未命中'},
+          {o:'类别 3',d:'Σ(100×M×Chronic 1)+10×Σ(Chronic 2)+Σ(Chronic 3) ≥ '+mf.limit+'%',hit:aqResult==='类别 3'?'✓ 系统建议':'未命中'},
+          {o:'类别 4',d:'Σ(Chronic 1~4) ≥ '+mf.limit+'%',hit:aqResult==='类别 4'?'✓ 系统建议':'未命中'},
+          {o:'不分类（无需分类）',d:'所有逐级判定和均低于 '+mf.limit+'%',hit:aqResult==='不分类'?'✓ 当前结果':'未命中'}]});
+  }
 
   var hCodes=[],pCodes=[],pictograms=[],signal='warning';
   items.forEach(function(item){

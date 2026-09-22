@@ -727,6 +727,24 @@ var CONFLICT_MOCK=[
   {cas:'79-10-7',k:'职业接触限值 OEL',a:['未提供 OEL','sup'],b:['2 ppm（建议值，非法规限值）','pub'],
    note:'辅助来源为「建议值」而非法规限值 → 不得作为第 8 章暴露控制依据，需人工按官方来源补录'}
 ];
+/* 第 3 步「一键补录」演示数据源（第 38 轮）——
+   模拟法规专员按来源优先级（实测报告 > 供应商 SDS > 法规库 > 辅助资料）把数据补齐。
+   值统一写在数据层；渲染函数只负责展示，不在页面里现场编造结论。 */
+var DEMO_FILL={
+  /* ① 缺失数据：key 为数据项名称，值为 [内容, 来源, 依据编号] */
+  collect:{
+    '闪点 / 沸点':      ['闪点 50 ℃（闭杯）/ 沸点 141 ℃','lab','JL-2026-0417'],
+    '职业接触限值 OEL': ['10 ppm（8h TWA，德国 AGW）','reg','AGW-79-10-7'],
+    '急性毒性 LD50':    ['LD50 > 5000 mg/kg（大鼠经口，OECD 423）','lab','JL-2026-0418'],
+    '严重眼损伤/刺激':  ['轻度刺激，不达分类阈值（OECD 405）','lab','JL-2026-0418'],
+    '水生急性毒性':     ['不适用（低溶解度，OECD 202 未检出）','lab','JL-2026-0418']
+  },
+  /* ④ 会导致危害类别算不动的数据：补足「水生慢性分类的来源依据」，使加和法输入变为可靠 */
+  aqua:{
+    '50-00-0':  {lc50:'LC50 24 mg/L（96h 鱼，OECD 203）',noec:'NOEC 1 mg/L（21d 溞，OECD 211）',ref:'JL-2026-0419'},
+    '111-76-2': {lc50:'LC50 1474 mg/L（96h 鱼，OECD 203）',noec:'NOEC 100 mg/L（21d 溞，OECD 211）',ref:'JL-2026-0420'}
+  }
+};
 function wzEvidence(cas,src){
   var srcKey=cas.replace(/[^0-9]/g,'').slice(0,4)||'0000';
   var m=EVID_META[src]||EVID_META.pub;
@@ -741,8 +759,9 @@ function wzBlockers(){
       out.push({cas:f.cas,name:f.name||p.name||f.cas,k:'急性毒性 LD50 / ATE',v:'缺少可用 ATE',
         eff:'急性毒性（经口）无法执行 ATE 加和，该项转人工判定'});
     if(h.aquaticChronic&&p.aqState==='unknown')
-      out.push({cas:f.cas,name:f.name||p.name||f.cas,k:'水生毒性数据',v:'缺少可用 M 因子 / 急性毒性数据',
-        eff:'危害水生环境（长期）无法执行 M 因子加权，该项结论可能不完整'});
+      out.push({cas:f.cas,name:f.name||p.name||f.cas,k:'水生慢性分类依据',v:'未归档急性毒性 / NOEC 实测依据',
+        eff:'危害水生环境（长期）加和法输入依据不足 → 第 4 步转「待人工判断」'
+            +'（本品为 Chronic '+h.aquaticChronic+'，按 Annex I 表 4.1.3 不适用 M 因子）'});
   });
   return out;
 }
@@ -880,15 +899,45 @@ function renderStep3(){
         +'<button class="btn sm" onclick="reCollect()">重新汇集</button>'
       +'</div></div>'
       +'<div class="card-bd">'
-        +'<div class="sub-hd">① 缺失数据<span class="tag '+(missList.length?'red':'green')+'">'+missList.length+' 项</span></div>'+missHtml
+        +'<div class="sub-hd">① 缺失数据<span class="tag '+(missList.length?'red':'green')+'">'+missList.length+' 项</span>'
+      +(missList.length?'<button class="btn sm" style="margin-left:8px" onclick="wzFillDemo(1)">一键填充演示数据</button>':'')+'</div>'+missHtml
         +'<div class="sub-hd">② 仅辅助来源的数据<span class="tag '+(pubOnly.length?'orange':'green')+'">'+pubOnly.length+' 项</span></div>'+pubHtml
         +'<div class="sub-hd">③ 多来源冲突<span class="tag '+(conflicts.length?'orange':'green')+'">'+conflicts.length+' 项</span></div>'+confHtml
-        +'<div class="sub-hd">④ 会导致危害类别无法计算的数据<span class="tag '+(blockers.length?'red':'green')+'">'+blockers.length+' 项</span></div>'+blkHtml
+        +'<div class="sub-hd">④ 会导致危害类别无法计算的数据<span class="tag '+(blockers.length?'red':'green')+'">'+blockers.length+' 项</span>'
+      +(blockers.length?'<button class="btn sm" style="margin-left:8px" onclick="wzFillDemo(4)">一键补充演示数据</button>':'')+'</div>'+blkHtml
       +'</div></div>'
     +'<div class="card"><div class="card-hd"><h3>全部汇集数据</h3>'
       +'<span class="sub">按组分维度展示，标签颜色代表数据来源优先级</span>'
       +'<div class="right"><button class="btn sm" id="wzAllBtn" onclick="wzToggleAll()">查看全部汇集数据 ▾</button></div></div>'
       +'<div class="card-bd"><div id="wzAllData" style="display:none"><div class="comp-grid">'+allCards+'</div></div></div></div>';
+}
+/* 「一键补录」—— 按 DEMO_FILL 模拟人工补齐，之后第 4 步结论必须重算 */
+function wzFillDemo(kind){
+  var n=0,why=[];
+  if(kind===1){
+    Object.keys(wz.collect||{}).forEach(function(cas){
+      (wz.collect[cas]||[]).forEach(function(it){
+        if(!it.miss)return;
+        var d=DEMO_FILL.collect[it.k]; if(!d)return;
+        it.v=d[0];it.src=d[1];it.ref=d[2];it.miss=false;n++;
+        var ff=wz.formula.filter(function(x){return x.cas===cas;})[0];
+        why.push(((ff&&ff.name)||(COMP_CLP[cas]||{}).name||cas)+' · '+it.k);
+      });
+    });
+  } else if(kind===4){
+    (wzBlockers()||[]).forEach(function(b){
+      if(b.k!=='水生慢性分类依据')return;
+      var d=DEMO_FILL.aqua[b.cas],p=COMP_CLP[b.cas];
+      if(!d||!p)return;
+      p.lc50=d.lc50;p.noec=d.noec;p.aqState='known';p.aqRef=d.ref;n++;
+      why.push((b.name||b.cas)+' · 水生毒性来源依据');
+    });
+  }
+  if(!n){toast('当前没有可补录的项目','info');return;}
+  /* 基础数据变了 → 第 4 步结论必须重算，否则拿的还是旧快照 */
+  wz.classItems=null;wz.classPack=null;
+  renderStep3();wzUpdateFoot();
+  toast('已按演示数据源补录 '+n+' 项'+(why.length?'：'+why.slice(0,2).join('；')+(why.length>2?' 等':''):''),'ok');
 }
 function reCollect(){
   wz.collected=false;wz.collect={};
@@ -1657,9 +1706,9 @@ function euhAuto(){
 var EUH_OPTS=[
   ['EUH066','重复接触可能导致皮肤干燥或开裂','含特定有机溶剂的混合物常见，由编制人员据实勾选'],
   ['EUH071','对呼吸道有腐蚀性','仅在判为皮肤腐蚀类别 1 且无吸入毒性数据时适用'],
-  ['EUH380','可能对人体造成内分泌干扰','由 ED 类别 1 判定自动带出，不可取消'],
-  ['EUH381','怀疑对人体造成内分泌干扰','由 ED 类别 2 判定自动带出，不可取消'],
-  ['EUH450','可对水资源造成长期、广泛的污染','由 PMT / vPvM 判定自动带出，不可取消']
+  ['EUH380','可能对人体造成内分泌干扰','ED 判为类别 1 时随之带出且锁定；当前 ED 为「待人工判断」，本项随之一并处理'],
+  ['EUH381','怀疑对人体造成内分泌干扰','ED 判为类别 2 时随之带出且锁定；当前 ED 为「待人工判断」，本项随之一并处理'],
+  ['EUH450','可对水资源造成长期、广泛的污染','PMT / vPvM 判定时随之带出且锁定；当前 PMT 为「待人工判断」，本项随之一并处理']
 ];
 function euhCard(){
   var sel=wz.project.euh||[],auto=euhAuto();
