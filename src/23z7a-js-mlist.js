@@ -25,7 +25,7 @@ function listGetDataset(key){
 function listGetDatasets(){return Object.keys(REGULATORY_LIST_DATASETS).map(function(k){return REGULATORY_LIST_DATASETS[k];});}
 function listResolveDataset(key,asOfDate){
   var ds=listGetDataset(key);
-  return ds && asOfDate && (!ds.effectiveFrom || ds.effectiveFrom<=asOfDate) &&
+  return ds && ds.available!==false && asOfDate && (!ds.effectiveFrom || ds.effectiveFrom<=asOfDate) &&
     (!ds.effectiveTo || asOfDate<ds.effectiveTo) ? ds : null;
 }
 function listDatasetAvailable(key,asOfDate){return !!listResolveDataset(key,asOfDate);}
@@ -98,25 +98,32 @@ function listAssessEntry(entry,matches,context){
 function listExecute(context){
   context=context||{};
   var components=context.components||[], keys=context.datasetKeys||[], asOfDate=context.asOfDate;
+  var requested=keys.filter(function(key,index){return keys.indexOf(key)===index;});
   var result={status:'NO_MATCH',datasetVersions:{},entryResults:[],
+    coverage:{requested:requested,evaluated:[],unavailable:[],complete:true},
     summary:{listedOnly:0,triggered:0,notTriggered:0,needContext:0,notApplicable:0,datasetUnavailable:0},
     inputs:[{asOfDate:asOfDate||'',datasetKeys:keys.slice(),components:components.map(function(c){return Object.assign({},c);}),
       context:Object.assign({},context.context||{})}],
     intermediates:{datasetsChecked:[],identityMatches:[]},evidence:[],messages:[]};
   var counts={LISTED_ONLY:'listedOnly',TRIGGERED:'triggered',NOT_TRIGGERED:'notTriggered',
     NEED_CONTEXT:'needContext',NOT_APPLICABLE:'notApplicable',DATASET_UNAVAILABLE:'datasetUnavailable'};
-  if(!keys.length){result.status='NEED_INPUT';result.messages.push('未指定需要匹配的名单数据集。');return result;}
-  keys.forEach(function(key){
+  if(!requested.length){result.status='NEED_INPUT';result.messages.push('未指定需要匹配的名单数据集。');return result;}
+  requested.forEach(function(key){
     var ds=listResolveDataset(key,asOfDate);
     if(!ds){
-      result.entryResults.push({datasetKey:key,datasetVersion:'',entryId:'',entryCode:'',matchedBy:'',
+      var registered=listGetDataset(key), unavailableReason=registered && registered.available===false ?
+        (registered.unavailableReason||'数据集尚不可执行。') :
+        '数据集不存在或查询日期无可用版本。';
+      result.coverage.unavailable.push(key);
+      result.entryResults.push({datasetKey:key,datasetVersion:registered?registered.version:'',entryId:'',entryCode:'',matchedBy:'',
         matchedComponents:[],assessmentStatus:'DATASET_UNAVAILABLE',
-        reason:'数据集不存在或查询日期无可用版本，不能判定未列入。',
-        requiredInputs:[],conditionResults:[],source:{},evidence:[]});
+        reason:unavailableReason+'不能判定未列入。',unavailableReason:unavailableReason,
+        requiredInputs:[],conditionResults:[],source:registered?{datasetVersion:registered.version,reference:registered.source}:{},evidence:[]});
       result.summary.datasetUnavailable++;
-      result.messages.push(key+'：数据集不可用，不能判定未列入。');
+      result.messages.push(key+'：'+unavailableReason+'不能判定未列入。');
       return;
     }
+    result.coverage.evaluated.push(key);
     result.datasetVersions[key]=ds.version;
     result.intermediates.datasetsChecked.push({key:key,version:ds.version,entries:ds.entries.length});
     ds.entries.forEach(function(entry){
@@ -136,8 +143,16 @@ function listExecute(context){
       result.evidence.push(evidence);
     });
   });
-  result.status=result.summary.datasetUnavailable?'BLOCKED':
-    result.summary.needContext?'NEED_INPUT':result.entryResults.length?'AUTO':'NO_MATCH';
+  result.coverage.complete=!result.coverage.unavailable.length;
+  result.status=!result.coverage.evaluated.length?'BLOCKED':
+    result.summary.needContext?'NEED_INPUT':
+    !result.coverage.complete?'AUTO':
+    result.entryResults.length?'AUTO':'NO_MATCH';
+  if(!result.coverage.complete && result.coverage.evaluated.length){
+    result.messages.push(result.entryResults.some(function(r){return r.assessmentStatus!=='DATASET_UNAVAILABLE';}) ?
+      '部分名单数据集不可用，本次结果不是完整覆盖。' :
+      '已完成可用数据集检查，未发现命中；仍有部分数据集不可用，不能形成全库“未列入”结论。');
+  }
   return result;
 }
 

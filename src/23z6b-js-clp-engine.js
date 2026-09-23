@@ -167,6 +167,7 @@ function complianceExecuteMethod(code, context){
     shell.datasetVersions = out.datasetVersions || {};
     shell.entryResults = out.entryResults || [];
     shell.summary = out.summary || {};
+    shell.coverage = out.coverage || {};
   }
   return shell;
 }

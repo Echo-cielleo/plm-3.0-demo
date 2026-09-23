@@ -51,6 +51,9 @@ with sync_playwright() as pw:
              {field:'objectType',operator:'in',value:['article']},
              {field:'useClass',operator:'in',value:['consumer']}].concat(conc))
         ]});
+      listRegisterDataset({key:'engine-test-fixture-unavailable',version:'fixture-1',
+        source:'engine-test-fixture',market:'EU',available:false,
+        unavailableReason:'本期尚未建立结构化数据集',entries:[]});
       window.mlRun=function(components,context,keys,date){
         return complianceExecuteMethod('M-LIST',{asOfDate:date||'2026-10-01',
           datasetKeys:keys||[MLKEY],components:components,context:context||{}});
@@ -75,8 +78,8 @@ with sync_playwright() as pw:
        '未登记方法保留既有错误状态')
     ok(page.evaluate("() => ['CLP-M-ATE-SUM','CLP-M-GCL-SUM','CLP-M-SCL','CLP-M-MFACTOR'].every(complianceMethodImplemented)"),
        '原四个 CLP 方法仍已实现')
-    ok(page.evaluate("() => listGetDatasets().length===3 && listGetDataset('reach-svhc') && listGetDataset('reach-xvii')"),
-       '只登记两个真实名单库和一个测试夹具')
+    ok(page.evaluate("() => listGetDatasets().length===4 && listGetDataset('reach-svhc') && listGetDataset('reach-xvii')"),
+       '只登记两个真实名单库和两个测试夹具')
     ok(page.evaluate("() => {var d=listGetDataset(MLKEY);try{listRegisterDataset(d);return false}catch(e){return /重复注册/.test(e.message)&&listGetDataset(MLKEY)===d}}"),
        '重复数据集注册报错且未覆盖')
     ok(page.evaluate("() => ['', 'version','source','market'].every(function(field){var d={key:'fixture-bad-'+field,version:'1',source:'fixture',market:'EU',entries:[]};if(field)d[field]='';else d.key='';try{listRegisterDataset(d);return false}catch(e){return true}})"),
@@ -147,8 +150,22 @@ with sync_playwright() as pw:
        '浓度基础不一致为 NEED_CONTEXT，未推算配方到材料浓度')
     ok(page.evaluate("() => {var r=mlRun([{cas:'999-00-3',concentration:0.2,concentrationUnit:'%',concentrationBasis:'formula-w/w'}],{},['missing-dataset']);return r.status==='BLOCKED' && r.entryResults[0].assessmentStatus==='DATASET_UNAVAILABLE' && r.summary.datasetUnavailable===1}"),
        '数据集不可用为 BLOCKED，不误判未列入')
-    ok(page.evaluate("() => {var r=mlRun([{cas:'999-00-1'}],{},[MLKEY,'missing-dataset']);return r.status==='BLOCKED' && r.summary.listedOnly>0 && r.summary.datasetUnavailable===1}"),
-       '部分数据集不可用时仍保留命中，但方法阻断')
+    ok(page.evaluate("() => {var r=mlRun([{cas:'999-00-1'}],{},[MLKEY,'missing-dataset']);return r.status==='AUTO' && r.summary.listedOnly>0 && r.summary.datasetUnavailable===1 && !r.coverage.complete}"),
+       '部分数据集不可用时保留有效命中，方法为 AUTO')
+    ok(page.evaluate("() => {var r=mlRun([{cas:'999-00-1'}],{},[MLKEY,'engine-test-fixture-unavailable']);return r.coverage.evaluated.join()==MLKEY && r.coverage.unavailable.join()==='engine-test-fixture-unavailable' && r.messages.some(x=>x.includes('不是完整覆盖'))}"),
+       '部分覆盖的可用与不可用数据集分别留痕')
+    ok(page.evaluate("() => {var r=mlRun([{cas:'999-00-3'}],{},[MLKEY,'engine-test-fixture-unavailable']);return r.status==='NEED_INPUT' && mlPick(r,'CONC').assessmentStatus==='NEED_CONTEXT' && !r.coverage.complete}"),
+       '局部不可用不能覆盖 NEED_CONTEXT 的方法级状态')
+    ok(page.evaluate("() => {var r=mlRun([{cas:'999-00-1'}],{},['missing-dataset','engine-test-fixture-unavailable']);return r.status==='BLOCKED' && r.coverage.evaluated.length===0 && r.entryResults.length===2 && r.entryResults.every(x=>x.assessmentStatus==='DATASET_UNAVAILABLE')}"),
+       '全部数据集不可用时 BLOCKED，并保留逐库结果')
+    ok(page.evaluate("() => {var r=mlRun([{cas:'999-99-9'}],{},[MLKEY]);return r.status==='NO_MATCH' && r.coverage.complete}"),
+       '全部数据集可用且无身份命中时 NO_MATCH')
+    ok(page.evaluate("() => {var r=mlRun([{cas:'999-99-9'}],{},[MLKEY,'engine-test-fixture-unavailable']);return r.status==='AUTO' && !r.coverage.complete && r.messages.some(x=>x.includes('不能形成全库'))}"),
+       '部分覆盖且无命中不能形成全库 NO_MATCH')
+    ok(page.evaluate("() => {var d=listGetDataset('engine-test-fixture-unavailable'),r=mlRun([],{targetMarket:'EU'},[d.key]);return d.available===false && !listDatasetAvailable(d.key,'2026-10-01') && !listResolveDataset(d.key,'2026-10-01') && r.entryResults[0].unavailableReason===d.unavailableReason}"),
+       '已注册但不可用的数据集可读元数据且原因进入结果')
+    ok(page.evaluate("() => {var ks=['missing-dataset',MLKEY,'missing-dataset','engine-test-fixture-unavailable',MLKEY],before=JSON.stringify(ks),r=mlRun([{cas:'999-00-1'}],{},ks);return JSON.stringify(ks)===before && r.coverage.requested.join()==='missing-dataset,'+MLKEY+',engine-test-fixture-unavailable' && r.coverage.evaluated.join()===MLKEY && r.coverage.unavailable.join()==='missing-dataset,engine-test-fixture-unavailable' && r.inputs[0].datasetKeys.length===5}"),
+       '覆盖数组去重保序，原请求及输入快照不变')
     ok(page.evaluate("() => {var r=mlRun([{cas:'999-00-1'}],{},[MLKEY]);return r.status==='AUTO' && r.summary.listedOnly===3 && Object.keys(r.summary).length===6}"),
        '方法级 AUTO 与六种条目状态统计')
     ok(page.evaluate("() => mlRun([{cas:'999-00-3',concentration:0.2,concentrationUnit:'%',concentrationBasis:'formula-w/w'}],{}).entryResults[0].conditionResults[0].actual===0.2"),
