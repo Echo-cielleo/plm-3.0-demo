@@ -173,14 +173,14 @@ with sync_playwright() as pw:
     page.evaluate('closeModal()')
 
     print('\n=== 跳转法规统一查询（按 lawKey 过滤） ===')
-    for lk,cnt in [('svhc',1),('xiv',2),('xvii',3)]:
+    for lk,cnt in [('svhc',8),('xiv',6),('xvii',8)]:
         page.evaluate("()=>showPage('law:reach')");page.wait_for_timeout(120)
         page.evaluate("(k)=>rchToQuery(k)",lk);page.wait_for_timeout(350)
         ok(page.evaluate('curPage')=='law:query','跳到法规统一查询（%s）'%lk)
         ok(page.evaluate("()=>$('lqLaw').value")==lk,'按 lawKey=%s 预置法规类别筛选'%lk)
         ok(page.locator('#lqTable tbody tr').count()==cnt,'%s 类别命中 %d 条'%(lk,cnt))
     page.evaluate("()=>lawQueryClear()");page.wait_for_timeout(150)
-    ok(page.evaluate("()=>$('lqLaw').value")=='' and page.locator('#lqTable tbody tr').count()==19,'重置后恢复全量 19 条（CLP 动态投影增加甲苯）')
+    ok(page.evaluate("()=>$('lqLaw').value")=='' and page.locator('#lqTable tbody tr').count()==47,'重置后恢复全量 47 条动态与参考查询行')
 
     print('\n=== 导入新版本向导（静态演示） ===')
     page.evaluate("()=>showPage('law:reach')");page.wait_for_timeout(250)

@@ -78,8 +78,8 @@ with sync_playwright() as pw:
        '未登记方法保留既有错误状态')
     ok(page.evaluate("() => ['CLP-M-ATE-SUM','CLP-M-GCL-SUM','CLP-M-SCL','CLP-M-MFACTOR'].every(complianceMethodImplemented)"),
        '原四个 CLP 方法仍已实现')
-    ok(page.evaluate("() => listGetDatasets().length===4 && listGetDataset('reach-svhc') && listGetDataset('reach-xvii')"),
-       '只登记两个真实名单库和两个测试夹具')
+    ok(page.evaluate("() => listGetDatasets().length===10 && listGetDataset('reach-svhc') && listGetDataset('reach-xvii')"),
+       '八个业务名单库和两个测试夹具已登记')
     ok(page.evaluate("() => {var d=listGetDataset(MLKEY);try{listRegisterDataset(d);return false}catch(e){return /重复注册/.test(e.message)&&listGetDataset(MLKEY)===d}}"),
        '重复数据集注册报错且未覆盖')
     ok(page.evaluate("() => ['', 'version','source','market'].every(function(field){var d={key:'fixture-bad-'+field,version:'1',source:'fixture',market:'EU',entries:[]};if(field)d[field]='';else d.key='';try{listRegisterDataset(d);return false}catch(e){return true}})"),
@@ -116,8 +116,8 @@ with sync_playwright() as pw:
        '多 CAS 物质组条目不会被拆作单物质触发')
     ok(page.evaluate("() => {var a=listGetDataset('reach-svhc'),b=listGetDataset('reach-xvii');return a.version===REACH_MODULES.svhc.ver && b.version===REACH_MODULES.xvii.ver && a.source===REACH_MODULES.svhc.src && b.source===REACH_MODULES.xvii.src && a.entries.length===REACH_SVHC.length && b.entries.length===REACH_XVII.length}"),
        '版本、来源和条目数量均来自现有 REACH 模块')
-    ok(page.evaluate("() => listGetDatasets().filter(d=>d.source!=='engine-test-fixture').every(d=>['reach-svhc','reach-xvii'].includes(d.key))"),
-       'C&L Inventory 等其他库未接入 M-LIST')
+    ok(page.evaluate("() => {var keys=listGetDatasets().filter(d=>d.source!=='engine-test-fixture').map(d=>d.key);return keys.length===8 && !keys.includes('cl-inventory') && !keys.includes('oel')}"),
+       'C&L Inventory 和 OEL 未接入 M-LIST')
     ok(page.evaluate("() => {var e=listGetDataset('reach-xvii').entries.find(x=>x.entryCode==='Entry 77');return e.mode==='listed-only' && e.conditions.length===0 && e.originalText.threshold.includes('75 mg/kg') && e.originalText.exemption.includes('工业用途')}"),
        '复杂浓度、材质及豁免文字只留证据，不转成条件')
     ok(page.evaluate("() => {var r=mlRun([{cas:'50-00-0'}],{},['reach-svhc','reach-xvii']);return r.datasetVersions['reach-svhc']===REACH_MODULES.svhc.ver && r.inputs.length>0 && r.intermediates.identityMatches.length===2 && r.evidence.length===2 && r.entryResults.every(x=>x.source.reference && x.evidence.length)}"),
