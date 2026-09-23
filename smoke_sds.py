@@ -103,10 +103,10 @@ with sync_playwright() as p:
                               '实际 %s / %s / %s' % (aq['s'], aq['n'], aq['r']))
             recov = page.evaluate("""() => {
               var tgt=['50-00-0','111-76-2'],bak={};
-              tgt.forEach(function(c){bak[c]=COMP_CLP[c].aqState;COMP_CLP[c].aqState='known';});
+              tgt.forEach(function(c){bak[c]=clpSupplementalGet(c).aquaticState;clpSupplementalUpsert(c,{aquaticState:'known'},{sourceRef:'测试补录'});});
               var it=clpEvaluateMixture(wz.formula).items.filter(function(x){return x.id==='aqua';})[0];
               var got={s:it.status,r:String(it.result),f:String(it.formula||'')};
-              tgt.forEach(function(c){COMP_CLP[c].aqState=bak[c];});
+              tgt.forEach(function(c){clpSupplementalUpsert(c,{aquaticState:bak[c]},{sourceRef:'测试复位'});});
               return got;
             }""")
             if recov['s'] != 'auto' or recov['r'] == u'—':
@@ -138,13 +138,10 @@ with sync_playwright() as p:
               var live=clpEvaluateMixture(wz.formula),items={};
               live.items.forEach(x=>items[x.id]={result:x.result,method:x.method,rules:x.ruleIds,formula:x.formula});
               var frozen=wz.classPack.id;
-              /* 冻结快照语义：生成 SDS 后，模块 / 版本信息再怎么变，都不得回写这份 SDS。
-                 探针改用 Annex VI 模块版本 —— 规则集版本已改由规则版本库决定
-                 （改 CLP_MODULES.rules.ver 不再影响包编号），不再适合当探针。 */
-              var oldVi=CLP_MODULES.vi.ver;
-              CLP_MODULES.vi.ver='ATP99';
-              var next=clpActivePack().id;
-              CLP_MODULES.vi.ver=oldVi;
+              /* 发布未来 Annex VI 快照后，已生成 SDS 的包编号仍保持原值。 */
+              clpViDatasetPublish(clpViDemoDraft('ATP 23','2027-02-01','2026-09-10',
+                {regulation:'测试',sourceFile:'演示整理稿',sourceVersion:'ATP 23',sourceDate:'2026-09-10'}),{reviewer:'法规专员'});
+              var next=clpActivePack('2027-02-01').id;
               return {pack:wz.classPack,items:items,labels:live.labels,frozen:frozen,next:next,
                 body:$('wzBody').innerText};
             }""")
@@ -195,17 +192,18 @@ with sync_playwright() as p:
                 if(b.textContent.indexOf('一键')>=0) r.push(b.textContent.trim()); });
               return r.join(','); }""")
             miss_n = page.evaluate('() => wzMissCount()')
-            if miss_n and u'一键填充演示数据' not in btn_txt:
-                errors.append('[演示补录] 存在 %d 项缺失数据，但区块①缺少「一键填充演示数据」按钮' % miss_n)
+            fillable_n = page.evaluate("() => Object.keys(wz.collect).reduce((n,c)=>n+wz.collect[c].filter(i=>i.miss&&!clpCollectControlled(DATA_ITEMS.indexOf(i.k))&&DEMO_FILL.collect[i.k]).length,0)")
+            if fillable_n and u'一键填充非 CLP 演示数据' not in btn_txt:
+                errors.append('[演示补录] 存在 %d 项可补充的非 CLP 数据，但区块①缺少演示补录按钮' % fillable_n)
             if u'一键补充演示数据' not in btn_txt:
                 errors.append('[演示补录] 第 3 步区块④未找到「一键补充演示数据」按钮')
             else:
-                # 区块①：一键填充 → 缺失数据归零
-                if miss_n:
-                    page.click('#wzBody button:has-text("一键填充演示数据")')
+                # 区块①只填充非 CLP 演示数据；CLP 缺失仍须走统一来源维护。
+                if fillable_n:
+                    page.click('#wzBody button:has-text("一键填充非 CLP 演示数据")')
                     page.wait_for_timeout(300)
-                    if page.evaluate('() => wzMissCount()') != 0:
-                        errors.append('[演示补录] 点击「一键填充演示数据」后缺失项未归零')
+                    if page.evaluate("() => Object.keys(wz.collect).reduce((n,c)=>n+wz.collect[c].filter(i=>i.miss&&!clpCollectControlled(DATA_ITEMS.indexOf(i.k))&&DEMO_FILL.collect[i.k]).length,0)") != 0:
+                        errors.append('[演示补录] 非 CLP 演示数据未补齐')
                 # 区块④：一键补充 → 阻止项归零，且第 4 步 aqua 恢复自动计算
                 page.click('#wzBody button:has-text("一键补充演示数据")')
                 page.wait_for_timeout(300)
@@ -217,11 +215,11 @@ with sync_playwright() as p:
                   return {s:c.status,r:String(c.result)}; }""")
                 if aq2['s'] != 'auto' or aq2['r'] == u'—':
                     errors.append('[演示补录] 补录后 aqua 未恢复自动计算：%s / %s' % (aq2['s'], aq2['r']))
-                if page.evaluate('() => wzMissCount()') != 0:
-                    errors.append('[演示补录] 补录后仍有缺失数据项未清零')
+                if page.evaluate("() => Object.keys(wz.collect).reduce((n,c)=>n+wz.collect[c].filter(i=>i.miss&&!clpCollectControlled(DATA_ITEMS.indexOf(i.k))&&DEMO_FILL.collect[i.k]).length,0)") != 0:
+                    errors.append('[演示补录] 非 CLP 演示数据仍有未补齐项')
                 # 复位：保证后续第 5/6 步与「未补录」的初始条件一致
                 page.evaluate("""() => {
-                  ['50-00-0','111-76-2'].forEach(function(c){COMP_CLP[c].aqState='unknown';delete COMP_CLP[c].aqRef;});
+                  ['50-00-0','111-76-2'].forEach(function(c){clpSupplementalUpsert(c,{aquaticState:'unknown',aqRef:''},{sourceRef:'测试复位'});});
                   wz.classItems=null;wz.classPack=null; }""")
                 page.evaluate('wzGo(4)'); page.wait_for_timeout(250)
                 print('  演示补录：一键补充 → 阻止项归零且 aqua 恢复自动（随后复位）')

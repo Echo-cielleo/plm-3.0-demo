@@ -206,7 +206,7 @@ var CLP_IMP_LV={block:'阻断',warn:'告警',info:'提示',pass:'通过'};
 /* ---------- 2. 向导状态 ---------- */
 /* draftId / draftError / deactivationConfirmed：仅 Annex I 规则分支使用（阶段 2） */
 var _clpImp={step:1,mod:'vi',t4:'chk',rechecked:false,file:'',origFile:'',uploadAt:'',
-  draftId:'',draftError:'',deactivationConfirmed:false};
+  draftId:'',draftError:'',deactivationConfirmed:false,viDraft:null};
 
 function clpImpCsvCell(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}
 function clpImpDownloadTemplate(key){
@@ -265,6 +265,7 @@ function clpImpTestStat(){
 /* 本次实际发布数量：新增扣掉被排除的规则 */
 function clpImpPublishCount(){
   var M=clpImpMod(),add=M.diffs.add;
+  if(M.key==='vi'&&_clpImp.viDraft)return clpViDraftDiff(_clpImp.viDraft);
   if(M.key==='rules'){
     var ex=(M.excluded||[]).length;
     add=Math.max(0,add-ex);
@@ -539,6 +540,12 @@ function clpImpPick(){
   _clpImp.file=clpImpMod().demo;_clpImp.uploadAt=clpImpNow();_clpImp.rechecked=false;
   /* Annex I：上传后立即在系统内形成真实的草稿版本对象（供第 4 步实时比较） */
   if(clpImpIsRules())clpImpBuildDraft();
+  if(_clpImp.mod==='vi'){
+    var M=clpImpMod();
+    _clpImp.viDraft=clpViDemoDraft(_clpImp.ver||M.ver,_clpImp.eff||M.eff,_clpImp.cut||M.cut,
+      {regulation:_clpImp.src||M.srcName,annex:'Annex VI Part 3',sourceFile:_clpImp.file,
+        sourceVersion:_clpImp.srcCode||M.srcCode,sourceDate:_clpImp.srcDate||clpSystemToday(),note:'演示结构化数据；法律效力以 OJ 原文为准'});
+  }
   var r=$('cipFileRow');if(r)r.innerHTML=clpImpFileRow();
   var b=$('cipNext3');if(b){b.disabled=false;b.classList.remove('disabled');}
 }
@@ -793,6 +800,13 @@ function clpImpTestHtml(){
 }
 function clpImpDiffHtml(){
   if(clpImpIsRules())return clpImpRulesDiffHtml();
+  if(_clpImp.mod==='vi'&&_clpImp.viDraft){
+    var diff=clpViDraftDiff(_clpImp.viDraft);
+    return '<div class="stat-row"><div class="stat"><b>'+diff.add+'</b><span>新增物质</span></div><div class="stat"><b>'+diff.mod+'</b><span>字段修改</span></div><div class="stat"><b>'+diff.del+'</b><span>废止物质</span></div></div>'+
+      '<div class="notice grey">以上差异由当前 Annex VI 数据集与演示结构化草稿实时比较；未解析真实 XLSX。</div>'+
+      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>类型</th><th>Index No.</th><th>物质</th><th>字段</th><th>变更前</th><th>变更后</th></tr></thead><tbody>'+
+      diff.items.map(function(x){return '<tr><td>'+esc(x.tp)+'</td><td>'+esc(x.k)+'</td><td>'+esc(x.n)+'</td><td>'+esc(x.field||'—')+'</td><td>'+esc(x.a)+'</td><td>'+esc(x.b)+'</td></tr>';}).join('')+'</tbody></table></div>';
+  }
   var M=clpImpMod(),c=clpImpPublishCount();
   var h='<div class="stat-row">'+
     '<div class="stat" style="border-color:var(--green-b);background:var(--green-b)"><b style="color:var(--green)">'+c.add+'</b><span>新增'+(M.key==='rules'?'规则（已扣除排除项）':'')+'</span></div>'+
@@ -922,6 +936,16 @@ function clpLImpPublish(){
   var ver=_clpImp.ver||M.ver,eff=_clpImp.eff||M.eff,cut=_clpImp.cut||M.cut;
   var c=clpImpPublishCount();
 
+  if(M.key==='vi'){
+    if(!_clpImp.viDraft){toast('请先上传结构化演示数据','warn');return;}
+    var dataset;
+    try{dataset=clpViDatasetPublish(_clpImp.viDraft,{reviewer:auditor,opinion:opinion});}
+    catch(e){toast(String(e.message||e),'warn');return;}
+    CLP_CHANGES.unshift({mod:'vi',tp:'新增',content:dataset.version+' 演示结构化数据发布：新增 '+c.add+' 条 / 字段修改 '+c.mod+' 处 / 废止 '+c.del+' 条',
+      reason:'法规专员对照来源核对并发布（'+auditor+'）',eff:dataset.effectiveFrom,by:auditor,subs:c.add,recipes:'—',sds:'—'});
+    closeModal();clpLGoTab('vi');toast(dataset.status==='待生效'?'已发布，待 '+dataset.effectiveFrom+' 生效':'新数据集已发布生效','ok');return;
+  }
+
   /* ① 更新对应 Annex 模块的版本信息 */
   var mod=CLP_MODULES[M.key];
   if(mod){mod.ver=ver;mod.eff=eff;mod.cutoff=cut;mod.status='已生效';}
@@ -929,12 +953,7 @@ function clpLImpPublish(){
   CLP_TOP.cutoff=cut;
 
   /* ② 数据落入对应 Tab */
-  if(M.key==='vi'){
-    CLP_VI_ROWS.forEach(function(r){r.ver=ver;r.src=r.src.replace(/经 ATP \d+ 采纳/,'经 '+ver+' 采纳');});
-    CLP_VI_ROWS.push({idx:'029-022-00-4',name:'2-乙基己酸锆',cas:'1304-63-2',ec:'215-132-3',
-      cls:'Repr. 1B',h:'H360Df',euh:'—',picto:'GHS08',signal:'危险',scl:'—',m:'—',ate:'—',notes:'—',
-      ver:ver,src:'Annex VI Part 3 · Table 3（经 '+ver+' 采纳）',rule:'CLP-R-0006'});
-  }else if(M.key==='rules'){
+  if(M.key==='rules'){
     /* 规则以「规则编号」为准做 upsert：库中已存在同编号草稿时更新其状态与版本，
        不存在时才新增 —— 避免同一编号在规则表中出现两行。 */
     var hit=null;

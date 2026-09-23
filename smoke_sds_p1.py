@@ -141,10 +141,10 @@ with sync_playwright() as pw:
         }
         return false;}"""),
        "聚氨酯预聚体标「不适用」且不再高亮（na 不等于未知）")
-    ok(pg.evaluate("""()=>{var p=COMP_CLP['9009-54-5'],old=p.ateState;p.ateState='unknown';
+    ok(pg.evaluate("""()=>{var p=clpSupplementalGet('9009-54-5'),old=p.ateState;clpSupplementalUpsert('9009-54-5',{ateState:'unknown'},{sourceRef:'测试'});
         renderStep4();
         var n=document.querySelector('#wzBody table.tbl.mini').querySelectorAll('tr.row-chk').length;
-        p.ateState=old;renderStep4();return n===1;}"""),
+        clpSupplementalUpsert('9009-54-5',{ateState:old},{sourceRef:'测试复位'});renderStep4();return n===1;}"""),
        "改回 unknown 后重新高亮 1 行，表格口径与 B5 声明一致")
     ok(pg.evaluate("()=>{var t=document.querySelector('#wzBody table.tbl.mini'),c=t.closest('.card');return !!c&&c.textContent.indexOf('未知急性毒性声明')>=0;}"),
        "参数表说明与第 3/11 章未知毒性声明形成闭环")

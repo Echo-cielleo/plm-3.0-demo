@@ -118,8 +118,8 @@ with sync_playwright() as pw:
     ok(abs(aq - 47.50) < 0.01, "水生未知占比 = 47.50%（甲醛 + 丁醚 + 聚氨酯无水生数据）")
     ok(pg.evaluate("()=>unknownNames('acute').length===0"), "急性无未知组分")
     ok(pg.evaluate("""()=>{var before=unknownPct('acute');
-        var p=COMP_CLP['9009-54-5'],old=p.ateState;p.ateState='unknown';
-        var after=unknownPct('acute');p.ateState=old;
+        var p=clpSupplementalGet('9009-54-5'),old=p.ateState;clpSupplementalUpsert('9009-54-5',{ateState:'unknown'},{sourceRef:'测试'});
+        var after=unknownPct('acute');clpSupplementalUpsert('9009-54-5',{ateState:old},{sourceRef:'测试复位'});
         return Math.abs(before)<0.01&&Math.abs(after-38.65)<0.01;}"""),
        "na → unknown 占比回到 38.65%，四态口径确实生效")
     ok(pg.evaluate("()=>{wz.formula=[];var v=unknownPct('acute');wz.formula=[];return v;}") == 0, "空配方时占比为 0")

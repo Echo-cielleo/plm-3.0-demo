@@ -26,28 +26,16 @@
       ['1105','甲苯','108-88-3','易燃液体 / 生殖毒性','—']
     ]};
   }
-  /* CLP 物质明细使用完整计算字段；统一查询和分库详情引用相同口径。 */
-  LAW_DETAIL.clp6={cols:['Index No.','物质名称','EC No.','CAS 号','危害类别与分类','H 代码','标签要素','SCL','M 因子','ATE','Notes'],rows:[
-    ['605-001-00-5','甲醛','200-001-8','50-00-0','Carc. 1B / Muta. 2 / Acute Tox. 3','H350 / H341 / H301','GHS06 / GHS08 · 危险','Skin Sens. 1; H317: C ≥ 0.2%','M=10（慢性水生毒性）','口服 ATE = 100 mg/kg','B / D'],
-    ['607-061-00-8','丙烯酸','201-177-9','79-10-7','Skin Corr. 1A / Acute Tox. 4','H314 / H302','GHS05 / GHS07 · 危险','—','—','—','—'],
-    ['603-014-00-0','乙二醇单丁醚','203-905-0','111-76-2','Acute Tox. 4 / Eye Irrit. 2','H302 / H319','GHS07 · 警告','—','—','—','—'],
-    ['603-002-00-5','乙醇','200-578-6','64-17-5','Flam. Liq. 2 / Eye Irrit. 2','H225 / H319','GHS02 / GHS07 · 危险','—','—','—','—'],
-    ['601-021-00-3','甲苯','203-625-9','108-88-3','Flam. Liq. 2 / Repr. 2 / STOT RE 2','H225 / H361d / H373','GHS02 / GHS08 · 危险','—','—','—','C']
-  ]};
 })();
 
-var LAW_QUERY_ROWS=[
-  {id:'Q001',cas:'50-00-0',name:'甲醛',ec:'200-001-8',source:'CLP 附录 VI',sourceType:'clp',region:'欧盟',dataType:'统一分类',result:'已统一分类',value:'Carc. 1B / Muta. 2 / Acute Tox. 3',version:'ATP 21',status:'待复核',lawKey:'clp6'},
+var LAW_QUERY_STATIC_ROWS=[
   {id:'Q002',cas:'50-00-0',name:'甲醛',ec:'200-001-8',source:'REACH Annex XVII',sourceType:'reach',region:'欧盟',dataType:'限制',result:'Entry 77 命中',value:'消费品释放量受限',version:'V2026.2',status:'已生效',lawKey:'xvii'},
   {id:'Q003',cas:'50-00-0',name:'甲醛',ec:'200-001-8',source:'SVHC 候选清单',sourceType:'reach',region:'欧盟',dataType:'高关注物质',result:'已列入',value:'浓度超过 0.1% 触发信息传递',version:'第 33 批',status:'已生效',lawKey:'svhc'},
   {id:'Q004',cas:'50-00-0',name:'甲醛',ec:'200-001-8',source:'C&L Inventory',sourceType:'cl',region:'欧盟',dataType:'企业申报分类',result:'存在分类申报',value:'Carc. 1B / Skin Sens. 1',version:'2026-Q1',status:'已生效',lawKey:'cl-inventory'},
   {id:'Q005',cas:'50-00-0',name:'甲醛',ec:'200-001-8',source:'国内危化品分类',sourceType:'cn',region:'中国',dataType:'危化品分类',result:'目录命中',value:'甲醛溶液（含量＞25%）',version:'2025 增补版',status:'已生效',lawKey:'cn-danger'},
   {id:'Q006',cas:'50-00-0',name:'甲醛',ec:'200-001-8',source:'ZDHC MRSL',sourceType:'zdhc',region:'行业标准',dataType:'制造限用',result:'限值管控',value:'皮革/纺织加工限值适用',version:'V3.1',status:'已生效',lawKey:'zdhc-mrsl'},
-  {id:'Q007',cas:'79-10-7',name:'丙烯酸',ec:'201-177-9',source:'CLP 附录 VI',sourceType:'clp',region:'欧盟',dataType:'统一分类',result:'已统一分类',value:'Skin Corr. 1A / Acute Tox. 4',version:'ATP 21',status:'待复核',lawKey:'clp6'},
   {id:'Q008',cas:'79-10-7',name:'丙烯酸',ec:'201-177-9',source:'C&L Inventory',sourceType:'cl',region:'欧盟',dataType:'企业申报分类',result:'存在分类申报',value:'Skin Corr. 1A / Acute Tox. 4',version:'2026-Q1',status:'已生效',lawKey:'cl-inventory'},
-  {id:'Q009',cas:'111-76-2',name:'乙二醇单丁醚',ec:'203-905-0',source:'CLP 附录 VI',sourceType:'clp',region:'欧盟',dataType:'统一分类',result:'已统一分类',value:'Acute Tox. 4 / Eye Irrit. 2',version:'ATP 21',status:'待复核',lawKey:'clp6'},
   {id:'Q010',cas:'111-76-2',name:'乙二醇单丁醚',ec:'203-905-0',source:'C&L Inventory',sourceType:'cl',region:'欧盟',dataType:'企业申报分类',result:'存在分类申报',value:'Acute Tox. 4 / Eye Irrit. 2',version:'2026-Q1',status:'已生效',lawKey:'cl-inventory'},
-  {id:'Q011',cas:'64-17-5',name:'乙醇',ec:'200-578-6',source:'CLP 附录 VI',sourceType:'clp',region:'欧盟',dataType:'统一分类',result:'已统一分类',value:'Flam. Liq. 2 / Eye Irrit. 2',version:'ATP 21',status:'待复核',lawKey:'clp6'},
   {id:'Q012',cas:'64-17-5',name:'乙醇',ec:'200-578-6',source:'国内危化品分类',sourceType:'cn',region:'中国',dataType:'危化品分类',result:'目录命中',value:'易燃液体 类别2',version:'2025 增补版',status:'已生效',lawKey:'cn-danger'},
   {id:'Q013',cas:'108-88-3',name:'甲苯',ec:'203-625-9',source:'REACH Annex XVII',sourceType:'reach',region:'欧盟',dataType:'限制',result:'限制条目命中',value:'消费品与专业用途限制',version:'V2026.2',status:'已生效',lawKey:'xvii'},
   {id:'Q014',cas:'108-88-3',name:'甲苯',ec:'203-625-9',source:'ZDHC MRSL',sourceType:'zdhc',region:'行业标准',dataType:'制造限用',result:'MRSL 命中',value:'溶剂类物质限值适用',version:'V3.1',status:'已生效',lawKey:'zdhc-mrsl'},
@@ -58,6 +46,8 @@ var LAW_QUERY_ROWS=[
   {id:'Q017',cas:'7758-97-6',name:'铬酸铅',ec:'231-846-0',source:'REACH Annex XIV',sourceType:'reach',region:'欧盟',dataType:'授权',result:'列入授权清单',value:'最迟申请日期 2017-05-21 / 日落日期 2019-05-04',version:'V2026.1',status:'已生效',lawKey:'xiv'},
   {id:'Q018',cas:'18540-29-9',name:'六价铬化合物 Cr(VI)',ec:'240-881-5',source:'REACH Annex XVII',sourceType:'reach',region:'欧盟',dataType:'限制',result:'Entry 47 命中',value:'与皮肤接触的皮革制品：Cr(VI) < 3 mg/kg',version:'V2026.2',status:'已生效',lawKey:'xvii'}
 ];
+/* CLP 行按当前系统日期从 Annex VI 已发布数据集生成；其他法规仍保留演示行。 */
+function lawQueryAllRows(){return LAW_QUERY_STATIC_ROWS.concat(clpLawQueryProjection(clpSystemToday()));}
 var LAW_LIBRARY_META={
   clp:{cycle:'随 ATP 发布复审',maintain:'ECHA ATP 包人工导入'},
   reach:{cycle:'半年检查；清单发布时复审',maintain:'ECHA Excel 人工导入'},
@@ -77,13 +67,8 @@ var LAW_LIBRARY_META={
     r.reviewDue=r.reviewDue||due[r.key]||'2027-06-30';
     r.latestVer=r.latestVer||r.ver;
   });
-  var extra={
-    Q001:{reviewDue:'2026-08-31',latestVersion:'ATP 21',scl:'Skin Sens. 1; H317: C ≥ 0.2%',mFactor:'M=10（慢性水生毒性）',ate:'口服 ATE = 100 mg/kg'},
-    Q004:{reviewDue:'2027-02-02',latestVersion:'2026-Q1'},
-    Q005:{reviewDue:'2027-03-31',latestVersion:'2026 第1批增补'},
-    Q007:{reviewDue:'2026-08-31',latestVersion:'ATP 21'},Q009:{reviewDue:'2026-08-31',latestVersion:'ATP 21'},Q011:{reviewDue:'2026-08-31',latestVersion:'ATP 21'}
-  };
-  LAW_QUERY_ROWS.forEach(function(r){
+  var extra={Q004:{reviewDue:'2027-02-02',latestVersion:'2026-Q1'},Q005:{reviewDue:'2027-03-31',latestVersion:'2026 第1批增补'}};
+  LAW_QUERY_STATIC_ROWS.forEach(function(r){
     var law=lawRows.find(function(x){return x.key===r.lawKey;})||{};
     var x=extra[r.id]||{};
     r.reviewDue=x.reviewDue||law.reviewDue||'2027-06-30';
@@ -117,7 +102,7 @@ function lawKindText(k){var o=LAW_KIND_OPTS.filter(function(x){return x[0]===k;}
 function lawQueryRows(){
   var kw=($('lqKw').value||'').trim().toLowerCase(),src=$('lqSource').value,type=$('lqType').value,region=$('lqRegion').value,status=$('lqStatus').value;
   var lkEl=$('lqLaw'),lk=lkEl?lkEl.value:'';
-  return LAW_QUERY_ROWS.filter(function(r){
+  return lawQueryAllRows().filter(function(r){
     if(lk&&r.lawKey!==lk)return false;
     if(src&&r.sourceType!==src)return false;if(type&&r.dataType!==type)return false;if(region&&r.region!==region)return false;if(status&&r.status!==status)return false;
     return !kw||(r.cas+' '+r.name+' '+r.ec+' '+r.source+' '+r.result+' '+r.value).toLowerCase().indexOf(kw)>=0;
@@ -150,9 +135,9 @@ function lawQueryRender(){
 }
 function lawQueryClear(){['lqKw','lqLaw','lqSource','lqType','lqRegion','lqStatus'].forEach(function(id){var el=$(id);if(el)el.value='';});lawQueryRender();}
 function lawQueryView(id){
-  var r=LAW_QUERY_ROWS.find(function(x){return x.id===id;});if(!r)return;
+  var r=lawQueryAllRows().find(function(x){return x.id===id;});if(!r)return;
   var law=lawRows.find(function(x){return x.key===r.lawKey;});
-  var clp=r.sourceType==='clp'?'<div style="font-size:12.5px;font-weight:600;margin:16px 0 8px">CLP 混合物分类计算输入</div><dl class="desc-list" style="grid-template-columns:150px 1fr"><dt>SCL（特定浓度限值）</dt><dd>'+esc(r.scl)+'</dd><dt>M 因子</dt><dd>'+esc(r.mFactor)+'</dd><dt>ATE（急性毒性估计值）</dt><dd>'+esc(r.ate)+'</dd></dl>':'';
+  var clp=r.sourceType==='clp'?'<div style="font-size:12.5px;font-weight:600;margin:16px 0 8px">CLP 官方 Annex VI 数据</div><dl class="desc-list" style="grid-template-columns:150px 1fr"><dt>来源与版本</dt><dd>'+esc(r.sourceClause)+' · '+esc(r.version)+'</dd><dt>SCL（特定浓度限值）</dt><dd>'+esc(r.scl)+'</dd><dt>M 因子</dt><dd>'+esc(r.mFactor)+'</dd><dt>ATE（急性毒性估计值）</dt><dd>'+esc(r.ate)+'</dd></dl>':'';
   openModal({title:'法规命中详情 · '+r.name,width:700,body:'<dl class="desc-list" style="grid-template-columns:120px 1fr 120px 1fr">'+
     '<dt>物质名称</dt><dd>'+esc(r.name)+'</dd><dt>CAS 号</dt><dd class="mono">'+esc(r.cas)+'</dd><dt>EC 号</dt><dd class="mono">'+esc(r.ec)+'</dd><dt>法规来源</dt><dd>'+esc(r.source)+'</dd><dt>监管地区</dt><dd>'+esc(r.region)+'</dd><dt>数据类型</dt><dd>'+esc(r.dataType)+'</dd><dt>管控结论</dt><dd>'+esc(r.result)+'</dd><dt>当前版本</dt><dd>'+esc(r.version)+'</dd><dt>复审到期</dt><dd>'+esc(r.reviewDue)+'</dd><dt>证据状态</dt><dd>'+lawEvidenceLamp(r,true)+'</dd><dt>分类 / 限值 / 条件</dt><dd style="grid-column:span 3">'+esc(r.value)+'</dd><dt>维护状态</dt><dd><span class="tag '+TAG_CLS(r.status)+' dot-tag">'+esc(r.status)+'</span></dd><dt>最近维护</dt><dd>'+esc(law?law.upd:'—')+'</dd><dt>人工验证人</dt><dd>'+esc(law?law.verifier:'—')+'</dd></dl>'+clp+'<div class="notice grey" style="margin-top:14px"><div class="ni">§</div><div>查询页证据灯只读；上传新版本、版本 diff 与确认复审请进入来源法规库维护页。</div></div>',footer:'<button class="btn" onclick="closeModal();showPage(\''+lawMaintenanceRoute(r.sourceType)+'\')">打开来源库</button><button class="btn primary" onclick="closeModal()">关闭</button>'});
 }
@@ -201,7 +186,7 @@ function lawRender(){
 function lawConfirmReview(id){
   var r=lawRows.find(function(x){return x._id===id;});if(!r)return;
   r.lastReview=todayStr();r.reviewDue=daysFromNow(r.listType==='zdhc'?365:180);r.status='已生效';r.verifier='法规专员 · 当前用户';
-  LAW_QUERY_ROWS.filter(function(x){return x.lawKey===r.key;}).forEach(function(x){x.reviewDue=r.reviewDue;x.status='已生效';});
+  LAW_QUERY_STATIC_ROWS.filter(function(x){return x.lawKey===r.key;}).forEach(function(x){x.reviewDue=r.reviewDue;x.status='已生效';});
   lawRender();toast('复审已确认，证据灯已更新为绿色','ok');
 }
 function lawVersionDiff(id){
@@ -221,7 +206,7 @@ function renderLawPage(types,title,desc,noteKey){
 function lawFinish(){
   if(!$('lwOk').checked){toast('请先勾选人工核对确认项','warn');return;}
   var v=$('lwVerifier').value.trim();if(!v){toast('请填写人工验证人','warn');return;}
-  if(_lawCur){_lawCur.ver=_lawTmp.ver;_lawCur.latestVer=_lawTmp.ver;_lawCur.eff=_lawTmp.eff;_lawCur.upd=nowStr();_lawCur.lastReview=todayStr();_lawCur.reviewDue=daysFromNow(365);_lawCur.status='已生效';_lawCur.verifier=v;_lawCur.items+=12;LAW_QUERY_ROWS.filter(function(x){return x.lawKey===_lawCur.key;}).forEach(function(x){x.version=_lawCur.ver;x.latestVersion=_lawCur.ver;x.reviewDue=_lawCur.reviewDue;x.status='已生效';});}
+  if(_lawCur){_lawCur.ver=_lawTmp.ver;_lawCur.latestVer=_lawTmp.ver;_lawCur.eff=_lawTmp.eff;_lawCur.upd=nowStr();_lawCur.lastReview=todayStr();_lawCur.reviewDue=daysFromNow(365);_lawCur.status='已生效';_lawCur.verifier=v;_lawCur.items+=12;LAW_QUERY_STATIC_ROWS.filter(function(x){return x.lawKey===_lawCur.key;}).forEach(function(x){x.version=_lawCur.ver;x.latestVersion=_lawCur.ver;x.reviewDue=_lawCur.reviewDue;x.status='已生效';});}
   else{var type=Array.isArray(lawTypeFilter)?lawTypeFilter[0]:lawTypeFilter||'reach';var m=LAW_LIBRARY_META[type]||LAW_LIBRARY_META.reach;lawRows.unshift({_id:sdsUid(),key:'xvii',name:_lawTmp.name,org:_lawTmp.org,eff:_lawTmp.eff,ver:_lawTmp.ver,latestVer:_lawTmp.ver,upd:nowStr(),lastReview:todayStr(),reviewDue:daysFromNow(365),reviewCycle:m.cycle,status:'已生效',items:128,verifier:v,listType:type});}
   closeModal();lawPage=1;lawRender();toast('新版本已人工确认入库并生效','ok');
 }

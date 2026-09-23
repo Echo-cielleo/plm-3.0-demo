@@ -16,7 +16,7 @@
      续接指南「待专业核验项」，不在本阶段改结论。
 
    加载位置：23-js-sds.js → 23z6-js-clp.js → 23z6a-js-clp-import.js → 23z6b（本文件）
-   依赖的既有全局量：COMP_CLP / CLP_RULES / CLP_METHODS / CLP_MODULES / CLP_LABELS / P_BY_H
+   依赖的既有全局量：CLP_RULES / CLP_METHODS / CLP_MODULES / CLP_LABELS / P_BY_H
    复用的既有纯函数：clpCalcNum() / clpCalcInput()（23z6 提供，保证展示文案 1:1 不变）
 
    执行器约束（本文件所有 clpEngine* 函数）：
@@ -65,30 +65,38 @@ function complianceRegisterMethod(def){
 }
 
 /* ---------- 3. 统一执行上下文 ----------
-   调度器调用；执行器只读。入参 compData 默认取 COMP_CLP。 */
+   调度器调用；执行器只读。测试夹具可传 compData，实际配方读取统一 profile。 */
 function complianceBuildContext(formula, rule, pack, compData){
-  var dict = compData || (typeof COMP_CLP === 'object' ? COMP_CLP : {});
+  var day=(pack&&pack.asOfDate)||demoYmd();
   var comps = (formula || []).map(function(f){
-    var p = dict[f.cas] || {};
+    var profile=compData?null:clpSubstanceProfile(f.cas,day);
+    var e=profile&&profile.effective;
+    var p=compData?(compData[f.cas]||{}):{
+      name:profile.name,haz:e.hazardMap,ateState:e.ateState,ateO:e.ateValues.oral,ateD:e.ateValues.dermal,
+      ateI:e.ateValues.inhalation,mM:e.mFactors.acute,mC:e.mFactors.chronic,aqState:e.aquaticState
+    };
     return {
       cas: f.cas,
       name: f.name || p.name || f.cas,
       concentration: parseFloat(f.conc) || 0,
+      dataVersion:profile?profile.dataVersion:{},
+      provenance:profile?profile.provenance:{},
+      conflicts:profile?profile.conflicts:[],
       parameters: {
         classifications: p.haz || {},
         ateState: p.ateState || 'unknown',
-        ateOral: p.ateO || 0,
-        ateDermal: p.ateD || 0,
-        ateInhalation: p.ateI || 0,
-        mAcute: p.mM || 0,
-        mChronic: p.mC || 0,
+        ateOral: p.ateO == null ? null : p.ateO,
+        ateDermal: p.ateD == null ? null : p.ateD,
+        ateInhalation: p.ateI == null ? null : p.ateI,
+        mAcute: p.mM == null ? null : p.mM,
+        mChronic: p.mC == null ? null : p.mC,
         aquaticState: p.aqState || 'unknown'
       }
     };
   });
   return {
     market: (pack && pack.market) || 'EU',
-    asOfDate: (typeof demoYmd === 'function' ? demoYmd() : ''),
+    asOfDate: day,
     rule: {
       id: rule.id,
       version: rule.ver || '',
@@ -127,6 +135,15 @@ function complianceExecuteMethod(code, context){
   if(def.implementationStatus !== 'implemented' || typeof def.execute !== 'function'){
     shell.status = 'BLOCKED';
     shell.messages.push('计算方法「' + def.name + '」当前不可调用，需要研发实现或配置后启用。');
+    return shell;
+  }
+  var fieldPrefix={'CLP-M-ATE-SUM':['ateValues.'],'CLP-M-GCL-SUM':['classifications.','specificLimits.'],
+    'CLP-M-SCL':['specificLimits.','classifications.'],'CLP-M-MFACTOR':['mFactors.','classifications.']}[code]||[];
+  var unresolved=(context.components||[]).reduce(function(a,c){return a.concat((c.conflicts||[]).filter(function(x){
+    return x.effectiveSource!=='legacy-engine-baseline'&&fieldPrefix.some(function(p){return x.field.indexOf(p)===0;});
+  }));},[]);
+  if(unresolved.length){
+    shell.status='BLOCKED';shell.messages.push('组分分类参数存在待专业核验冲突，当前方法暂不能自动计算。');
     return shell;
   }
   var out;
@@ -292,7 +309,7 @@ function clpEngineGcl(ctx){
 
 /* ---------- 7. 执行器：CLP-M-SCL（特定浓度限值优先替代法，当前用于皮肤致敏） ----------
    组分自身 SCL 优先，无 SCL 时回落规则参数中的通用限值（skinSensGcl）。
-   本阶段仍消费 COMP_CLP.haz.skinSens.scl（结构化属后续单一事实源阶段）。 */
+   皮肤致敏限值来自统一 profile 的结构化 hazardMap.skinSens.scl。 */
 function clpEngineScl(ctx){
   var prm = ctx.rule.parameters, gcl = prm.skinSensGcl, packId = ctx.pack.id;
   var rows = ctx.components.filter(function(c){return !!c.parameters.classifications.skinSens;});

@@ -13,7 +13,7 @@
      Chemical Name / Registration No. / CAS No. / EC No.
      / Concentration / Classification / SCL·M-Factors·ATE
 
-   数据全部来自组分库（DB_CFG.component 的身份字段 + COMP_CLP 的分类参数），
+   身份字段来自组分库 DB_CFG.component；分类参数经 clpParamOf() 读取统一物质画像，
    SDS 内只读引用 —— 与 M 因子专项的口径一致，不在编制 SDS 时就地改。
    ================================================================== */
 function compTableHtml(){

@@ -65,13 +65,7 @@ var CLP_MODULES={
 };
 
 /* Tab1：Annex VI 物质统一分类（5 条示例数据；euh / picto / signal 对齐 Table 3.1 的 Labelling 区块） */
-var CLP_VI_ROWS=[
-  {idx:'605-001-00-5',name:'甲醛',cas:'50-00-0',ec:'200-001-8',cls:'Carc. 1B / Muta. 2 / Acute Tox. 3',h:'H350 / H341 / H301',euh:'—',picto:'GHS06 / GHS08',signal:'危险',scl:'Skin Sens. 1; H317: C ≥ 0.2%',m:'M=10（慢性水生毒性）',ate:'口服 ATE = 100 mg/kg',notes:'B / D',ver:'ATP 22',src:'Annex VI Part 3 · Table 3（经 ATP 22 采纳）',rule:'CLP-R-0001'},
-  {idx:'607-061-00-8',name:'丙烯酸',cas:'79-10-7',ec:'201-177-9',cls:'Skin Corr. 1A / Acute Tox. 4',h:'H314 / H302',euh:'—',picto:'GHS05 / GHS07',signal:'危险',scl:'—',m:'—',ate:'—',notes:'—',ver:'ATP 22',src:'Annex VI Part 3 · Table 3（经 ATP 22 采纳）',rule:'CLP-R-0002'},
-  {idx:'603-014-00-0',name:'乙二醇单丁醚',cas:'111-76-2',ec:'203-905-0',cls:'Acute Tox. 4 / Eye Irrit. 2',h:'H302 / H319',euh:'—',picto:'GHS07',signal:'警告',scl:'—',m:'—',ate:'—',notes:'—',ver:'ATP 22',src:'Annex VI Part 3 · Table 3（经 ATP 22 采纳）',rule:'CLP-R-0003'},
-  {idx:'603-002-00-5',name:'乙醇',cas:'64-17-5',ec:'200-578-6',cls:'Flam. Liq. 2 / Eye Irrit. 2',h:'H225 / H319',euh:'—',picto:'GHS02 / GHS07',signal:'危险',scl:'—',m:'—',ate:'—',notes:'—',ver:'ATP 22',src:'Annex VI Part 3 · Table 3（经 ATP 22 采纳）',rule:'CLP-R-0005'},
-  {idx:'601-021-00-3',name:'甲苯',cas:'108-88-3',ec:'203-625-9',cls:'Flam. Liq. 2 / Repr. 2 / STOT RE 2',h:'H225 / H361d / H373',euh:'—',picto:'GHS02 / GHS07 / GHS08',signal:'危险',scl:'—',m:'—',ate:'—',notes:'C',ver:'ATP 22',src:'Annex VI Part 3 · Table 3（经 ATP 22 采纳）',rule:'CLP-R-0004'}
-];
+var CLP_VI_ROWS=[]; /* 仅由 clpViRowsProjection() 刷新 */
 
 /* Tab2：Annex I 分类规则（法规专员维护命中条件与参数，计算由已登记的引擎方法执行） */
 var CLP_RULES=[
@@ -164,6 +158,7 @@ function clpNextRuleId(){
    「按日期解析出的活动规则版本」（见 23z6c 生命周期）的规则集，未传日期时
    取当前活动版本。规则编号依旧不参与算法分派，只作为审计信息。 */
 function clpActivePack(asOfDate){
+  var day=asOfDate||clpSystemToday(),vi=clpViDatasetResolve(day);
   var src=(typeof clpRuleVersionRulesFor==='function')?clpRuleVersionRulesFor(asOfDate):CLP_RULES;
   var candidates=src.filter(function(r){
     return !!r.method&&complianceHasMethod(r.method)&&complianceMethodImplemented(r.method)
@@ -178,23 +173,24 @@ function clpActivePack(asOfDate){
   /* 规则版本元数据必须与本次实际取用的规则**同源**：
      按日期解析到历史版本时，包上的「规则集版本 / 生效日期」也要跟着变成那个版本，
      否则会出现「装的是旧版规则、标签却写着当前版本」的自相矛盾。
-     ⚠️ Annex VI 与标签字典尚未做版本化存储，仍取模块当前值。 */
+     Annex VI 按同一日期从已发布数据集解析；标签字典仍取模块当前值。 */
   var ver=(typeof clpRuleVersionResolve==='function')?clpRuleVersionResolve(asOfDate):null;
   var rulesVer=ver?ver.version:CLP_MODULES.rules.ver;
   var rulesEff=(ver&&ver.effectiveFrom)?ver.effectiveFrom:CLP_MODULES.rules.eff;
   return {
-    id:'CLP-EU-'+clpPackToken(CLP_MODULES.vi.ver)+'-'+clpPackToken(rulesVer)+'-'+clpPackToken(CLP_MODULES.labels.ver),
-    market:'EU',status:rules.length&&rules.length===candidates.length?'已发布':'不可调用',
-    modules:{vi:CLP_MODULES.vi.ver,rules:rulesVer,labels:CLP_MODULES.labels.ver},
+    id:'CLP-EU-'+clpPackToken(vi?vi.version:'NA')+'-'+clpPackToken(rulesVer)+'-'+clpPackToken(CLP_MODULES.labels.ver),
+    market:'EU',status:vi&&rules.length&&rules.length===candidates.length?'已发布':'不可调用',
+    modules:{vi:vi?vi.version:'无适用数据集',rules:rulesVer,labels:CLP_MODULES.labels.ver},
     ruleIds:rules.map(function(r){return r.id;}),
     rules:rules.slice(),
     methods:rules.map(function(r){return r.method;}),
     methodVersions:methodVersions,
     effectiveFrom:rulesEff,
-    tested:rules.length>0&&rules.length===candidates.length,
+    tested:!!vi&&rules.length>0&&rules.length===candidates.length,
     /* 阶段 2：规则版本追溯（新增字段，不改变既有字段与计算结果） */
     ruleSetVersion:ver?ver.version:'',
-    asOfDate:asOfDate||(typeof clpSystemToday==='function'?clpSystemToday():'')
+    asOfDate:day,
+    dataVersion:vi?{datasetId:vi.id,annexViVersion:vi.version,effectiveFrom:vi.effectiveFrom}:null
   };
 }
 
@@ -423,7 +419,7 @@ function clpLGoChg(){_clpTab='chg';showPage('law:clp');}
 function clpLRenderTab(){
   if(_clpTab==='pcn'){$('clpTabBody').innerHTML=clpLTabPcn();return;}
   var m=_clpTab==='chg'?null:CLP_MODULES[_clpTab];
-  var h=m?clpLStrip(m):'<div class="notice warn" style="margin-bottom:12px"><div class="ni">!</div><div>本页汇总各模块的版本变更记录。<b>影响配方数量与 SDS 数量为示例数据</b>（原型阶段），不代表系统已具备影响分析能力。</div></div>';
+  var h=m?(_clpTab==='vi'?'<div id="clpViStrip">'+clpLStrip(clpLViModuleSelected())+'</div>':clpLStrip(m)):'<div class="notice warn" style="margin-bottom:12px"><div class="ni">!</div><div>本页汇总各模块的版本变更记录。<b>影响配方数量与 SDS 数量为示例数据</b>（原型阶段），不代表系统已具备影响分析能力。</div></div>';
   if(_clpTab==='labels')h+=clpLPictoBlock();
   h+='<div class="card"><div class="toolbar" style="flex-wrap:wrap">';
   if(_clpTab==='vi'){
@@ -469,8 +465,8 @@ function clpLFill(){
   if(_clpTab==='vi'){
     var kw=($('clpViKw').value||'').trim().toLowerCase(),ver=$('clpViVer').value;
     _clpF.vi={kw:$('clpViKw').value,ver:ver};
-    rows=CLP_VI_ROWS.filter(function(r){
-      if(ver&&r.ver!==ver)return false;
+    if($('clpViStrip'))$('clpViStrip').innerHTML=clpLStrip(clpLViModuleSelected());
+    rows=clpLViRowsSelected().filter(function(r){
       return !kw||(r.idx+' '+r.name+' '+r.cas+' '+r.ec+' '+r.h+' '+r.euh+' '+r.cls+' '+r.picto).toLowerCase().indexOf(kw)>=0;
     });
     clpLTable(cols=[['Index No.','idx',130],['物质名称','name',100],['CAS 号','cas',100],['EC 号','ec',100],['危害分类','cls',190],['H 码','h',130],['补充危险说明 EUH','euh',110],['象形图代码','picto',120],['信号词代码','signal',80],['SCL','scl',170],['M 因子','m',120],['ATE','ate',130],['备注','notes',60],['生效版本','ver',80],['来源与条款位置','src',210]],rows,function(r){
@@ -523,9 +519,16 @@ function clpLFill(){
 function clpLIsNum(v){return v!==''&&v!=null&&!isNaN(Number(v));}
 /* Tab1「生效版本」下拉改为数据驱动：新版本发布后自动出现，不再硬编码 */
 function clpLViVers(){
-  var a=[];
-  CLP_VI_ROWS.forEach(function(r){if(r.ver&&a.indexOf(r.ver)<0)a.push(r.ver);});
-  return a;
+  return clpViDatasetList().map(function(d){return d.version;});
+}
+function clpLViModuleSelected(){
+  var ver=(_clpF.vi||{}).ver,d=ver?clpViDatasetList().filter(function(x){return x.version===ver;})[0]:clpViDatasetResolve(clpSystemToday());
+  if(!d)return CLP_MODULES.vi;
+  return Object.assign({},CLP_MODULES.vi,{ver:d.version,eff:d.effectiveFrom,status:d.status,cutoff:d.cutoff,owner:d.reviewedBy,src:d.source.note});
+}
+function clpLViRowsSelected(){
+  var ver=(_clpF.vi||{}).ver,d=ver?clpViDatasetList().filter(function(x){return x.version===ver;})[0]:null;
+  return clpViRowsProjection(d?d.id:clpSystemToday());
 }
 function clpLMethod(code){return CLP_METHODS.filter(function(m){return m.code===code;})[0]||null;}
 function clpLEngineTag(v){
@@ -596,9 +599,11 @@ function clpLPageGo(p){_clpP[_clpTab]=p;clpLFill();}
 
 /* ---------- 5. Tab1 详情与跳转 ---------- */
 function clpLViDrawer(idx){
-  var r=CLP_VI_ROWS.filter(function(x){return x.idx===idx;})[0];if(!r)return;
+  var r=clpLViRowsSelected().filter(function(x){return x.idx===idx;})[0];if(!r)return;
+  var dataset=clpViDatasetList().filter(function(d){return d.version===r.ver;})[0];
+  var profile=clpSubstanceProfile(r.cas,dataset?dataset.effectiveFrom:clpSystemToday());
   clpLDrawer('物质统一分类 · '+r.name,
-    clpLStrip(CLP_MODULES.vi)+
+    clpLStrip(clpLViModuleSelected())+
     '<dl class="desc-list" style="grid-template-columns:130px 1fr 130px 1fr">'+
     '<dt>Index No.</dt><dd class="mono">'+esc(r.idx)+'</dd><dt>物质名称</dt><dd><b>'+esc(r.name)+'</b></dd>'+
     '<dt>CAS 号</dt><dd class="mono">'+esc(r.cas)+'</dd><dt>EC 号</dt><dd class="mono">'+esc(r.ec)+'</dd>'+
@@ -608,13 +613,15 @@ function clpLViDrawer(idx){
     '<dt>SCL</dt><dd>'+esc(r.scl)+'</dd><dt>M 因子</dt><dd>'+esc(r.m)+'</dd>'+
     '<dt>ATE</dt><dd>'+esc(r.ate)+'</dd><dt>备注（Notes）</dt><dd>'+esc(r.notes)+'</dd>'+
     '<dt>生效版本</dt><dd class="mono">'+esc(r.ver)+'</dd><dt>来源与条款位置</dt><dd>'+esc(r.src)+'</dd>'+
+    '<dt>数据集生效日期</dt><dd>'+esc(dataset?dataset.effectiveFrom:'—')+'</dd><dt>企业补充数据</dt><dd>'+esc(profile.supplemental?'有（独立于官方记录）':'无')+'</dd>'+
+    '<dt>待核验冲突</dt><dd style="grid-column:span 3">'+esc(profile.conflicts.length?profile.conflicts.map(function(c){return clpDataFieldLabel(c.field)+'：官方 '+c.officialValue+' / 企业补充 '+c.supplementalValue+'；当前计算取用 '+c.effectiveValue+'（'+clpDataSourceLabel({sourceType:c.effectiveSource,sourceVersion:profile.dataVersion.annexViVersion})+'）';}).join('；'):'无')+'</dd>'+
     '</dl>'+
     '<div class="notice info" style="margin-top:12px"><div class="ni">i</div><div><b>来源分两层：</b>① <b>法规原文</b>——OJ / EUR-Lex 公布的 Annex VI Table 3，是<b>法律效力依据</b>；② <b>整理数据</b>——ECHA CHEM 导出 / ECHA 开放数据门户 / 非正式 Excel 整理稿，便于导入但<b>与 OJ 不一致时以 OJ 为准</b>。统一分类为法定分类，制造商 / 进口商必须采用（未被统一的危害类别仍需自行分类）。</div></div>',
     '<button class="btn" onclick="clpLDrawerClose()">关闭</button>'+
     '<button class="btn primary" onclick="clpLViToRule(\''+esc(r.idx)+'\')">查看相关分类规则 →</button>');
 }
 function clpLViToRule(idx){
-  var r=CLP_VI_ROWS.filter(function(x){return x.idx===idx;})[0];if(!r)return;
+  var r=clpLViRowsSelected().filter(function(x){return x.idx===idx;})[0];if(!r)return;
   var rule=CLP_RULES.filter(function(x){return x.id===r.rule;})[0];
   clpLDrawerClose();
   _clpTab='rules';

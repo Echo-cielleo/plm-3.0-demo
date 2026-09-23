@@ -25,7 +25,7 @@ with sync_playwright() as pw:
     print("\n=== 一、数据层：COMP_CLP 取代硬编码 CLP_PARAM ===")
     ok(pg.evaluate("()=>typeof COMP_CLP==='object'&&typeof CLP_PARAM==='undefined'"),
        "COMP_CLP 已就位，旧的 CLP_PARAM 已移除")
-    ok(pg.evaluate("()=>Object.keys(COMP_CLP).length===8"), "预置 8 个组分（6 个配方内 + 2 个含 M 因子）")
+    ok(pg.evaluate("()=>Object.keys(COMP_CLP).length===9"), "兼容投影包含 8 个企业补充组分和 1 个仅有官方记录的组分")
     ok(pg.evaluate("()=>!!COMP_CLP['13463-41-7']&&!!COMP_CLP['8001-54-5']"),
        "两个含 M 因子的演示组分已入库")
 
@@ -168,9 +168,9 @@ with sync_playwright() as pw:
         renderStep4();
         var t=document.querySelector('#wzBody table.tbl.mini');
         var has=t.innerHTML.indexOf('gotoCompFill')>=0&&t.textContent.indexOf('去补录')>=0
-              &&t.textContent.indexOf('未维护')>=0;
+              &&t.textContent.indexOf('数据未知')>=0&&t.textContent.indexOf('Flam. Liq.')>=0;
         wz.formula=old;renderStep4();return has;}"""),
-       "组分库没维护过的 CAS 显示「未维护」+「去补录」")
+       "仅有官方分类的 CAS 保留分类并提示 ATE 数据未知和去补录")
 
     pg.evaluate("gotoCompFill('108-88-3')"); pg.wait_for_timeout(800)
     ok(pg.evaluate("()=>{var k=document.getElementById('dbKw');return !!k&&k.value==='108-88-3';}"),

@@ -71,7 +71,7 @@ function physTableHtml(){
 
 /* G4：第 11 章毒理信息
    9 个 CLP 标准毒理端点（除急性毒性外）从 classItems 取结论；
-   组分实测 LD50/LC50 来自组分库 COMP_CLP.ate；CMR 评估总结沿用既有口径。 */
+   组分 LD50/LC50 经 clpParamOf() 读取统一物质画像；CMR 评估总结沿用既有口径。 */
 var TOX_ENDPOINTS = [
   ['皮肤腐蚀 / 刺激',            'skin'],
   ['严重眼损伤 / 眼刺激',        'eye'],
