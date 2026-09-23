@@ -43,6 +43,17 @@ with sync_playwright() as pw:
     ok(page.evaluate("()=>clpSubstanceProfile('9009-54-5').effective.ateValues.oral===123&&clpParamOf('9009-54-5').ateO===123&&COMP_CLP['9009-54-5'].ateO===123"), '补充层保存后画像、SDS 与兼容投影同步')
     ok(page.evaluate("()=>clpSubstanceProfile('9009-54-5').provenance['ateValues.oral'].sourceRef==='集成测试'"), '补充值保留维护来源')
     ok(before['s'] == 0 and before['q'] == 0, '补充前的演示基线可读')
+    ok(page.evaluate("""()=>{
+      wz.project.date=clpSystemToday();
+      wz.formula=[{cas:'9009-54-5',name:'聚氨酯',conc:'40'},
+        {cas:'7732-18-5',name:'水',conc:'59'},
+        {cas:'50-00-0',name:'甲醛',conc:'1'}];
+      wzCollectData();
+      var polymer=wz.collect['9009-54-5'][8],water=wz.collect['7732-18-5'][8],official=wz.collect['50-00-0'][8];
+      return polymer.v==='聚合物豁免注册 (REACH Art.2(9))'&&polymer.src==='reg'&&!polymer.miss&&
+        water.v==='未命中其他演示管控清单'&&!water.miss&&
+        official.v.includes('CLP Annex VI')&&official.v.includes('SVHC 候选清单');
+    }"""), '无 Annex VI 记录时保留原法规清单内容，有记录时合并其他命中')
 
     print('=== 组分维护入口 ===')
     page.evaluate("()=>{showPage('bd:comp');var r=DB_CFG.component.rows.find(x=>x.cas==='50-00-0');dbEdit(r._id)}")

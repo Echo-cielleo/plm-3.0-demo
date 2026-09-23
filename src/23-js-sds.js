@@ -731,7 +731,7 @@ function wzCollectData(){
     var day=(wz.project&&wz.project.date)||clpSystemToday(),clp=clpCollectItems(f.cas,day),profile=clpSubstanceProfile(f.cas,day);
     wz.collect[f.cas]=DATA_ITEMS.map(function(k,i){
       var m=mock[i]||[null,'pub'];
-      if(Object.prototype.hasOwnProperty.call(clp,i))m=[clp[i],clpCollectSource(profile,i)];
+      if(Object.prototype.hasOwnProperty.call(clp,i)&&(i!==8||clp[i]!==null))m=[clp[i],clpCollectSource(profile,i)];
       if(i===8&&clp[8]&&mock[8]&&mock[8][0])m=[clp[8]+' / '+mock[8][0],'reg'];
       return {k:k,v:m[0],src:m[1],miss:m[0]===null};
     });
