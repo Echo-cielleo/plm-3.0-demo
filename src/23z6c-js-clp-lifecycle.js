@@ -139,9 +139,13 @@ function clpRuleDiffText(v){
   }
   return String(v);
 }
-/* 当前使用的「今天」：一律走演示时间锚点，不依赖真实系统日期 */
-function clpRuleAsOfDate(){
-  if(typeof wz === 'object' && wz && wz.project && wz.project.date)return wz.project.date;
+/* 系统「今天」：规则发布、发布门禁、活动规则版本解析等**系统行为**的唯一日期来源。
+   只走演示时间锚点（DEMO_TODAY），**永不读取 SDS 的计划投放日期**。
+   投放日期是某一份 SDS 的业务上下文日期，只用于回答「这份 SDS 该按哪版法规计算」；
+   反过来用它决定规则版本何时生效，就会把演示里的未来投放日变成「提前发布」。
+   ⚠️ 需要「按投放日期匹配规则版本」时，请由调用方显式把日期传进
+      clpActivePack() / clpEvaluateMixture()，不要在这里取。 */
+function clpSystemToday(){
   return (typeof demoYmd === 'function') ? demoYmd() : '';
 }
 function clpRuleNowStamp(){
@@ -258,16 +262,22 @@ function clpRuleVersionGuardEditable(v){
   if(v.frozen)throw new Error('已发布版本不可编辑，请复制为新草稿版本');
   return v;
 }
+/* 候选草稿与基线快照**不参与版本号唯一性判定**：
+   它们是「下一版规则暂存区」和「历史快照」，都不是一个真实发布的版本。
+   若参与判定，导入向导（版本号默认就是 R2027.1）会直接命中候选草稿并把它整个覆盖掉。 */
+function clpRuleVersionReserved(v){return !!(v && (v.isCandidate || v.isBaseline));}
 /* 创建草稿：同一版本号若已有草稿则复用该草稿（导入向导允许反复重传），
    但已存在非草稿（已发布 / 已撤回）的同号版本时明确报错。 */
 function clpRuleVersionCreateDraft(meta){
   meta = meta || {};
   var ver = meta.version || '';
   var clash = CLP_RULE_VERSION_STORE.filter(function(v){
-    return v.version === ver && v.status !== '草稿' && v.status !== '校验失败';
+    return !clpRuleVersionReserved(v) && v.version === ver && v.status !== '草稿' && v.status !== '校验失败';
   })[0];
   if(clash)throw new Error('版本 ' + ver + ' 已存在，请修改版本号。');
-  var exist = CLP_RULE_VERSION_STORE.filter(function(v){return v.version === ver && (v.status === '草稿' || v.status === '校验失败');})[0];
+  var exist = CLP_RULE_VERSION_STORE.filter(function(v){
+    return !clpRuleVersionReserved(v) && v.version === ver && (v.status === '草稿' || v.status === '校验失败');
+  })[0];
   var v = exist || {id: 'CLP-RULESET-' + (ver || 'DRAFT') + '-DRAFT', createdAt: clpRuleNowStamp(), frozen: false, isBaseline: false};
   var base = clpRuleVersionBaseline();
   var rows = (meta.rows || []).map(clpRuleDeepClone);
@@ -575,7 +585,8 @@ function clpRuleVersionValidate(draftVersion){
   var ver = draftVersion.version;
   if(!clpRuleNormText(ver))errors.push('请填写模块版本号。');
   else if(CLP_RULE_VERSION_STORE.some(function(v){
-    return v !== draftVersion && v.version === ver && v.status !== '草稿' && v.status !== '校验失败';
+    return v !== draftVersion && !clpRuleVersionReserved(v)
+      && v.version === ver && v.status !== '草稿' && v.status !== '校验失败';
   }))errors.push('版本 ' + ver + ' 已存在，请修改版本号。');
   var s = draftVersion.source || {};
   if(!clpRuleNormText(s.regulation))errors.push('请填写「官方来源名称」。');
@@ -592,7 +603,7 @@ function clpRuleVersionValidate(draftVersion){
 /* 跑完版本内所有规则门禁 */
 function clpRuleVersionRunGates(draftVersion){
   if(!draftVersion)return null;
-  var active = clpRuleVersionResolve(clpRuleAsOfDate()) || clpRuleVersionBaseline();
+  var active = clpRuleVersionResolve(clpSystemToday()) || clpRuleVersionBaseline();
   var baseRules = clpRuleVersionRules(active), baseById = {};
   baseRules.forEach(function(r){baseById[r.id] = r;});
   var diff = clpRuleVersionCompare(active, draftVersion);
@@ -650,7 +661,7 @@ function clpRuleVersionRunGates(draftVersion){
 /* ---------- 8. Release Manifest（§17） ---------- */
 function clpRuleVersionBuildReleaseManifest(draftVersion){
   var gates = clpRuleVersionRunGates(draftVersion);
-  var active = clpRuleVersionResolve(clpRuleAsOfDate()) || clpRuleVersionBaseline();
+  var active = clpRuleVersionResolve(clpSystemToday()) || clpRuleVersionBaseline();
   var baseById = {};
   clpRuleVersionRules(active).forEach(function(r){baseById[r.id] = r;});
   var publishable = [], unchanged = [], retainedOld = [], deferred = [], deactivated = [];
@@ -697,7 +708,7 @@ function clpRuleVersionPublish(draftVersion, reviewInfo){
     return {ok: false, errors: ['请先勾选审核确认：' + CLP_REVIEW_DECLARATION]};
   if(!clpRuleNormText(reviewInfo.reviewedBy))return {ok: false, errors: ['请填写审核人。']};
 
-  var active = clpRuleVersionResolve(clpRuleAsOfDate());
+  var active = clpRuleVersionResolve(clpSystemToday());
   var merged = clpRuleDeepClone(clpRuleVersionRules(active));
   var idx = {};
   merged.forEach(function(r, i){idx[r.id] = i;});
@@ -715,10 +726,13 @@ function clpRuleVersionPublish(draftVersion, reviewInfo){
     if(idx[id] === undefined){merged.push(r);idx[id] = merged.length - 1;}
     else merged[idx[id]] = r;
   });
-  /* ② 明确确认的停用规则 → 移除 */
-  man.deactivatedRules.forEach(function(id){
-    if(idx[id] !== undefined){merged.splice(idx[id], 1);}
-  });
+  /* ② 明确确认的停用规则 → 移除
+     ⚠️ 必须「先收集、再整体过滤」，不能边遍历边 splice：
+        删掉一条后，后面所有元素的下标都会前移，
+        第二条起就会删到别的规则头上（该删的没删、不该删的被删）。 */
+  var delIds = {};
+  man.deactivatedRules.forEach(function(id){delIds[id] = 1;});
+  merged = merged.filter(function(r){return !delIds[r.id];});
   draftVersion.rules = merged;
   draftVersion.reviewedBy = reviewInfo.reviewedBy;
   draftVersion.reviewedAt = reviewInfo.reviewedAt || clpRuleNowStamp();
@@ -730,7 +744,7 @@ function clpRuleVersionPublish(draftVersion, reviewInfo){
   draftVersion.deferredRules = man.deferredRules;
   draftVersion.frozen = true;
   /* ③ 生效日期：晚于演示当前日期 → 待生效，当前活动版本不变 */
-  var today = clpRuleAsOfDate();
+  var today = clpSystemToday();
   if(draftVersion.effectiveFrom && draftVersion.effectiveFrom > today){
     draftVersion.status = '待生效';
   }else{
@@ -748,7 +762,7 @@ function clpRuleVersionPublish(draftVersion, reviewInfo){
 /* 按日期解析活动版本：已生效或已发布有效（待生效且已到期）→ 生效日期不晚于
    asOfDate → 未撤回 → 取生效日期最新者。 */
 function clpRuleVersionResolve(asOfDate){
-  var d = asOfDate || clpRuleAsOfDate();
+  var d = asOfDate || clpSystemToday();
   var cands = CLP_RULE_VERSION_STORE.filter(function(v){
     if(v.status === '已撤回')return false;
     if(v.status !== '已生效' && v.status !== '待生效' && v.status !== '已失效')return false;
@@ -772,7 +786,7 @@ function clpRuleVersionRulesFor(asOfDate){
       发布新版本后由本函数同步；历史版本一律保存在 CLP_RULE_VERSION_STORE。 */
 function clpSyncActiveRulesProjection(asOfDate){
   clpRuleVersionSeedBaseline();
-  var v = clpRuleVersionResolve(asOfDate || clpRuleAsOfDate());
+  var v = clpRuleVersionResolve(asOfDate || clpSystemToday());
   if(!v)return null;
   CLP_RULES = clpSyncRuleEngineStatus(clpRuleDeepClone(v.rules));
   return v;

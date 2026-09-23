@@ -819,7 +819,7 @@ function clpLImpHtml5Rules(){
   if(!d||!g||!m)return clpLMini(5)+
     '<div class="notice red" style="margin-top:12px"><div class="ni">!</div><div>'+
     esc(_clpImp.draftError||'草稿版本尚未生成，请返回第 3 步重新上传结构化规则表。')+'</div></div>';
-  var s=m.summary,today=clpRuleAsOfDate();
+  var s=m.summary,today=clpSystemToday();
   var future=!!(d.effectiveFrom&&d.effectiveFrom>today);
   function ids(arr){return arr.length?arr.map(function(x){return '<span class="tag grey mono" style="margin-right:4px">'+esc(x)+'</span>';}).join(''):'<span class="muted">无</span>';}
   var h=clpLMini(5)+

@@ -464,17 +464,17 @@ with sync_playwright() as pw:
     n_chg = page.evaluate('()=>CLP_CHANGES.length')
     page.evaluate("()=>clpLImpPublish()")
     page.wait_for_timeout(220)
-    st27 = page.evaluate("()=>CLP_RULE_VERSION_STORE.filter(v=>v.version==='R2027.1')[0].status")
+    st27 = page.evaluate("()=>CLP_RULE_VERSION_STORE.filter(v=>v.version==='R2027.1'&&!v.isCandidate)[0].status")
     ok(st27 in ('草稿', '待审核'),
        '未勾选审核确认时发布被拦截（版本仍为「%s」，未进入待生效/已生效）' % st27)
     page.evaluate("()=>{$('cipDecl').checked=true;}")
     page.evaluate("()=>clpLImpPublish()")
     page.wait_for_timeout(260)
-    v27 = page.evaluate("()=>{var v=CLP_RULE_VERSION_STORE.filter(x=>x.version==='R2027.1')[0];return {st:v.status,by:v.reviewedBy,frozen:v.frozen,def:v.deferredRules.length,decl:v.declarationAccepted};}")
+    v27 = page.evaluate("()=>{var v=CLP_RULE_VERSION_STORE.filter(x=>x.version==='R2027.1'&&!x.isCandidate)[0];return {st:v.status,by:v.reviewedBy,frozen:v.frozen,def:v.deferredRules.length,decl:v.declarationAccepted};}")
     ok(v27['st'] == '待生效' and v27['frozen'] and v27['by'] == '质管-杨工',
        '生效日期 2027-01-01 晚于当前日期 → 版本「待生效」且已冻结、留痕审核人')
     ok(v27['def'] == 4, '发布快照保存延后规则 %d 条' % v27['def'])
-    ok(page.evaluate("()=>clpRuleVersionResolve(clpRuleAsOfDate()).version") == 'R2026.2',
+    ok(page.evaluate("()=>clpRuleVersionResolve(clpSystemToday()).version") == 'R2026.2',
        '待生效版本不改变当前活动规则版本（仍 R2026.2）')
     ok(page.evaluate('()=>CLP_MODULES.rules.ver') == 'R2026.2', '待生效版本的模块版本号暂不更新')
     ok(page.evaluate('()=>CLP_CHANGES.length') == n_chg + 1 and page.evaluate("()=>CLP_CHANGES[0].mod") == 'rules',
@@ -519,7 +519,7 @@ with sync_playwright() as pw:
     ok('没有匹配的记录' in page.locator('#clpTable tbody').inner_text(),
        '当前生效规则集（R2026.2 快照）无待审核规则')
     def6 = page.evaluate("""() => {
-      var v = CLP_RULE_VERSION_STORE.filter(function(x){ return x.version === 'R2027.1'; })[0];
+      var v = CLP_RULE_VERSION_STORE.filter(function(x){ return x.version === 'R2027.1' && !x.isCandidate; })[0];
       var d = null; (v.deferredRules || []).forEach(function(x){ if(x.ruleId === 'CLP-R-0006') d = x; });
       return d ? d.gateStatus : 'missing';
     }""")

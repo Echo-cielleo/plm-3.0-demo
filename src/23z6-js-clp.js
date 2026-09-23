@@ -175,22 +175,26 @@ function clpActivePack(asOfDate){
     var m=complianceGetMethod(r.method);
     methodVersions[r.method]=m?m.version:'';
   });
+  /* 规则版本元数据必须与本次实际取用的规则**同源**：
+     按日期解析到历史版本时，包上的「规则集版本 / 生效日期」也要跟着变成那个版本，
+     否则会出现「装的是旧版规则、标签却写着当前版本」的自相矛盾。
+     ⚠️ Annex VI 与标签字典尚未做版本化存储，仍取模块当前值。 */
+  var ver=(typeof clpRuleVersionResolve==='function')?clpRuleVersionResolve(asOfDate):null;
+  var rulesVer=ver?ver.version:CLP_MODULES.rules.ver;
+  var rulesEff=(ver&&ver.effectiveFrom)?ver.effectiveFrom:CLP_MODULES.rules.eff;
   return {
-    id:'CLP-EU-'+clpPackToken(CLP_MODULES.vi.ver)+'-'+clpPackToken(CLP_MODULES.rules.ver)+'-'+clpPackToken(CLP_MODULES.labels.ver),
+    id:'CLP-EU-'+clpPackToken(CLP_MODULES.vi.ver)+'-'+clpPackToken(rulesVer)+'-'+clpPackToken(CLP_MODULES.labels.ver),
     market:'EU',status:rules.length&&rules.length===candidates.length?'已发布':'不可调用',
-    modules:{vi:CLP_MODULES.vi.ver,rules:CLP_MODULES.rules.ver,labels:CLP_MODULES.labels.ver},
+    modules:{vi:CLP_MODULES.vi.ver,rules:rulesVer,labels:CLP_MODULES.labels.ver},
     ruleIds:rules.map(function(r){return r.id;}),
     rules:rules.slice(),
     methods:rules.map(function(r){return r.method;}),
     methodVersions:methodVersions,
-    effectiveFrom:CLP_MODULES.rules.eff,
+    effectiveFrom:rulesEff,
     tested:rules.length>0&&rules.length===candidates.length,
     /* 阶段 2：规则版本追溯（新增字段，不改变既有字段与计算结果） */
-    ruleSetVersion:(function(){
-      if(typeof clpRuleVersionResolve!=='function')return '';
-      var v=clpRuleVersionResolve(asOfDate);return v?v.version:'';
-    })(),
-    asOfDate:asOfDate||(typeof clpRuleAsOfDate==='function'?clpRuleAsOfDate():'')
+    ruleSetVersion:ver?ver.version:'',
+    asOfDate:asOfDate||(typeof clpSystemToday==='function'?clpSystemToday():'')
   };
 }
 

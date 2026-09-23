@@ -137,10 +137,14 @@ with sync_playwright() as p:
             run = page.evaluate("""() => {
               var live=clpEvaluateMixture(wz.formula),items={};
               live.items.forEach(x=>items[x.id]={result:x.result,method:x.method,rules:x.ruleIds,formula:x.formula});
-              var frozen=wz.classPack.id,old=CLP_MODULES.rules.ver;
-              CLP_MODULES.rules.ver='R2099.9';
+              var frozen=wz.classPack.id;
+              /* 冻结快照语义：生成 SDS 后，模块 / 版本信息再怎么变，都不得回写这份 SDS。
+                 探针改用 Annex VI 模块版本 —— 规则集版本已改由规则版本库决定
+                 （改 CLP_MODULES.rules.ver 不再影响包编号），不再适合当探针。 */
+              var oldVi=CLP_MODULES.vi.ver;
+              CLP_MODULES.vi.ver='ATP99';
               var next=clpActivePack().id;
-              CLP_MODULES.rules.ver=old;
+              CLP_MODULES.vi.ver=oldVi;
               return {pack:wz.classPack,items:items,labels:live.labels,frozen:frozen,next:next,
                 body:$('wzBody').innerText};
             }""")

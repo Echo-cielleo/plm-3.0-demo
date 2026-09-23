@@ -43,6 +43,21 @@ with sync_playwright() as pw:
           clpSyncActiveRulesProjection();
           return CLP_RULE_VERSION_STORE.length;
         },
+        /* 与页面真实加载后的版本库一致：基线 + 候选草稿 R2027.1 共存。
+           专用于「导入草稿不得覆盖候选草稿」一类断言 —— reset() 会把候选草稿一并清掉，
+           那种环境恰好绕开了这个冲突，所以必须单独有这个入口。 */
+        resetReal: function(){
+          CLP_RULE_VERSION_STORE.length = 0;
+          CLP_RULES = JSON.parse(JSON.stringify(window.PRISTINE_RULES));
+          clpRuleVersionSeedBaseline();
+          clpRuleVersionSeedCandidate();
+          clpSyncActiveRulesProjection();
+          return CLP_RULE_VERSION_STORE.map(function(v){
+            return v.version + ':' + v.status + (v.isCandidate ? ':候选' : (v.isBaseline ? ':基线' : ''));
+          });
+        },
+        setProjDate: function(d){ wz.project.date = d; },
+        projDate: function(){ return wz.project.date; },
         base: function(){ return clpRuleVersionBaseline(); },
         row: function(v, id){
           var rs = (v && v.rules) || [], r = null;
@@ -74,7 +89,7 @@ with sync_playwright() as pw:
           });
         },
         active: function(d){ return clpRuleVersionResolve(d); },
-        asOf: function(){ return clpRuleAsOfDate(); }
+        asOf: function(){ return clpSystemToday(); }
       };
       window.LF.reset();
       return true;
@@ -482,6 +497,102 @@ with sync_playwright() as pw:
       return {hasEval: (typeof COMPLIANCE_METHOD_REGISTRY === 'object')};
     }""")
     ok(r['hasEval'], "方法注册表在产物中可用")
+
+    print("\n=== 十二、修复回归（日期分离 · 批量停用 · 包版本信息 · 导入草稿与候选草稿） ===")
+    r = pg.evaluate("""() => {
+      var out = {};
+
+      /* ---- 12.1 规则版本何时生效，只由系统日期决定，与 SDS 投放日期无关 ---- */
+      out.scen = {};
+      ['2026-09-23', '2027-06-01', '2026-01-05'].forEach(function(pd, i){
+        LF.setProjDate(pd);
+        CLP_RULE_VERSION_STORE.length = 0;
+        CLP_RULES = JSON.parse(JSON.stringify(window.PRISTINE_RULES));
+        clpRuleVersionSeedBaseline(); clpRuleVersionSeedCandidate(); clpSyncActiveRulesProjection();
+        var d = LF.draft('R2099-DT' + i, '2026-10-01', LF.demoRows('R2099-DT' + i));
+        var p = LF.pub(d);
+        var act = LF.active(LF.asOf());
+        out.scen[pd] = {ok: p.ok, st: d.status, act: act ? act.version : null,
+                        base: clpRuleVersionBaseline().status, sys: clpSystemToday()};
+      });
+      LF.setProjDate('2026-10-01');
+
+      /* ---- 12.2 一次停用两条及以上规则，只移除被确认停用的那些 ---- */
+      function stop(ids, ver){
+        LF.reset();
+        var rows = LF.cloneRules().filter(function(x){ return ids.indexOf(x.id) < 0; });
+        var d = LF.draft(ver, '2026-09-20', rows);
+        d.deactivationConfirmed = true;
+        var man = clpRuleVersionBuildReleaseManifest(d);
+        var p = LF.pub(d);
+        return {ok: p.ok, pend: man.pendingDeactivationRules, after: d.rules.map(function(x){ return x.id; })};
+      }
+      out.stopTwo = stop(['CLP-R-0004', 'CLP-R-0005'], 'R2099-S1');
+      out.stopMid = stop(['CLP-R-0002', 'CLP-R-0004'], 'R2099-S2');
+      out.stopThree = stop(['CLP-R-0001', 'CLP-R-0003', 'CLP-R-0005'], 'R2099-S3');
+
+      /* ---- 12.3 规则包上的版本信息，与本次实际取用的那版规则同源 ---- */
+      LF.reset();
+      var dP = LF.draft('R2099-P', '2026-09-20', LF.demoRows('R2099-P'));
+      LF.pub(dP);
+      var pFut = clpActivePack('2027-06-01'), pHis = clpActivePack('2026-07-01');
+      var vFut = clpRuleVersionResolve('2027-06-01'), vHis = clpRuleVersionResolve('2026-07-01');
+      out.fut = {rv: pFut.ruleSetVersion, mod: pFut.modules.rules, eff: pFut.effectiveFrom, id: pFut.id,
+                 vver: vFut ? vFut.version : '', veff: vFut ? vFut.effectiveFrom : ''};
+      out.his = {rv: pHis.ruleSetVersion, mod: pHis.modules.rules, vver: vHis ? vHis.version : ''};
+
+      /* ---- 12.4 导入草稿不得覆盖候选草稿（真实启动态：两者共存） ---- */
+      out.store0 = LF.resetReal();
+      var cand0 = clpRuleVersionCandidate();
+      out.cand0 = {id: cand0.id, rules: cand0.rules.map(function(x){ return x.id; })};
+      clpLImport();
+      _clpImp.mod = 'rules'; _clpImp.ver = 'R2027.1'; _clpImp.eff = '2027-01-01';
+      _clpImp.cut = '2026-09-15'; _clpImp.srcCode = 'R2027.1'; _clpImp.srcDate = '2026-09-15';
+      var d1 = clpImpBuildDraft();
+      var cand1 = clpRuleVersionCandidate();
+      out.store1 = CLP_RULE_VERSION_STORE.map(function(v){ return v.version + ':' + v.status; });
+      out.cand1 = {id: cand1 ? cand1.id : '', rules: cand1 ? cand1.rules.map(function(x){ return x.id; }) : null};
+      out.d1 = {id: d1 ? d1.id : '', isCand: d1 ? !!d1.isCandidate : null, isBase: d1 ? !!d1.isBaseline : null};
+
+      /* ---- 12.5 同版本重复上传，复用同一个导入草稿 ---- */
+      var d2 = clpImpBuildDraft();
+      out.d2 = {id: d2 ? d2.id : '', same: !!(d1 && d2 && d1.id === d2.id), n: CLP_RULE_VERSION_STORE.length};
+      return out;
+    }""")
+
+    for pd, label in [('2026-09-23', '投放日=系统今天'), ('2027-06-01', '投放日=未来'), ('2026-01-05', '投放日=过去')]:
+        s = r['scen'][pd]
+        ok(s['ok'] and s['st'] == '待生效' and s['act'] == 'R2026.2' and s['base'] == '已生效',
+           "生效日期 2026-10-01 尚未到期 → %s：版本「%s」、活动版本仍 %s（系统日 %s）"
+           % (label, s['st'], s['act'], s['sys']))
+
+    ok(r['stopTwo']['pend'] == ['CLP-R-0004', 'CLP-R-0005']
+       and r['stopTwo']['after'] == ['CLP-R-0001', 'CLP-R-0002', 'CLP-R-0003'],
+       "一次停用相邻两条（R-0004 / R-0005）→ 只移除这两条，剩 %s" % '/'.join(r['stopTwo']['after']))
+    ok(r['stopMid']['pend'] == ['CLP-R-0002', 'CLP-R-0004']
+       and r['stopMid']['after'] == ['CLP-R-0001', 'CLP-R-0003', 'CLP-R-0005'],
+       "一次停用不相邻两条（R-0002 / R-0004）→ 不误伤其他规则，剩 %s" % '/'.join(r['stopMid']['after']))
+    ok(r['stopThree']['after'] == ['CLP-R-0002', 'CLP-R-0004'],
+       "一次停用三条（R-0001 / R-0003 / R-0005）→ 剩 %s" % '/'.join(r['stopThree']['after']))
+
+    f, h = r['fut'], r['his']
+    ok(f['rv'] == 'R2099-P' and f['mod'] == f['rv'] and f['rv'] == f['vver'],
+       "未来日期取的规则包：三处版本号一致（包版本 %s / 模块版本 %s / 解析版本 %s）" % (f['rv'], f['mod'], f['vver']))
+    ok(f['eff'] == f['veff'] and f['eff'] == '2026-09-20',
+       "规则包生效日期取自同一版本（包 %s / 版本 %s）" % (f['eff'], f['veff']))
+    ok('R2099' in f['id'], "规则包编号含该版本标识：%s" % f['id'])
+    ok(h['rv'] == 'R2026.2' and h['mod'] == 'R2026.2' and h['vver'] == 'R2026.2',
+       "历史日期取到历史版本，包版本信息同为 %s" % h['rv'])
+
+    ok(len(r['store0']) == 2 and r['cand0']['rules'] == ['CLP-R-0006', 'CLP-R-0007'],
+       "真实启动态：基线 + 候选草稿共存（%s），候选含 %s" % (' / '.join(r['store0']), '/'.join(r['cand0']['rules'])))
+    ok(r['d1']['id'] == 'CLP-RULESET-R2027.1-DRAFT' and r['d1']['isCand'] is False and r['d1']['isBase'] is False,
+       "导入草稿是独立对象，不落在候选草稿上：%s" % r['d1']['id'])
+    ok(r['cand1']['rules'] == ['CLP-R-0006', 'CLP-R-0007'] and r['cand1']['id'] == r['cand0']['id'],
+       "导入后候选草稿内容未被动过（%s → %s）" % ('/'.join(r['cand0']['rules']), '/'.join(r['cand1']['rules'])))
+    ok(len(r['store1']) == 3, "导入后版本库为 3 个（基线 + 候选 + 导入草稿）：%s" % ' / '.join(r['store1']))
+    ok(r['d2']['same'] and r['d2']['n'] == 3,
+       "同版本重复上传复用同一个导入草稿（%s），版本库不增长（%d 个）" % (r['d2']['id'], r['d2']['n']))
 
     print("\n" + "=" * 46)
     print("阶段 2 生命周期自检：通过 %d / 失败 %d" % (P, Fail))
