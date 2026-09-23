@@ -51,6 +51,7 @@ with sync_playwright() as pw:
     }"""), '默认 SDS 第 3 步为 5 项缺失，原按钮一键填充后归零')
 
     print('=== 跨入口同步 ===')
+    ok(page.evaluate("()=>lawQueryAllRows().length===19&&lawQueryAllRows().some(x=>x.cas==='108-88-3'&&x.sourceType==='clp')"), '法规统一查询为 19 行，包含补入的甲苯 CLP 命中')
     ok(page.evaluate("()=>clpLawQueryProjection().length===clpViRecords().length&&lawQueryAllRows().filter(x=>x.sourceType==='clp').length===clpViRecords().length"), '统一查询的 CLP 行为动态投影')
     ok(page.evaluate("()=>LAW_DETAIL.clp6.rows.length===clpViRecords().length"), 'CLP 来源库明细为动态投影')
     before = page.evaluate("()=>({s:clpSubstanceProfile('9009-54-5').effective.ateValues.oral,q:clpParamOf('9009-54-5').ateO})")
@@ -108,11 +109,30 @@ with sync_playwright() as pw:
     ok(page.evaluate("()=>!clpActivePack('2026-04-30').tested&&clpActivePack('2026-04-30').dataVersion===null"), '没有适用官方数据集的日期不冒用当前版本')
     ok(page.evaluate("()=>CLP_VI_ROWS.length===5&&clpViRowsProjection('2027-02-01').length===6"), '当前兼容投影不提前切换未来数据')
     ok(page.evaluate("()=>clpLawQueryProjection('2027-02-01').length===6&&clpLawDetailProjection('2027-02-01').rows.length===6"), '查询和明细可按未来数据版本生成')
+    page.evaluate("()=>{showPage('law:clp');_clpTab='vi';clpLRenderTab();}")
+    page.locator('#clpViVer').select_option(label='ATP 23')
+    ok(page.evaluate("()=>_clpF.vi.ver==='ATP 23'&&clpLViRowsSelected().length===6&&document.getElementById('clpViStrip').textContent.includes('待生效')"), 'Annex VI 页可切换到待生效版本并显示对应条目')
     ok(page.evaluate("()=>{wz.formula=[{cas:'111-76-2',name:'乙二醇单丁醚',conc:'100'}];wz.project.date='2027-02-01';wzCollectData();return wz.collect['111-76-2'][12].v.includes('Acute Tox. 3')&&wz.collect['111-76-2'][13].v.includes('H301')&&wz.collect['111-76-2'][8].v.includes('Annex VI');}"), 'SDS 第 3 步分类、H 码和 Annex VI 命中随投放日期读取统一画像')
     ok(page.evaluate("()=>{try{clpViDatasetPublish(clpViDemoDraft('ATP 23','2027-02-01','',{}),{reviewer:'法规专员'});return false;}catch(e){return clpViDatasetList().length===2;}}"), '重复发布被阻止')
     print('=== 待核验冲突门禁 ===')
+    ok(page.evaluate("""()=>{
+      wz.project.date=clpSystemToday();wz.formula=[{cas:'50-00-0',name:'甲醛',conc:'0.35'}];
+      var before=buildClassItems().find(x=>x.id==='aqua');
+      showPage('bd:comp');var row=DB_CFG.component.rows.find(x=>x.cas==='50-00-0');dbEdit(row._id);
+      document.getElementById('fx_cn').value='甲醛（名称测试）';dbSave(row._id);
+      var after=buildClassItems().find(x=>x.id==='aqua');
+      var conflict=clpSubstanceProfile('50-00-0').conflicts.find(x=>x.field==='mFactors.chronic');
+      return !!CLP_SUBSTANCE_STORE.legacyResolutions['50-00-0']&&conflict.effectiveSource==='legacy-engine-baseline'&&
+        after.status===before.status&&after.need===before.need&&after.result===before.result&&after.input===before.input;
+    }"""), '只修改甲醛名称不会撤销 M 因子迁移例外或改变水生项理由')
+    ok(page.evaluate("""()=>{
+      clpSupplementalUpsert('50-00-0',{mFactors:{acute:1,chronic:0}},{sourceRef:'急性 M 因子测试'});
+      var conflict=clpSubstanceProfile('50-00-0').conflicts.find(x=>x.field==='mFactors.chronic');
+      return !!CLP_SUBSTANCE_STORE.legacyResolutions['50-00-0']['mFactors.chronic']&&
+        conflict.effectiveSource==='legacy-engine-baseline'&&clpSubstanceProfile('50-00-0').effective.mFactors.chronic===0;
+    }"""), '只改急性 M 因子不会撤销慢性 M 因子的迁移例外')
     blocked = page.evaluate("""()=>{
-      clpSupplementalUpsert('50-00-0',{mFactors:{acute:0,chronic:0}},{sourceRef:'组分编辑器重新维护'});
+      clpSupplementalUpsert('50-00-0',{mFactors:{acute:1,chronic:1}},{sourceRef:'组分编辑器重新维护'});
       wz.project.date=clpSystemToday();wz.formula=[{cas:'50-00-0',name:'甲醛',conc:'0.35'}];
       var conflict=clpSubstanceProfile('50-00-0').conflicts.find(x=>x.field==='mFactors.chronic');
       var item=buildClassItems().find(x=>x.id==='aqua');

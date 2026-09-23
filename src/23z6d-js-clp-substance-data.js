@@ -187,7 +187,13 @@ function clpSupplementalUpsert(cas,patch,auditInfo){
   if(['known','unknown','na'].indexOf(next.ateState)<0||['known','unknown','na'].indexOf(next.aquaticState)<0)throw Error('数据状态取值无效');
   next.revision='SUP-'+clpSystemToday();next.updatedBy=(auditInfo&&auditInfo.by)||'当前用户';next.updatedAt=clpRuleNowStamp();
   next.sourceType=(auditInfo&&auditInfo.sourceType)||'enterprise-supplement';next.sourceRef=(auditInfo&&auditInfo.sourceRef)||'组分基础信息人工维护';
-  if(patch&&patch.mFactors&&CLP_SUBSTANCE_STORE.legacyResolutions[cas])delete CLP_SUBSTANCE_STORE.legacyResolutions[cas];
+  var resolutions=CLP_SUBSTANCE_STORE.legacyResolutions[cas];
+  if(patch&&patch.mFactors&&resolutions){
+    ['acute','chronic'].forEach(function(k){
+      if(Object.prototype.hasOwnProperty.call(patch.mFactors,k)&&patch.mFactors[k]!==old.mFactors[k])delete resolutions['mFactors.'+k];
+    });
+    if(!Object.keys(resolutions).length)delete CLP_SUBSTANCE_STORE.legacyResolutions[cas];
+  }
   CLP_SUBSTANCE_STORE.supplementalByCas[cas]=next;
   clpRefreshCompatibilityProjections(clpSystemToday());
   return clpDataCopy(next);

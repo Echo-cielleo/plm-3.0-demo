@@ -25,7 +25,7 @@
 
 `provenance` 按字段键（例如 `classifications.Carc.|`、`specificLimits.Skin Sens.|1`、`ateValues.oral`、`mFactors.chronic`）标记 `sourceType / sourceVersion / sourceRef`，官方来源还含文件、日期与 Index No.。`conflicts` 保存官方值、补充值、当前取用值、取用来源和待专业核验状态。组分编辑器展示官方只读区、企业补充结构化编辑区和冲突提示；保存后刷新兼容投影。
 
-唯一迁移期例外是甲醛 `50-00-0` 的 `mFactors.chronic`：Annex VI 演示值为 10，阶段二计算基线为 0。`legacyResolutions` 明示继续取旧值 0 以保持默认 SDS 输出，并列入 `clpDataConflictList()`。它只适用于 ATP 22 已知冲突；当该字段在组分库被重新维护时，例外删除，冲突转为待专业核验。本记录不构成法规裁决。
+唯一迁移期例外是甲醛 `50-00-0` 的 `mFactors.chronic`：Annex VI 演示值为 10，阶段二计算基线为 0。`legacyResolutions` 明示继续取旧值 0 以保持默认 SDS 输出，并列入 `clpDataConflictList()`。它只适用于 ATP 22 已知冲突；只有对应的慢性 M 因子数值实际变化时才删除例外，修改组分名称、急性 M 因子或原值重存不会触发阻断。例外删除后冲突转为待专业核验。本记录不构成法规裁决。
 
 乙二醇单丁醚 `111-76-2` 在阶段二 SDS 汇集演示值中曾显示眼刺激 `2A`，而当前 Annex VI 演示快照为 `2`。旧 `2A` 只用于汇集展示，从未进入阶段二混合物计算；迁移后保留在补充层并记为待核验展示差异，不进入 `effective.classifications`，也不阻断既有计算。组分库显示双方来源与当前取用值，不据此做法规专业裁决。
 
