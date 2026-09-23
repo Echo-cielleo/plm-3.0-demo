@@ -1,8 +1,8 @@
 _CHROME_PATH = '/Users/dowell/Library/Caches/ms-playwright/chromium-1223/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'
 # -*- coding: utf-8 -*-
-"""G5（第12章生态毒性）+ G6（第15章法规/CSA/Annex XIV）+ G10（第14章运输）专项自检
+"""G5（第12章生态毒性）+ G6（第15章动态名单/CSA）+ G10（第14章运输）专项自检
 覆盖：edit / dv 双视图渲染、生态毒性表（混合物级 + 按组分）、运输概览表（含 ADN）、
-      法规表（EU/CN）、CSA 勾选框、Annex XIV 联动、未知水生毒性声明、0 JS 错误。"""
+      法规表（EU/CN）、CSA 勾选框、名单快照、未知水生毒性声明、0 JS 错误。"""
 from playwright.sync_api import sync_playwright
 
 F = "/Users/dowell/Desktop/code/workbuddy/PLM/PLM3.0全系统演示原型.html"
@@ -40,20 +40,23 @@ with sync_playwright() as pw:
        "第14章含 ADR/RID/ADN/IMDG/IATA 多模式")
     ok('不适用' in body14, "第14章非危险货物标注「不适用」")
 
-    # 第15章 法规/CSA/Annex XIV
+    # 第15章 动态名单/CSA
     body15 = pg.evaluate("()=>document.querySelector('#acc14')?.textContent||''")
     ok('REACH Annex XVII' in body15, "第15章含 REACH Annex XVII")
     ok('SVHC' in body15, "第15章含 SVHC 候选清单")
     ok('化学安全评估' in body15 or 'CSA' in body15, "第15章含 CSA 勾选区")
-    ok('Annex XIV' in body15, "第15章含 Annex XIV 命中判定")
-    ok('未列入' in body15 or '重铬酸铵' not in body15, "第15章当前配方未命中 Annex XIV")
+    ok('法规或清单' in body15 and '版本' in body15 and 'Entry 77' in body15,
+       "第15章从评估快照展示名单条目和版本")
+    ok('本混合物组分均未列入 REACH Annex XIV' not in body15,
+       "第15章不再以手写 CAS 表作 Annex XIV 全库未列入判断")
 
     print("\n=== dv 交付文档流：表格同样渲染 ===")
     pg.evaluate("setWzView('deliver')"); pg.wait_for_timeout(700)
     d12 = pg.evaluate("()=>document.querySelector('.doc-page')?.textContent||''")
     ok('水生危害分类' in d12, "dv 文档流第12章有生态毒性表")
     ok('ADN' in d12, "dv 文档流第14章有运输表（含 ADN）")
-    ok('Annex XIV' in d12, "dv 文档流第15章有法规/Annex XIV")
+    ok('法规名单列入情况' in d12 and 'Entry 77' in d12,
+       "dv 文档流第15章包含快照名单条目")
     ok('CSA' in d12 or '化学安全评估' in d12, "dv 文档流第15章有 CSA")
     pg.evaluate("setWzView('edit')"); pg.wait_for_timeout(500)
 
@@ -66,6 +69,8 @@ with sync_playwright() as pw:
     b15c = pg.evaluate("()=>document.getElementById('acc14')?.textContent||''")
     ok('15.1 中国法规' in b15c, "CN 市场下第15章显示中国法规表")
     ok('15.1 欧盟法规' not in b15c, "CN 市场下不混入欧盟法规表")
+    ok('禁止进出口目录' in b15c and '本期未建立可执行数据集' in b15c,
+       "CN 市场下两个待建目录如实标记不可用")
 
     print("\n=== 无 JS 错误 ===")
     ok(len(errs) == 0, "运行期 0 JS 错误" + ("" if not errs else " -> "+str(errs[:2])))

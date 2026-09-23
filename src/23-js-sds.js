@@ -72,6 +72,11 @@ function wzInitState(){
     classAdjust:{},    /* 分类人工调整记录 */
     classItems:null,
     classPack:null,    /* 生成分类结论时冻结的 CLP 规则包版本快照 */
+    listContext:{objectType:'mixture',useClass:'',productCategory:'',materialType:''},
+    evaluationSnapshot:null,
+    evaluationDirty:true,
+    evaluationInvalidReason:'',
+    evaluationAt:'',
     draftEdits:{},     /* 章节临时编辑 */
     draftAt:'',
     view:'edit',       /* 步骤 5 视图：edit 编制态 / deliver 交付预览 */
@@ -195,6 +200,7 @@ var LANG_EU={'德语 Deutsch':'德语（DE）','法语 Français':'法语（FR�
 function pickMarket(m){
   if(wz.project.market===m)return;
   wz.project.market=m;
+  if(typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate('目标市场变化');
   wz.project.state='';wz.project.oflang='';
   wz.project.lang=(m==='CN')?'简体中文（zh-CN）':'';
   renderStep1();wzUpdateFoot();
@@ -256,6 +262,7 @@ function ufiErr(u){
 }
 function wzValidate1(){
   var p=wz.project;
+  var oldSignature=[p.product,p.date,p.state,p.lang].join('|');
   if($('f_product'))p.product=$('f_product').value;
   if($('f_date'))p.date=$('f_date').value;
   if($('f_emerg'))p.emerg=$('f_emerg').value;
@@ -273,12 +280,14 @@ function wzValidate1(){
     if($('f_state'))p.state=$('f_state').value;
     if($('f_oflang')){
       var nv=$('f_oflang').value;
-      if(nv!==p.oflang){p.oflang=nv;p.lang='';renderStep1();wzUpdateFoot();return;}
+      if(nv!==p.oflang){p.oflang=nv;p.lang='';if(typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate('产品信息变化');renderStep1();wzUpdateFoot();return;}
     }
     if($('f_lang')&&!$('f_lang').disabled)p.lang=$('f_lang').value;
   }else if(p.market==='CN'){
     p.lang='简体中文（zh-CN）';
   }
+  if(oldSignature!==[p.product,p.date,p.state,p.lang].join('|')&&typeof complianceEvaluationInvalidate==='function')
+    complianceEvaluationInvalidate('产品信息或投放日期变化');
   wzUpdateFoot();
 }
 function wzSyncForm1(){ renderStep1(); }
@@ -435,6 +444,7 @@ function wzLoadMaterial(code){
   wz.materialCode=code;
   wz.project.product=r.name;
   wz.formType=pure?'pure':'mix';
+  if(typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate('产品类型或物料变化');
   /* R8 产品决策：不再带出配方，仅保留物质形态判定 */
   wz.formula=[];
   wz.frozen=false;wz.collected=false;wz.collect={};wz.classItems=null;wz.classPack=null;wz.draftAt='';
@@ -491,6 +501,7 @@ function fmPickApply(){
     wz.formula.push({cas:cas,name:r?r.cn:'',conc:'',secret:false});
     added++;
   });
+  if(added&&typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate('添加组分');
   closeModal();renderStep2();wzUpdateFoot();
   toast(added?('已加入 '+added+' 个组分，请补充浓度'):'所选组分已存在于配方中',added?'ok':'warn');
 }
@@ -550,6 +561,7 @@ function renderStep2(){
 }
 function fmSet(i,k,v){
   wz.formula[i][k]=v;
+  if(typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate(k==='secret'?'组分保密标记变化':'组分数据变化');
   if(k==='secret')renderStep2();          /* 保密标记变化需重绘标签 */
   else if(k==='conc')renderStep2Soft();   /* 仅刷新合计，避免输入框失焦 */
 }
@@ -560,6 +572,7 @@ function renderStep2Soft(){/* 轻量刷新合计，不重绘输入框，避免�
 }
 function fmCas(i,v){
   wz.formula[i].cas=v;
+  if(typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate('组分 CAS 变化');
   var hit=CAS_LIB[v.trim()];
   if(hit){
     wz.formula[i].name=hit.cn;
@@ -568,11 +581,12 @@ function fmCas(i,v){
     toast('已自动匹配物质：'+hit.cn+'（'+hit.en+'）','info');
   }
 }
-function fmAdd(){wz.formula.push({cas:'',name:'',conc:'',secret:false,chk:true});renderStep2();toast('已添加配方行','ok');}
+function fmAdd(){wz.formula.push({cas:'',name:'',conc:'',secret:false,chk:true});if(typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate('添加组分');renderStep2();toast('已添加配方行','ok');}
 function fmDel(i){
   var n=wz.formula[i].name||('第 '+(i+1)+' 行');
   sdsConfirm('删除配方组分','确认删除组分 <b>'+esc(n)+'</b>？',function(){
     wz.formula.splice(i,1);renderStep2();wzUpdateFoot();toast('已删除组分：'+n,'ok');
+    if(typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate('删除组分');
   },'删除',true);
 }
 /* B1 · 路径 A：从实验配方引入
@@ -619,6 +633,7 @@ function fmExpConfirm(eid){
       wz.formula=rec.rows.map(function(r){
         return {cas:r.cas,name:r.name,conc:r.pct,secret:false,chk:false};   /* chk:false = 待核对 */
       });
+      if(typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate('引入实验配方');
       wz.frozen=false;wz.collected=false;wz.collect={};wz.classItems=null;wz.classPack=null;wz.draftAt='';
       renderStep2();wzUpdateFoot();
       toast('已引入 '+rec.rows.length+' 个组分，请逐行核对后冻结','ok');
@@ -648,6 +663,7 @@ function fmDemo(){
     {cas:'50-00-0',name:'甲醛',conc:'0.35',secret:false,chk:true},
     {cas:'9009-54-5',name:'聚氨酯预聚体',conc:'38.65',secret:true,chk:true}
   ];
+  if(typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate('载入示例配方');
   renderStep2();toast('已载入示例配方（6 个组分）','ok');
 }
 function fmFreeze(){
@@ -664,6 +680,7 @@ function fmFreeze(){
   sdsConfirm('冻结配方','冻结后配方将<b>不可再编辑</b>，并作为数据汇集、分类判定与 SDS 草案的唯一输入快照。<br><span style="color:var(--muted)">共 '+wz.formula.length+' 个组分，其中保密组分 '+wz.formula.filter(function(f){return f.secret;}).length+' 项。</span>'+warnHtml,
   function(){
     wz.frozen=true;wz.frozenAt=nowStr();wz.collected=false;
+    if(typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate('冻结配方');
     renderStep2();wzUpdateFoot();
     toast('配方已冻结，可进入数据汇集','ok');
   },'确认冻结');
@@ -671,6 +688,7 @@ function fmFreeze(){
 function fmUnfreeze(){
   sdsConfirm('解除配方冻结','解除冻结后，<b>后面步骤已维护内容全部失效</b>——已汇集的受控数据、分类结论与 SDS 草案均需重新生成。',function(){
     wz.frozen=false;wz.collected=false;wz.collect={};wz.classItems=null;wz.classPack=null;wz.draftAt='';
+    if(typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate('解除配方冻结');
     renderStep2();wzUpdateFoot();toast('已解除冻结，后面步骤已维护内容全部失效','warn');
   },'解除冻结',true);
 }
@@ -807,6 +825,7 @@ function wzToggleAll(){
 }
 function renderStep3(){
   if(!wz.collected)wzCollectData();
+  var evaluation=complianceEvaluationEnsure();
   var total=0,miss=wzMissCount(),bySrc={lab:0,sup:0,reg:0,pub:0,man:0};
   Object.keys(wz.collect).forEach(function(c){wz.collect[c].forEach(function(i){total++;if(!i.miss)bySrc[i.src]++;});});
   var pct=total?Math.round((total-miss)/total*100):0;
@@ -945,7 +964,8 @@ function renderStep3(){
     +'<div class="card"><div class="card-hd"><h3>全部汇集数据</h3>'
       +'<span class="sub">按组分维度展示，标签颜色代表数据来源优先级</span>'
       +'<div class="right"><button class="btn sm" id="wzAllBtn" onclick="wzToggleAll()">查看全部汇集数据 ▾</button></div></div>'
-      +'<div class="card-bd"><div id="wzAllData" style="display:none"><div class="comp-grid">'+allCards+'</div></div></div></div>';
+      +'<div class="card-bd"><div id="wzAllData" style="display:none"><div class="comp-grid">'+allCards+'</div></div></div></div>'
+    +complianceEvaluationStep3Html(evaluation);
 }
 /* 「一键补录」—— 按 DEMO_FILL 模拟人工补齐，之后第 4 步结论必须重算 */
 function wzFillDemo(kind){
@@ -1594,10 +1614,10 @@ function clpParamTable(){
     +'会计入第 3 / 11 章的<b style="display:inline">未知急性毒性声明</b>；'
     +'标「不适用」的是已确认不达分类阈值的组分，属已知安全，不计入。</div></div></div>';
 }
-function buildClassItems(){
+function buildClassItems(precomputedRun){
   /* 阶段 2：按 SDS 投放日期解析活动规则版本（未来生效的规则不会提前参与计算） */
-  var run=clpEvaluateMixture(wz.formula,(wz.project&&wz.project.date)||''),byId={};
-  run.items.forEach(function(item){byId[item.id]=item;});
+  var run=precomputedRun||clpEvaluateMixture(wz.formula,(wz.project&&wz.project.date)||''),byId={};
+  run.items.forEach(function(item){byId[item.id]=precomputedRun?JSON.parse(JSON.stringify(item)):item;});
   function blocked(id,name,method){
     if(byId[id])return byId[id];
     var w=run.warnings.filter(function(x){return x.method===method;})[0];
@@ -1608,7 +1628,7 @@ function buildClassItems(){
       src:[['reg','CLP 物质画像 · 来源与冲突待核验']],
       opts:[{o:'暂不自动分类',d:'核对物质数据来源与字段级冲突后重新计算',hit:'当前状态'}]};
   }
-  wz.classPack=run.pack;
+  if(!precomputedRun)wz.classPack=run.pack;
   return [
     /* B6：2024/2865 新增危害类别，结论须在 2.3 / 11.2 / 12.6 三处声明 */
     {id:'ed',name:'内分泌干扰（ED）',result:'—',code:'待人工判断',status:'pending',need:'judge',
@@ -1749,7 +1769,7 @@ function clpPackCallCard(){
       +'。本次分类结论已绑定该版本快照；法规库后续发布新版本不会改写本次结果。</div></div></div>';
 }
 function renderStep4(){
-  if(!wz.classItems)wz.classItems=buildClassItems();
+  var evaluation=complianceEvaluationEnsure();
   var items=wz.classItems;
   var pend=items.filter(function(c){return c.status==='pending';});
   var hs=items.filter(function(c){return c.status!=='pending'&&c.code.indexOf('H')===0;});
@@ -1836,7 +1856,8 @@ function renderStep4(){
             +pend.filter(function(c){return c.need!=='confirm';}).length+' 判断）›</span>'
         : '<span class="tag green dot-tag">全部已判定</span>')
       +'</div>'
-      +'<div class="card-bd">'+evs+'</div></div>';
+      +'<div class="card-bd">'+evs+'</div></div>'
+    +complianceEvaluationStep4Html(evaluation);
 }
 /* 从标题旁的待判定标签跳转到第一个待判定证据卡并短暂高亮 */
 function jumpPend(){

@@ -195,6 +195,7 @@ function clpSupplementalUpsert(cas,patch,auditInfo){
     if(!Object.keys(resolutions).length)delete CLP_SUBSTANCE_STORE.legacyResolutions[cas];
   }
   CLP_SUBSTANCE_STORE.supplementalByCas[cas]=next;
+  if(typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate('组分补充分类数据变化');
   clpRefreshCompatibilityProjections(clpSystemToday());
   return clpDataCopy(next);
 }
