@@ -162,6 +162,12 @@ function complianceExecuteMethod(code, context){
   shell.intermediates = out.intermediates || {};
   shell.evidence = out.evidence || [];
   shell.messages = out.messages || [];
+  /* 名单方法的条目结果独立于 CLP 分类 items；只透传该方法明确返回的字段。 */
+  if(code === 'M-LIST'){
+    shell.datasetVersions = out.datasetVersions || {};
+    shell.entryResults = out.entryResults || [];
+    shell.summary = out.summary || {};
+  }
   return shell;
 }
 
