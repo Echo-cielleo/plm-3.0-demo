@@ -32,8 +32,23 @@ with sync_playwright() as pw:
     ok(page.evaluate("()=>clpSubstanceProfile('108-88-3').effective.ateState==='unknown'&&clpSubstanceProfile('108-88-3').effective.ateValues.oral===null"), '仅有官方记录时缺失 ATE 保持未知')
     ok(page.evaluate("()=>clpSubstanceProfile('50-00-0').effective.classifications.some(x=>x.hazardClass==='Carc.')&&clpSubstanceProfile('50-00-0').effective.classifications.some(x=>x.hazardClass==='Aquatic Chronic')"), '官方与企业补充分类可共同进入画像')
     ok(page.evaluate("()=>clpSubstanceProfile('50-00-0').provenance['classifications.Carc.|']?.sourceType==='annex-vi'&&clpSubstanceProfile('50-00-0').provenance['classifications.Aquatic Chronic|']?.sourceType==='legacy-engine-baseline'"), '分类保留字段级来源')
+    ok(page.evaluate("""()=>clpSubstanceProfile('111-76-2').conflicts.some(x=>
+      x.field==='classifications.Eye Irrit.|'&&x.officialValue==='2'&&x.supplementalValue==='2A'&&
+      x.effectiveValue==='2'&&x.affectsCalculation===false&&x.supplementalSource.sourceType==='supplier-sds')&&
+      !clpSubstanceProfile('111-76-2','2026-04-30').effective.classifications.some(x=>x.hazardClass==='Eye Irrit.'&&x.category==='2A')"""),
+       '丁醚旧 SDS 展示值 2A 与 Annex VI 类别 2 的差异留痕，不进入计算画像')
     ok(page.evaluate("()=>clpDataConflictList().some(x=>x.cas==='50-00-0'&&x.field==='mFactors.chronic'&&x.officialValue===10&&x.supplementalValue===0&&x.effectiveValue===0&&x.effectiveSource==='legacy-engine-baseline')"), '迁移冲突明确记录旧计算取用值')
     ok(page.evaluate("()=>clpViRowsProjection()[0].cas===clpViRecords()[0].cas&&clpCompProjection()['50-00-0'].mC===clpSubstanceProfile('50-00-0').effective.mFactors.chronic"), '兼容投影从统一数据生成')
+    ok(page.evaluate("""()=>clpParamOf('64-17-5').ate==='经口 10 470 mg/kg（远高于分类阈值）'&&
+      clpParamOf('79-10-7').scl.includes('（低于则免分类）')&&
+      clpParamOf('9009-54-5').uni==='Skin Irrit. 2（聚合物）'&&
+      clpParamOf('111-76-2').scl==='—（统一分类无 SCL，按通用浓度限值执行）'"""), '组分库保留阶段二的分类、SCL 和 ATE 说明文字')
+    ok(page.evaluate("""()=>{
+      showPage('sds:wizard');wzGo(3);var before=wzMissCount();
+      var label=document.querySelector('#wzBody button[onclick="wzFillDemo(1)"]').textContent.trim();
+      wzFillDemo(1);var after=wzMissCount();
+      wz.collected=false;wz.collect={};return before===5&&after===0&&label==='一键填充演示数据';
+    }"""), '默认 SDS 第 3 步为 5 项缺失，原按钮一键填充后归零')
 
     print('=== 跨入口同步 ===')
     ok(page.evaluate("()=>clpLawQueryProjection().length===clpViRecords().length&&lawQueryAllRows().filter(x=>x.sourceType==='clp').length===clpViRecords().length"), '统一查询的 CLP 行为动态投影')
@@ -59,6 +74,16 @@ with sync_playwright() as pw:
     page.evaluate("()=>{showPage('bd:comp');var r=DB_CFG.component.rows.find(x=>x.cas==='50-00-0');dbEdit(r._id)}")
     ok(page.locator('#clp_uni').get_attribute('readonly') is not None and '官方 Annex VI（只读' in page.locator('#mBody').inner_text(), '官方记录在组分编辑器只读展示')
     ok('Annex VI · ATP 22' in page.locator('#mBody').inner_text() and '旧演示基线 · 待专业核验' in page.locator('#mBody').inner_text(), '业务页面展示官方与迁移冲突的可读来源')
+    ok(page.evaluate("""()=>{
+      closeModal();dbEdit(DB_CFG.component.rows.find(x=>x.cas==='9009-54-5')._id);
+      compClpRowsRead();var note=_edClp.classifications[0].note;
+      closeModal();dbEdit(DB_CFG.component.rows.find(x=>x.cas==='79-10-7')._id);
+      compClpRowsRead();var limitNote=_edClp.specificLimits[1].note;
+      closeModal();dbEdit(DB_CFG.component.rows.find(x=>x.cas==='111-76-2')._id);
+      compClpRowsRead();var eye=_edClp.classifications.find(x=>x.hazardClass==='Eye Irrit.');
+      return note==='聚合物'&&limitNote==='低于则免分类'&&eye.sourceType==='supplier-sds'&&eye.usedForCalculation===false;
+    }"""), '组分编辑器读取结构化行时保留说明文字')
+    ok('供应商 SDS' in page.locator('#mBody').inner_text() and '2A' in page.locator('#mBody').inner_text(), '丁醚分类差异在组分编辑器中可见')
     page.evaluate("()=>{closeModal();var r=DB_CFG.component.rows.find(x=>x.cas==='13463-41-7');dbEdit(r._id);compClpClassAdd();compClpLimitAdd();}")
     page.locator('#clp_class_h_4').fill('Skin Irrit.')
     page.locator('#clp_class_cat_4').fill('2')

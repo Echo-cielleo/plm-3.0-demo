@@ -5716,16 +5716,18 @@ var COLLECT_MOCK={
 };
 function clpCollectItems(cas,asOfDate){
   var p=clpSubstanceProfile(cas,asOfDate),e=p.effective,h=e.hazardMap||{},v={};
-  var records=p.officialRecords,carc=e.classifications.filter(function(c){return c.hazardClass==='Carc.';})[0];
-  v[3]=h.skinCorr?'腐蚀 类别'+h.skinCorr:(h.skinIrrit?'刺激 类别'+h.skinIrrit:null);
-  v[4]=h.eyeDamage?'严重损伤 类别'+h.eyeDamage:(h.eyeIrrit?'刺激 类别'+h.eyeIrrit:null);
-  v[5]=carc?'致癌 类别'+carc.category+' ('+clpDataCodes([carc]).join(' / ')+')':null;
+  var records=p.officialRecords,known=!!(records.length||p.supplemental),carc=e.classifications.filter(function(c){return c.hazardClass==='Carc.';})[0];
+  var noClass=known?'当前画像未记录该类别':null;
+  v[3]=h.skinCorr?'腐蚀 类别'+h.skinCorr:(h.skinIrrit?'刺激 类别'+h.skinIrrit:noClass);
+  v[4]=h.eyeDamage?'严重损伤 类别'+h.eyeDamage:(h.eyeIrrit?'刺激 类别'+h.eyeIrrit:noClass);
+  v[5]=carc?'致癌 类别'+carc.category+' ('+clpDataCodes([carc]).join(' / ')+')':noClass;
   v[8]=records.length?'CLP Annex VI '+records.map(function(r){return r.indexNo;}).join(' / '):null;
-  v[9]=e.specificLimits.length?e.specificLimits.map(clpDataLimitText).join('｜'):null;
-  v[10]=e.ateState==='known'&&e.ateValues.oral>0?'经口 '+fmtNum(e.ateValues.oral)+' mg/kg':null;
-  v[11]=e.mFactors.acute>0||e.mFactors.chronic>0?'急性 '+e.mFactors.acute+' / 慢性 '+e.mFactors.chronic:null;
-  v[12]=e.classifications.length?clpDataClassText(e.classifications):null;
-  v[13]=clpDataCodes(e.classifications).join(' / ')||null;
+  v[9]=e.specificLimits.length?e.specificLimits.map(clpDataLimitText).join('｜'):(known?'当前画像未记录 SCL':null);
+  v[10]=e.ateState==='known'&&e.ateValues.oral>0?'经口 '+fmtNum(e.ateValues.oral)+' mg/kg':(e.ateState==='na'?'经评估不适用':null);
+  var mRequired=e.classifications.some(function(c){return (c.hazardClass==='Aquatic Acute'||c.hazardClass==='Aquatic Chronic')&&c.category==='1';});
+  v[11]=e.mFactors.acute>0||e.mFactors.chronic>0?'急性 '+e.mFactors.acute+' / 慢性 '+e.mFactors.chronic:(known&&!mRequired?'不适用（无水生类别 1 分类）':null);
+  v[12]=e.classifications.length?clpDataClassText(e.classifications):(known?'当前画像未记录分类':null);
+  v[13]=clpDataCodes(e.classifications).join(' / ')||(known&&!e.classifications.length?'当前画像未记录 H 码':null);
   return v;
 }
 function clpCollectSource(p,i){
@@ -5949,7 +5951,9 @@ function renderStep3(){
       +'</div></div>'
       +'<div class="card-bd">'
         +'<div class="sub-hd">① 缺失数据<span class="tag '+(missList.length?'red':'green')+'">'+missList.length+' 项</span>'
-      +(missList.some(function(x){var i=DATA_ITEMS.indexOf(x.k);return !clpCollectControlled(i)&&DEMO_FILL.collect[x.k];})?'<button class="btn sm" style="margin-left:8px" onclick="wzFillDemo(1)">一键填充非 CLP 演示数据</button>':'')+'</div>'+missHtml
+      +(missList.some(function(x){var i=DATA_ITEMS.indexOf(x.k);return !clpCollectControlled(i)&&DEMO_FILL.collect[x.k];})
+        ?'<button class="btn sm" style="margin-left:8px" onclick="wzFillDemo(1)">'
+          +(missList.some(function(x){return clpCollectControlled(DATA_ITEMS.indexOf(x.k));})?'一键填充非 CLP 演示数据':'一键填充演示数据')+'</button>':'')+'</div>'+missHtml
         +'<div class="sub-hd">② 仅辅助来源的数据<span class="tag '+(pubOnly.length?'orange':'green')+'">'+pubOnly.length+' 项</span></div>'+pubHtml
         +'<div class="sub-hd">③ 多来源冲突<span class="tag '+(conflicts.length?'orange':'green')+'">'+conflicts.length+' 项</span></div>'+confHtml
         +'<div class="sub-hd">④ 会导致危害类别无法计算的数据<span class="tag '+(blockers.length?'red':'green')+'">'+blockers.length+' 项</span>'
@@ -6213,10 +6217,10 @@ function fmtNum(n){
 /* 由三个数值拼 ATE 展示串（与手写 ate 串互为校验） */
 function ateTxt(p){
   var a=[];
-  if(p.ateO>0)a.push('经口 '+fmtNum(p.ateO)+' mg/kg');
+  if(p.ateO>0)a.push('经口 '+(p.ateOralQualifier||'')+fmtNum(p.ateO)+' mg/kg');
   if(p.ateD>0)a.push('经皮 '+fmtNum(p.ateD)+' mg/kg');
   if(p.ateI>0)a.push('吸入 '+fmtNum(p.ateI)+' mg/L');
-  return a.length?a.join('｜'):'—';
+  return a.length?a.join('｜')+(p.ateNote?'（'+p.ateNote+'）':''):'—';
 }
 /* 取某组分的分类参数视图（SDS 侧只读入口）
    组分库里没有该物质 → 全部返回 unmaintained，由调用方引导去补录 */
@@ -6224,10 +6228,10 @@ function clpParamOf(cas){
   var profile=clpSubstanceProfile(cas,(wz.project&&wz.project.date)||clpSystemToday());
   var e=profile.effective,s=profile.supplemental;
   var p=profile.officialRecords.length||s?{
-    name:profile.name,uni:clpDataClassText(e.classifications),scl:e.specificLimits.map(clpDataLimitShortText).join('｜')||'—',
+    name:profile.name,uni:clpDataClassText(e.classifications),scl:e.specificLimits.map(clpDataLimitShortText).join('｜')||(e.specificLimitNote?'—（'+e.specificLimitNote+'）':'—'),
     mM:e.mFactors.acute,mC:e.mFactors.chronic,mSrc:e.mSource||'',lc50:e.lc50,noec:e.noec,
     ateO:e.ateValues.oral,ateD:e.ateValues.dermal,ateI:e.ateValues.inhalation,
-    ateState:e.ateState,aqState:e.aquaticState
+    ateOralQualifier:e.ateOralQualifier,ateNote:e.ateNote,ateState:e.ateState,aqState:e.aquaticState
   }:null;
   if(!p)return{name:'—',uni:'未维护统一分类',scl:'—',m:'—',mM:0,mC:0,mSrc:'',mSrcTxt:'未指定',
     lc50:'',noec:'',ate:'—',ateO:0,ateD:0,ateI:0,
@@ -7645,19 +7649,24 @@ function compClpCollect(){
 }
 function compClpRowsRead(){
   if(!$('clpClassRows'))return;
-  _edClp.classifications=(_edClp.classifications||[]).map(function(_,i){
-    return {hazardClass:($('clp_class_h_'+i)||{}).value||'',category:($('clp_class_cat_'+i)||{}).value||'',
-      route:($('clp_class_route_'+i)||{}).value||'',hCodes:(($('clp_class_codes_'+i)||{}).value||'').split(/[\s,/]+/).filter(Boolean)};
+  _edClp.classifications=(_edClp.classifications||[]).map(function(old,i){
+    var row={hazardClass:($('clp_class_h_'+i)||{}).value||'',category:($('clp_class_cat_'+i)||{}).value||'',
+      route:($('clp_class_route_'+i)||{}).value||'',hCodes:(($('clp_class_codes_'+i)||{}).value||'').split(/[\s,/]+/).filter(Boolean),note:old.note||''};
+    if(old.sourceType&&old.hazardClass===row.hazardClass&&old.category===row.category&&old.route===row.route&&
+       JSON.stringify(old.hCodes)===JSON.stringify(row.hCodes)){
+      row.sourceType=old.sourceType;row.sourceRef=old.sourceRef;row.usedForCalculation=old.usedForCalculation;
+    }
+    return row;
   });
-  _edClp.specificLimits=(_edClp.specificLimits||[]).map(function(_,i){
+  _edClp.specificLimits=(_edClp.specificLimits||[]).map(function(old,i){
     return {hazardClass:($('clp_limit_h_'+i)||{}).value||'',category:($('clp_limit_cat_'+i)||{}).value||'',
-      hCode:($('clp_limit_code_'+i)||{}).value||'',operator:'>=',value:parseFloat(($('clp_limit_val_'+i)||{}).value),unit:'%'};
+      hCode:($('clp_limit_code_'+i)||{}).value||'',operator:'>=',value:parseFloat(($('clp_limit_val_'+i)||{}).value),unit:'%',note:old.note||''};
   });
 }
 function compClpSummary(){
   compClpRowsRead();
   if($('clp_uni'))$('clp_uni').value=clpDataClassText(_edClp.classifications);
-  if($('clp_scl'))$('clp_scl').value=(_edClp.specificLimits||[]).map(clpDataLimitText).join('｜')||'—';
+  if($('clp_scl'))$('clp_scl').value=(_edClp.specificLimits||[]).map(clpDataLimitText).join('｜')||(_edClp.specificLimitNote?'—（'+_edClp.specificLimitNote+'）':'—');
 }
 function compClpClassAdd(){compClpRowsRead();_edClp.classifications.push(clpDataClass('','',null));compClpRender();}
 function compClpClassDel(i){compClpRowsRead();_edClp.classifications.splice(i,1);compClpRender();}
@@ -7689,7 +7698,7 @@ function compClpRender(){
   var box=$('compClpBox'); if(!box)return;
   var p=_edClp||{},v=clpSubstanceProfile(p.cas||(($('fx_cas')||{}).value)||'');
   var official=v.officialRecords.map(function(r){return r.indexNo+' · '+clpDataClassText(r.classifications)+' · '+r.source.version;}).join('；');
-  var conflict=v.conflicts.map(function(c){return clpDataFieldLabel(c.field)+'：Annex VI '+c.officialValue+' / 企业补充 '+c.supplementalValue+'；当前取用 '+c.effectiveValue+'（'+clpDataSourceLabel({sourceType:c.effectiveSource,sourceVersion:v.dataVersion.annexViVersion})+'）';}).join('；');
+  var conflict=v.conflicts.map(function(c){return clpDataFieldLabel(c.field)+'：'+clpDataSourceLabel(c.officialSource)+' '+c.officialValue+' / '+clpDataSourceLabel(c.supplementalSource)+' '+c.supplementalValue+'；当前取用 '+c.effectiveValue+'（'+clpDataSourceLabel({sourceType:c.effectiveSource,sourceVersion:v.dataVersion.annexViVersion})+'）'+(c.note?'；'+c.note:'');}).join('；');
   var classSrc=(v.officialRecords.length?'Annex VI · '+v.dataVersion.annexViVersion:'')+(v.supplemental?(v.officialRecords.length?' + ':'')+clpDataSourceLabel({sourceType:v.supplemental.sourceType,sourceRef:v.supplemental.sourceRef,sourceVersion:v.supplemental.revision}):'');
   var fieldSrc='分类：'+(classSrc||'来源未维护')+'；SCL：'+clpDataSourceLabel(v.provenance['specificLimits.Skin Sens.|1']||v.provenance.specificLimits)+'；ATE：'+clpDataSourceLabel(v.provenance['ateValues.oral'])+'；M 因子：'+clpDataSourceLabel(v.provenance['mFactors.chronic']);
   var sel=function(v,arr){return arr.map(function(o){
@@ -7706,7 +7715,7 @@ function compClpRender(){
     +'<div class="field span2"><label>企业补充分类（结构化摘要）</label>'
       +'<input class="ctrl" id="clp_uni" readonly value="'+esc(clpDataClassText(p.classifications||[]))+'"></div>'
     +'<div class="field span2"><label>企业补充 SCL（结构化摘要）</label>'
-      +'<input class="ctrl" id="clp_scl" readonly value="'+esc((p.specificLimits||[]).map(clpDataLimitText).join('｜')||'—')+'"></div>'
+      +'<input class="ctrl" id="clp_scl" readonly value="'+esc((p.specificLimits||[]).map(clpDataLimitText).join('｜')||(p.specificLimitNote?'—（'+p.specificLimitNote+'）':'—'))+'"></div>'
     +'<div class="field span2"><label>当前计算取用 / 来源</label><div class="notice grey">'+esc(v.dataVersion.annexViVersion||'未列入 Annex VI')+' · '+esc(v.dataVersion.supplementalRevision||'无企业补充')+'<br>'+esc(fieldSrc)+'</div></div>'
     +(conflict?'<div class="field span2"><div class="notice warn">待专业核验冲突：'+esc(conflict)+'</div></div>':'')
     +'</div>'
@@ -11647,7 +11656,7 @@ function complianceExecuteMethod(code, context){
   var fieldPrefix={'CLP-M-ATE-SUM':['ateValues.'],'CLP-M-GCL-SUM':['classifications.','specificLimits.'],
     'CLP-M-SCL':['specificLimits.','classifications.'],'CLP-M-MFACTOR':['mFactors.','classifications.']}[code]||[];
   var unresolved=(context.components||[]).reduce(function(a,c){return a.concat((c.conflicts||[]).filter(function(x){
-    return x.effectiveSource!=='legacy-engine-baseline'&&fieldPrefix.some(function(p){return x.field.indexOf(p)===0;});
+    return x.affectsCalculation!==false&&x.effectiveSource!=='legacy-engine-baseline'&&fieldPrefix.some(function(p){return x.field.indexOf(p)===0;});
   }));},[]);
   if(unresolved.length){
     shell.status='BLOCKED';shell.messages.push('组分分类参数存在待专业核验冲突，当前方法暂不能自动计算。');
@@ -12894,8 +12903,8 @@ function clpDataLimit(hazardClass,category,hCode,value,note){
 function clpDataLimitText(x){
   return x.hazardClass+' '+x.category+(x.hCode?'; '+x.hCode+': C':'')+' ≥ '+x.value+'%'+(x.note?'（'+x.note+'）':'');
 }
-function clpDataLimitShortText(x){return x.hazardClass+' '+x.category+' ≥ '+x.value+'%';}
-function clpDataClassText(rows){return (rows||[]).map(function(x){return x.hazardClass+' '+x.category;}).join(' / ')||'不分类';}
+function clpDataLimitShortText(x){return x.hazardClass+' '+x.category+' ≥ '+x.value+'%'+(x.note?'（'+x.note+'）':'');}
+function clpDataClassText(rows){return (rows||[]).map(function(x){return x.hazardClass+' '+x.category+(x.note?'（'+x.note+'）':'');}).join(' / ')||'不分类';}
 function clpDataCodes(rows){
   var out=[];(rows||[]).forEach(function(x){(x.hCodes||[]).forEach(function(h){if(out.indexOf(h)<0)out.push(h);});});
   return out;
@@ -12904,6 +12913,7 @@ function clpDataSourceLabel(src){
   if(!src)return '来源未维护';
   if(src.sourceType==='annex-vi')return 'Annex VI · '+src.sourceVersion;
   if(src.sourceType==='legacy-engine-baseline')return '旧演示基线 · 待专业核验';
+  if(src.sourceType==='supplier-sds')return '供应商 SDS · '+(src.sourceRef||'来源未维护');
   if(src.sourceType==='unresolved')return '待专业核验，暂停自动取用';
   return '企业补充 · '+(src.sourceRef||src.sourceVersion||'来源未维护');
 }
@@ -12948,17 +12958,18 @@ var CLP_SUPPLEMENTAL_SEED={
     mFactors:{acute:0,chronic:0},mSource:'',ateValues:{oral:100,dermal:300,inhalation:3},ateState:'known',aquaticState:'unknown',lc50:'',noec:''},
   '79-10-7':{name:'丙烯酸',classifications:[clpDataClass('Aquatic Chronic','3','H412'),clpDataClass('Eye Dam.','1','H318')],
     hazardMap:{acuteOral:true,skinCorr:'1A',eyeDamage:'1',aquaticChronic:'3'},
-    specificLimits:[clpDataLimit('Skin Irrit.','2','',1),clpDataLimit('Eye Irrit.','2','',1)],
+    specificLimits:[clpDataLimit('Skin Irrit.','2','',1),clpDataLimit('Eye Irrit.','2','',1,'低于则免分类')],
     mFactors:{acute:0,chronic:0},mSource:'',ateValues:{oral:500,dermal:1100,inhalation:0},ateState:'known',aquaticState:'known',lc50:'',noec:''},
-  '111-76-2':{name:'乙二醇单丁醚',classifications:[clpDataClass('Skin Irrit.','2','H315'),clpDataClass('Aquatic Chronic','3','H412')],
-    hazardMap:{acuteOral:true,skinIrrit:'2',eyeIrrit:'2',aquaticChronic:'3'},specificLimits:[],
+  '111-76-2':{name:'乙二醇单丁醚',classifications:[clpDataClass('Skin Irrit.','2','H315'),clpDataClass('Aquatic Chronic','3','H412'),
+      Object.assign(clpDataClass('Eye Irrit.','2A','H319'),{sourceType:'supplier-sds',sourceRef:'阶段二 SDS 汇集演示值',usedForCalculation:false})],
+    hazardMap:{acuteOral:true,skinIrrit:'2',eyeIrrit:'2',aquaticChronic:'3'},specificLimits:[],specificLimitNote:'统一分类无 SCL，按通用浓度限值执行',
     mFactors:{acute:0,chronic:0},mSource:'',ateValues:{oral:500,dermal:1100,inhalation:11},ateState:'known',aquaticState:'unknown',lc50:'',noec:''},
   '64-17-5':{name:'乙醇',classifications:[],hazardMap:{eyeIrrit:'2'},specificLimits:[clpDataLimit('Eye Irrit.','2','',10)],
-    mFactors:{acute:0,chronic:0},mSource:'',ateValues:{oral:10470,dermal:0,inhalation:0},ateState:'known',aquaticState:'known',lc50:'',noec:''},
-  '9009-54-5':{name:'聚氨酯预聚体',classifications:[clpDataClass('Skin Irrit.','2','H315')],hazardMap:{skinIrrit:'2'},specificLimits:[],
+    mFactors:{acute:0,chronic:0},mSource:'',ateValues:{oral:10470,dermal:0,inhalation:0},ateNote:'远高于分类阈值',ateState:'known',aquaticState:'known',lc50:'',noec:''},
+  '9009-54-5':{name:'聚氨酯预聚体',classifications:[Object.assign(clpDataClass('Skin Irrit.','2','H315'),{note:'聚合物'})],hazardMap:{skinIrrit:'2'},specificLimits:[],
     mFactors:{acute:0,chronic:0},mSource:'',ateValues:{oral:0,dermal:0,inhalation:0},ateState:'na',aquaticState:'unknown',lc50:'',noec:''},
   '7732-18-5':{name:'水',classifications:[],hazardMap:{},specificLimits:[],mFactors:{acute:0,chronic:0},mSource:'',
-    ateValues:{oral:90000,dermal:0,inhalation:0},ateState:'known',aquaticState:'known',lc50:'',noec:''},
+    ateValues:{oral:90000,dermal:0,inhalation:0},ateOralQualifier:'> ',ateNote:'远高于分类阈值，不分类',ateState:'known',aquaticState:'known',lc50:'',noec:''},
   '13463-41-7':{name:'吡硫翁锌',classifications:[clpDataClass('Acute Tox.','3','H301','oral'),clpDataClass('Eye Dam.','1','H318'),clpDataClass('Aquatic Acute','1','H400'),clpDataClass('Aquatic Chronic','1','H410')],
     hazardMap:{},specificLimits:[clpDataLimit('Eye Dam.','1','',0.05)],mFactors:{acute:100,chronic:100},mSource:'calc',
     ateValues:{oral:100,dermal:200,inhalation:0.5},ateState:'known',aquaticState:'known',lc50:'0.0026',noec:'0.0008'},
@@ -13052,6 +13063,9 @@ function clpSupplementalUpsert(cas,patch,auditInfo){
   clpSubstanceStoreInit();if(!cas)throw Error('请先填写 CAS 号');
   var old=CLP_SUBSTANCE_STORE.supplementalByCas[cas]||{cas:cas,classifications:[],hazardMap:{},specificLimits:[],mFactors:{acute:null,chronic:null},ateValues:{oral:null,dermal:null,inhalation:null},ateState:'unknown',aquaticState:'unknown'};
   var next=Object.assign(clpDataCopy(old),clpDataCopy(patch||{}));next.cas=cas;
+  if(patch&&patch.ateValues&&['oral','dermal','inhalation'].some(function(k){return Object.prototype.hasOwnProperty.call(patch.ateValues,k)&&patch.ateValues[k]!==old.ateValues[k];})){
+    next.ateOralQualifier='';next.ateNote='';
+  }
   if((next.classifications||[]).some(function(x){return !x.hazardClass||!x.category||!Array.isArray(x.hCodes)||(x.hazardClass==='Acute Tox.'&&!x.route);}))throw Error('企业补充分类需填写危害类别、级别、H 码数组与急性毒性途径');
   if((next.specificLimits||[]).some(function(x){return !x.hazardClass||!x.category||!isFinite(x.value)||x.value<0||x.unit!=='%';}))throw Error('SCL 需填写结构化类别、有效阈值与百分比单位');
   if(['acute','chronic'].some(function(k){var v=next.mFactors&&next.mFactors[k];return v!=null&&(!isFinite(v)||v<0);})||
@@ -13087,21 +13101,24 @@ function clpSubstanceProfile(cas,asOfDate){
   var eff=out.effective,prov=out.provenance,srcOfficial=function(r){return {sourceType:'annex-vi',sourceVersion:dataset.version,sourceRef:r.source.clause,
     sourceFile:dataset.source.sourceFile,sourceDate:dataset.source.sourceDate,indexNo:r.indexNo};};
   if(supp){
-    eff.classifications=clpDataCopy(supp.classifications||[]);eff.hazardMap=clpDataCopy(supp.hazardMap||{});
+    eff.classifications=clpDataCopy((supp.classifications||[]).filter(function(c){return c.usedForCalculation!==false;}));
+    eff.hazardMap=clpDataCopy(supp.hazardMap||{});
     eff.specificLimits=clpDataCopy(supp.specificLimits||[]);eff.mFactors=clpDataCopy(supp.mFactors||{acute:0,chronic:0});
     eff.ateValues=clpDataCopy(supp.ateValues||{oral:0,dermal:0,inhalation:0});eff.ateState=supp.ateState||'unknown';eff.aquaticState=supp.aquaticState||'unknown';
     eff.lc50=supp.lc50||'';eff.noec=supp.noec||'';eff.mSource=supp.mSource||'';
+    eff.specificLimitNote=supp.specificLimitNote||'';eff.ateOralQualifier=supp.ateOralQualifier||'';eff.ateNote=supp.ateNote||'';
     ['classifications','specificLimits','mFactors.acute','mFactors.chronic','ateValues.oral','ateValues.dermal','ateValues.inhalation','ateState','aquaticState','lc50','noec'].forEach(function(k){
       prov[k]={sourceType:supp.sourceType,sourceVersion:supp.revision,sourceRef:supp.sourceRef};
     });
     Object.keys(supp.hazardMap||{}).forEach(function(k){prov['hazardMap.'+k]=prov.classifications;});
-    (supp.classifications||[]).forEach(function(c){prov['classifications.'+c.hazardClass+'|'+(c.route||'')]=prov.classifications;});
+    (supp.classifications||[]).forEach(function(c){prov['classifications.'+c.hazardClass+'|'+(c.route||'')]=c.sourceType
+      ?{sourceType:c.sourceType,sourceVersion:supp.revision,sourceRef:c.sourceRef}:prov.classifications;});
     (supp.specificLimits||[]).forEach(function(x){prov['specificLimits.'+x.hazardClass+'|'+x.category]=prov.specificLimits;});
   }
   var officialClasses={};
   official.forEach(function(r){
     r.classifications.forEach(function(c){
-      var key=c.hazardClass+'|'+(c.route||''),hit=eff.classifications.filter(function(x){return x.hazardClass+'|'+(x.route||'')===key;})[0];
+      var key=c.hazardClass+'|'+(c.route||''),hit=(supp&&supp.classifications||[]).filter(function(x){return x.hazardClass+'|'+(x.route||'')===key;})[0];
       if(officialClasses[key]&&officialClasses[key].category!==c.category){
         out.conflicts.push({id:cas+':official:'+key,cas:cas,field:'classifications.'+key,
           officialValue:[officialClasses[key].category,c.category],supplementalValue:null,effectiveValue:null,effectiveSource:'unresolved',
@@ -13109,7 +13126,11 @@ function clpSubstanceProfile(cas,asOfDate){
         delete eff.hazardMap[(clpDataHazardKey(c)||[])[0]];return;
       }
       officialClasses[key]={category:c.category,source:srcOfficial(r)};
-      if(hit&&hit.category!==c.category)out.conflicts.push({id:cas+':classifications:'+key,cas:cas,field:'classifications.'+key,officialValue:c.category,supplementalValue:hit.category,effectiveValue:c.category,effectiveSource:'annex-vi',status:'待专业核验',officialSource:srcOfficial(r),supplementalSource:prov.classifications});
+      if(hit&&hit.category!==c.category)out.conflicts.push({id:cas+':classifications:'+key,cas:cas,field:'classifications.'+key,
+        officialValue:c.category,supplementalValue:hit.category,effectiveValue:c.category,effectiveSource:'annex-vi',
+        affectsCalculation:hit.usedForCalculation!==false,status:'待专业核验',officialSource:srcOfficial(r),
+        supplementalSource:prov['classifications.'+key]||prov.classifications,
+        note:hit.usedForCalculation===false?'旧 SDS 汇集展示值，未参与阶段二混合物计算':''});
       eff.classifications=eff.classifications.filter(function(x){return x.hazardClass+'|'+(x.route||'')!==key;});eff.classifications.push(clpDataCopy(c));
       var h=clpDataHazardKey(c);if(h){eff.hazardMap[h[0]]=h[1];prov['hazardMap.'+h[0]]=srcOfficial(r);}
       prov['classifications.'+key]=srcOfficial(r);
@@ -13156,9 +13177,10 @@ function clpCompProjection(asOfDate){
   var out={},cas={};clpViRecords(asOfDate).forEach(function(r){cas[r.cas]=true;});
   Object.keys(CLP_SUBSTANCE_STORE.supplementalByCas).forEach(function(k){cas[k]=true;});
   Object.keys(cas).forEach(function(k){var p=clpSubstanceProfile(k,asOfDate),e=p.effective,s=p.supplemental;
-    out[k]={name:p.name,uni:clpDataClassText(e.classifications),scl:e.specificLimits.map(clpDataLimitShortText).join('｜')||'—',
+    out[k]={name:p.name,uni:clpDataClassText(e.classifications),scl:e.specificLimits.map(clpDataLimitShortText).join('｜')||(e.specificLimitNote?'—（'+e.specificLimitNote+'）':'—'),
       haz:clpDataCopy(e.hazardMap),mM:e.mFactors.acute||0,mC:e.mFactors.chronic||0,mSrc:e.mSource||'',lc50:e.lc50,noec:e.noec,
-      ateO:e.ateValues.oral||0,ateD:e.ateValues.dermal||0,ateI:e.ateValues.inhalation||0,ateState:e.ateState,aqState:e.aquaticState};
+      ateO:e.ateValues.oral||0,ateD:e.ateValues.dermal||0,ateI:e.ateValues.inhalation||0,
+      ateOralQualifier:e.ateOralQualifier,ateNote:e.ateNote,ateState:e.ateState,aqState:e.aquaticState};
     out[k].ate=ateTxt(out[k]);
     if(s&&s.ateState==='na')out[k].ate='—（经评估不适用急性毒性估算）';
   });return out;

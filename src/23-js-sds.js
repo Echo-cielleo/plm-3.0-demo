@@ -699,16 +699,18 @@ var COLLECT_MOCK={
 };
 function clpCollectItems(cas,asOfDate){
   var p=clpSubstanceProfile(cas,asOfDate),e=p.effective,h=e.hazardMap||{},v={};
-  var records=p.officialRecords,carc=e.classifications.filter(function(c){return c.hazardClass==='Carc.';})[0];
-  v[3]=h.skinCorr?'腐蚀 类别'+h.skinCorr:(h.skinIrrit?'刺激 类别'+h.skinIrrit:null);
-  v[4]=h.eyeDamage?'严重损伤 类别'+h.eyeDamage:(h.eyeIrrit?'刺激 类别'+h.eyeIrrit:null);
-  v[5]=carc?'致癌 类别'+carc.category+' ('+clpDataCodes([carc]).join(' / ')+')':null;
+  var records=p.officialRecords,known=!!(records.length||p.supplemental),carc=e.classifications.filter(function(c){return c.hazardClass==='Carc.';})[0];
+  var noClass=known?'当前画像未记录该类别':null;
+  v[3]=h.skinCorr?'腐蚀 类别'+h.skinCorr:(h.skinIrrit?'刺激 类别'+h.skinIrrit:noClass);
+  v[4]=h.eyeDamage?'严重损伤 类别'+h.eyeDamage:(h.eyeIrrit?'刺激 类别'+h.eyeIrrit:noClass);
+  v[5]=carc?'致癌 类别'+carc.category+' ('+clpDataCodes([carc]).join(' / ')+')':noClass;
   v[8]=records.length?'CLP Annex VI '+records.map(function(r){return r.indexNo;}).join(' / '):null;
-  v[9]=e.specificLimits.length?e.specificLimits.map(clpDataLimitText).join('｜'):null;
-  v[10]=e.ateState==='known'&&e.ateValues.oral>0?'经口 '+fmtNum(e.ateValues.oral)+' mg/kg':null;
-  v[11]=e.mFactors.acute>0||e.mFactors.chronic>0?'急性 '+e.mFactors.acute+' / 慢性 '+e.mFactors.chronic:null;
-  v[12]=e.classifications.length?clpDataClassText(e.classifications):null;
-  v[13]=clpDataCodes(e.classifications).join(' / ')||null;
+  v[9]=e.specificLimits.length?e.specificLimits.map(clpDataLimitText).join('｜'):(known?'当前画像未记录 SCL':null);
+  v[10]=e.ateState==='known'&&e.ateValues.oral>0?'经口 '+fmtNum(e.ateValues.oral)+' mg/kg':(e.ateState==='na'?'经评估不适用':null);
+  var mRequired=e.classifications.some(function(c){return (c.hazardClass==='Aquatic Acute'||c.hazardClass==='Aquatic Chronic')&&c.category==='1';});
+  v[11]=e.mFactors.acute>0||e.mFactors.chronic>0?'急性 '+e.mFactors.acute+' / 慢性 '+e.mFactors.chronic:(known&&!mRequired?'不适用（无水生类别 1 分类）':null);
+  v[12]=e.classifications.length?clpDataClassText(e.classifications):(known?'当前画像未记录分类':null);
+  v[13]=clpDataCodes(e.classifications).join(' / ')||(known&&!e.classifications.length?'当前画像未记录 H 码':null);
   return v;
 }
 function clpCollectSource(p,i){
@@ -932,7 +934,9 @@ function renderStep3(){
       +'</div></div>'
       +'<div class="card-bd">'
         +'<div class="sub-hd">① 缺失数据<span class="tag '+(missList.length?'red':'green')+'">'+missList.length+' 项</span>'
-      +(missList.some(function(x){var i=DATA_ITEMS.indexOf(x.k);return !clpCollectControlled(i)&&DEMO_FILL.collect[x.k];})?'<button class="btn sm" style="margin-left:8px" onclick="wzFillDemo(1)">一键填充非 CLP 演示数据</button>':'')+'</div>'+missHtml
+      +(missList.some(function(x){var i=DATA_ITEMS.indexOf(x.k);return !clpCollectControlled(i)&&DEMO_FILL.collect[x.k];})
+        ?'<button class="btn sm" style="margin-left:8px" onclick="wzFillDemo(1)">'
+          +(missList.some(function(x){return clpCollectControlled(DATA_ITEMS.indexOf(x.k));})?'一键填充非 CLP 演示数据':'一键填充演示数据')+'</button>':'')+'</div>'+missHtml
         +'<div class="sub-hd">② 仅辅助来源的数据<span class="tag '+(pubOnly.length?'orange':'green')+'">'+pubOnly.length+' 项</span></div>'+pubHtml
         +'<div class="sub-hd">③ 多来源冲突<span class="tag '+(conflicts.length?'orange':'green')+'">'+conflicts.length+' 项</span></div>'+confHtml
         +'<div class="sub-hd">④ 会导致危害类别无法计算的数据<span class="tag '+(blockers.length?'red':'green')+'">'+blockers.length+' 项</span>'
@@ -1196,10 +1200,10 @@ function fmtNum(n){
 /* 由三个数值拼 ATE 展示串（与手写 ate 串互为校验） */
 function ateTxt(p){
   var a=[];
-  if(p.ateO>0)a.push('经口 '+fmtNum(p.ateO)+' mg/kg');
+  if(p.ateO>0)a.push('经口 '+(p.ateOralQualifier||'')+fmtNum(p.ateO)+' mg/kg');
   if(p.ateD>0)a.push('经皮 '+fmtNum(p.ateD)+' mg/kg');
   if(p.ateI>0)a.push('吸入 '+fmtNum(p.ateI)+' mg/L');
-  return a.length?a.join('｜'):'—';
+  return a.length?a.join('｜')+(p.ateNote?'（'+p.ateNote+'）':''):'—';
 }
 /* 取某组分的分类参数视图（SDS 侧只读入口）
    组分库里没有该物质 → 全部返回 unmaintained，由调用方引导去补录 */
@@ -1207,10 +1211,10 @@ function clpParamOf(cas){
   var profile=clpSubstanceProfile(cas,(wz.project&&wz.project.date)||clpSystemToday());
   var e=profile.effective,s=profile.supplemental;
   var p=profile.officialRecords.length||s?{
-    name:profile.name,uni:clpDataClassText(e.classifications),scl:e.specificLimits.map(clpDataLimitShortText).join('｜')||'—',
+    name:profile.name,uni:clpDataClassText(e.classifications),scl:e.specificLimits.map(clpDataLimitShortText).join('｜')||(e.specificLimitNote?'—（'+e.specificLimitNote+'）':'—'),
     mM:e.mFactors.acute,mC:e.mFactors.chronic,mSrc:e.mSource||'',lc50:e.lc50,noec:e.noec,
     ateO:e.ateValues.oral,ateD:e.ateValues.dermal,ateI:e.ateValues.inhalation,
-    ateState:e.ateState,aqState:e.aquaticState
+    ateOralQualifier:e.ateOralQualifier,ateNote:e.ateNote,ateState:e.ateState,aqState:e.aquaticState
   }:null;
   if(!p)return{name:'—',uni:'未维护统一分类',scl:'—',m:'—',mM:0,mC:0,mSrc:'',mSrcTxt:'未指定',
     lc50:'',noec:'',ate:'—',ateO:0,ateD:0,ateI:0,
@@ -2628,19 +2632,24 @@ function compClpCollect(){
 }
 function compClpRowsRead(){
   if(!$('clpClassRows'))return;
-  _edClp.classifications=(_edClp.classifications||[]).map(function(_,i){
-    return {hazardClass:($('clp_class_h_'+i)||{}).value||'',category:($('clp_class_cat_'+i)||{}).value||'',
-      route:($('clp_class_route_'+i)||{}).value||'',hCodes:(($('clp_class_codes_'+i)||{}).value||'').split(/[\s,/]+/).filter(Boolean)};
+  _edClp.classifications=(_edClp.classifications||[]).map(function(old,i){
+    var row={hazardClass:($('clp_class_h_'+i)||{}).value||'',category:($('clp_class_cat_'+i)||{}).value||'',
+      route:($('clp_class_route_'+i)||{}).value||'',hCodes:(($('clp_class_codes_'+i)||{}).value||'').split(/[\s,/]+/).filter(Boolean),note:old.note||''};
+    if(old.sourceType&&old.hazardClass===row.hazardClass&&old.category===row.category&&old.route===row.route&&
+       JSON.stringify(old.hCodes)===JSON.stringify(row.hCodes)){
+      row.sourceType=old.sourceType;row.sourceRef=old.sourceRef;row.usedForCalculation=old.usedForCalculation;
+    }
+    return row;
   });
-  _edClp.specificLimits=(_edClp.specificLimits||[]).map(function(_,i){
+  _edClp.specificLimits=(_edClp.specificLimits||[]).map(function(old,i){
     return {hazardClass:($('clp_limit_h_'+i)||{}).value||'',category:($('clp_limit_cat_'+i)||{}).value||'',
-      hCode:($('clp_limit_code_'+i)||{}).value||'',operator:'>=',value:parseFloat(($('clp_limit_val_'+i)||{}).value),unit:'%'};
+      hCode:($('clp_limit_code_'+i)||{}).value||'',operator:'>=',value:parseFloat(($('clp_limit_val_'+i)||{}).value),unit:'%',note:old.note||''};
   });
 }
 function compClpSummary(){
   compClpRowsRead();
   if($('clp_uni'))$('clp_uni').value=clpDataClassText(_edClp.classifications);
-  if($('clp_scl'))$('clp_scl').value=(_edClp.specificLimits||[]).map(clpDataLimitText).join('｜')||'—';
+  if($('clp_scl'))$('clp_scl').value=(_edClp.specificLimits||[]).map(clpDataLimitText).join('｜')||(_edClp.specificLimitNote?'—（'+_edClp.specificLimitNote+'）':'—');
 }
 function compClpClassAdd(){compClpRowsRead();_edClp.classifications.push(clpDataClass('','',null));compClpRender();}
 function compClpClassDel(i){compClpRowsRead();_edClp.classifications.splice(i,1);compClpRender();}
@@ -2672,7 +2681,7 @@ function compClpRender(){
   var box=$('compClpBox'); if(!box)return;
   var p=_edClp||{},v=clpSubstanceProfile(p.cas||(($('fx_cas')||{}).value)||'');
   var official=v.officialRecords.map(function(r){return r.indexNo+' · '+clpDataClassText(r.classifications)+' · '+r.source.version;}).join('；');
-  var conflict=v.conflicts.map(function(c){return clpDataFieldLabel(c.field)+'：Annex VI '+c.officialValue+' / 企业补充 '+c.supplementalValue+'；当前取用 '+c.effectiveValue+'（'+clpDataSourceLabel({sourceType:c.effectiveSource,sourceVersion:v.dataVersion.annexViVersion})+'）';}).join('；');
+  var conflict=v.conflicts.map(function(c){return clpDataFieldLabel(c.field)+'：'+clpDataSourceLabel(c.officialSource)+' '+c.officialValue+' / '+clpDataSourceLabel(c.supplementalSource)+' '+c.supplementalValue+'；当前取用 '+c.effectiveValue+'（'+clpDataSourceLabel({sourceType:c.effectiveSource,sourceVersion:v.dataVersion.annexViVersion})+'）'+(c.note?'；'+c.note:'');}).join('；');
   var classSrc=(v.officialRecords.length?'Annex VI · '+v.dataVersion.annexViVersion:'')+(v.supplemental?(v.officialRecords.length?' + ':'')+clpDataSourceLabel({sourceType:v.supplemental.sourceType,sourceRef:v.supplemental.sourceRef,sourceVersion:v.supplemental.revision}):'');
   var fieldSrc='分类：'+(classSrc||'来源未维护')+'；SCL：'+clpDataSourceLabel(v.provenance['specificLimits.Skin Sens.|1']||v.provenance.specificLimits)+'；ATE：'+clpDataSourceLabel(v.provenance['ateValues.oral'])+'；M 因子：'+clpDataSourceLabel(v.provenance['mFactors.chronic']);
   var sel=function(v,arr){return arr.map(function(o){
@@ -2689,7 +2698,7 @@ function compClpRender(){
     +'<div class="field span2"><label>企业补充分类（结构化摘要）</label>'
       +'<input class="ctrl" id="clp_uni" readonly value="'+esc(clpDataClassText(p.classifications||[]))+'"></div>'
     +'<div class="field span2"><label>企业补充 SCL（结构化摘要）</label>'
-      +'<input class="ctrl" id="clp_scl" readonly value="'+esc((p.specificLimits||[]).map(clpDataLimitText).join('｜')||'—')+'"></div>'
+      +'<input class="ctrl" id="clp_scl" readonly value="'+esc((p.specificLimits||[]).map(clpDataLimitText).join('｜')||(p.specificLimitNote?'—（'+p.specificLimitNote+'）':'—'))+'"></div>'
     +'<div class="field span2"><label>当前计算取用 / 来源</label><div class="notice grey">'+esc(v.dataVersion.annexViVersion||'未列入 Annex VI')+' · '+esc(v.dataVersion.supplementalRevision||'无企业补充')+'<br>'+esc(fieldSrc)+'</div></div>'
     +(conflict?'<div class="field span2"><div class="notice warn">待专业核验冲突：'+esc(conflict)+'</div></div>':'')
     +'</div>'

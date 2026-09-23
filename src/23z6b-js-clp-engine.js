@@ -140,7 +140,7 @@ function complianceExecuteMethod(code, context){
   var fieldPrefix={'CLP-M-ATE-SUM':['ateValues.'],'CLP-M-GCL-SUM':['classifications.','specificLimits.'],
     'CLP-M-SCL':['specificLimits.','classifications.'],'CLP-M-MFACTOR':['mFactors.','classifications.']}[code]||[];
   var unresolved=(context.components||[]).reduce(function(a,c){return a.concat((c.conflicts||[]).filter(function(x){
-    return x.effectiveSource!=='legacy-engine-baseline'&&fieldPrefix.some(function(p){return x.field.indexOf(p)===0;});
+    return x.affectsCalculation!==false&&x.effectiveSource!=='legacy-engine-baseline'&&fieldPrefix.some(function(p){return x.field.indexOf(p)===0;});
   }));},[]);
   if(unresolved.length){
     shell.status='BLOCKED';shell.messages.push('组分分类参数存在待专业核验冲突，当前方法暂不能自动计算。');

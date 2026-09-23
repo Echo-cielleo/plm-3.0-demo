@@ -193,14 +193,16 @@ with sync_playwright() as p:
               return r.join(','); }""")
             miss_n = page.evaluate('() => wzMissCount()')
             fillable_n = page.evaluate("() => Object.keys(wz.collect).reduce((n,c)=>n+wz.collect[c].filter(i=>i.miss&&!clpCollectControlled(DATA_ITEMS.indexOf(i.k))&&DEMO_FILL.collect[i.k]).length,0)")
-            if fillable_n and u'一键填充非 CLP 演示数据' not in btn_txt:
-                errors.append('[演示补录] 存在 %d 项可补充的非 CLP 数据，但区块①缺少演示补录按钮' % fillable_n)
+            clp_miss_n = miss_n - page.evaluate("() => Object.keys(wz.collect).reduce((n,c)=>n+wz.collect[c].filter(i=>i.miss&&!clpCollectControlled(DATA_ITEMS.indexOf(i.k))).length,0)")
+            fill_label = u'一键填充非 CLP 演示数据' if clp_miss_n else u'一键填充演示数据'
+            if fillable_n and fill_label not in btn_txt:
+                errors.append('[演示补录] 存在 %d 项可补充的非 CLP 数据，但区块①缺少「%s」按钮' % (fillable_n, fill_label))
             if u'一键补充演示数据' not in btn_txt:
                 errors.append('[演示补录] 第 3 步区块④未找到「一键补充演示数据」按钮')
             else:
-                # 区块①只填充非 CLP 演示数据；CLP 缺失仍须走统一来源维护。
+                # 区块①只填充非 CLP 演示数据；如有 CLP 缺失，按钮会标明填充范围。
                 if fillable_n:
-                    page.click('#wzBody button:has-text("一键填充非 CLP 演示数据")')
+                    page.locator('#wzBody button').filter(has_text=fill_label).click()
                     page.wait_for_timeout(300)
                     if page.evaluate("() => Object.keys(wz.collect).reduce((n,c)=>n+wz.collect[c].filter(i=>i.miss&&!clpCollectControlled(DATA_ITEMS.indexOf(i.k))&&DEMO_FILL.collect[i.k]).length,0)") != 0:
                         errors.append('[演示补录] 非 CLP 演示数据未补齐')

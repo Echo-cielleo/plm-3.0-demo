@@ -27,11 +27,13 @@
 
 唯一迁移期例外是甲醛 `50-00-0` 的 `mFactors.chronic`：Annex VI 演示值为 10，阶段二计算基线为 0。`legacyResolutions` 明示继续取旧值 0 以保持默认 SDS 输出，并列入 `clpDataConflictList()`。它只适用于 ATP 22 已知冲突；当该字段在组分库被重新维护时，例外删除，冲突转为待专业核验。本记录不构成法规裁决。
 
+乙二醇单丁醚 `111-76-2` 在阶段二 SDS 汇集演示值中曾显示眼刺激 `2A`，而当前 Annex VI 演示快照为 `2`。旧 `2A` 只用于汇集展示，从未进入阶段二混合物计算；迁移后保留在补充层并记为待核验展示差异，不进入 `effective.classifications`，也不阻断既有计算。组分库显示双方来源与当前取用值，不据此做法规专业裁决。
+
 ## 页面与兼容层
 
 `CLP_VI_ROWS`、`COMP_CLP`、`LAW_DETAIL.clp6` 仅是当前生效数据的兼容投影，不是维护对象。法规统一查询的非 CLP 行保留在 `LAW_QUERY_STATIC_ROWS`，CLP 行由 `clpLawQueryProjection()` 动态生成；当前演示查询行数由 18 增至 19，新增的是原先未单列的甲苯 Annex VI 命中。Annex VI Tab 可选择历史或待生效版本，表格、信息条和详情按所选快照显示。
 
-SDS 第 3 步的实验、供应商、理化和非 CLP 名单演示数据仍可保留在 `COLLECT_MOCK`。CLP 分类、H 码、Annex VI 命中、SCL、ATE、M 因子由统一画像动态生成。演示一键填充只补非 CLP 数据；CLP 缺值指向 CLP 法规库或组分库维护。`M-LIST`、REACH/OEL/运输法规取数及真实法规文件解析不在本阶段。
+SDS 第 3 步的实验、供应商、理化和非 CLP 名单演示数据仍可保留在 `COLLECT_MOCK`。CLP 分类、H 码、Annex VI 命中、SCL、ATE、M 因子由统一画像动态生成。已维护画像中未记录某类别、SCL 或适用 M 因子时明确显示该状态，不将其一律记成“待补充”；真正未知的 ATE 和未维护物质仍保留缺失状态。默认配方保持 5 项待补充，可由原「一键填充演示数据」补齐；若配方另有 CLP 缺值，按钮明确标示只补非 CLP，CLP 缺值指向法规库或组分库维护。`M-LIST`、REACH/OEL/运输法规取数及真实法规文件解析不在本阶段。
 
 ## 验证
 
