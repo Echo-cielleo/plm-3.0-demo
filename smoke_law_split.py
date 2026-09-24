@@ -50,23 +50,39 @@ with sync_playwright() as pw:
     text=page.locator('#pageHost').inner_text()
     ok('法规统一查询' in text and '统一查询、分库维护' in text,'页面清楚说明查询与维护的分工')
     total=page.evaluate('()=>lawQueryAllRows().length')
-    ok(page.locator('#lqTable tbody tr').count()==total and total==51,'默认跨库展示 51 条动态与参考查询行')
-    ok(page.locator('#lqSource option').count()==7,'来源筛选包含全部及 6 类法规库')
-    ok(page.locator('#lqLaw option').count()==11,'法规类别筛选包含全部及 10 类法规清单')
+    ok(page.locator('#lqTable tbody tr').count()==total and total==63,
+       '默认跨库展示 63 行（名单 43 + CLP 5 + C&L 3 + OEL 12）')
+    ok(page.locator('#lqTabs button').count()==4 and
+       [t.strip() for t in page.locator('#lqTabs button').all_text_contents()]==['全部','GHS 分类','名录清单','OEL 限值'],
+       '页签按查询维度分为 4 个：全部 / GHS 分类 / 名录清单 / OEL 限值')
+    ok(page.locator('select#lqLaw').count()==0 and page.locator('select#lqSource').count()==0,
+       '页签取代了原「法规类别」「法规来源」两个下拉')
     lamps=page.locator('#lqTable .ev')
     ok(lamps.count()==total and page.locator('#lqTable .ev-green').count()>0 and page.locator('#lqTable .ev-due').count()>0 and page.locator('#lqTable .ev-red').count()>0,'查询结果同时展示绿、黄、红三色只读证据灯')
     ok('需改版' in page.locator('#lqKpi').inner_text(),'KPI 展示红灯需改版统计')
     ok(page.locator('#lqTable').get_by_role('button',name='确认复审').count()==0 and page.locator('#lqTable').get_by_role('button',name='查看新版本 diff').count()==0,'查询页证据灯只读且无维护操作')
     page.fill('#lqKw','50-00-0');page.wait_for_timeout(100)
-    ok(page.locator('#lqTable tbody tr').count()==5,'按 CAS 50-00-0 一次命中 5 条跨库记录')
+    ok(page.locator('#lqTable tbody tr').count()==7,'按 CAS 50-00-0 一次命中 7 条跨库记录（含欧盟与中国 OEL）')
     summary=page.locator('#lqSubstance').inner_text()
-    ok('甲醛' in summary and 'CAS 50-00-0' in summary and '共命中 5 条记录' in summary and '覆盖 5 个法规来源' in summary,
+    ok('物质基础信息' in summary and '甲醛' in summary and '50-00-0' in summary and
+       '共命中 7 条记录' in summary and '覆盖 7 个法规来源' in summary,
        '同一 CAS 先展示物质身份与跨法规命中汇总')
+    ok('来自组分基础信息' in summary and 'SMILES' in summary and 'C=O' in summary and '分子量' in summary,
+       '物质基础信息区读组分基础信息，展示 SMILES / 分子量等结构字段')
+    ok('605-001-00-5' in summary,'CLP Index No. 从 Annex VI 单一事实源派生展示')
     sources=page.locator('#lqTable tbody tr td:nth-child(4)').all_text_contents()
-    ok(len(set(sources))==5,'同一物质可同时看到 5 个法规来源')
-    page.select_option('#lqSource','cn');page.wait_for_timeout(100)
-    ok(page.locator('#lqTable tbody tr').count()==1,'CAS 与法规来源筛选可组合')
-    page.evaluate('lawQueryClear()');page.select_option('#lqSource','clp');page.wait_for_timeout(100)
+    ok(len(set(sources))==7,'同一物质可同时看到 7 个法规来源')
+    page.fill('#lqKw','');page.wait_for_timeout(120)
+    page.click('#lqTabs button[data-key="list"]');page.wait_for_timeout(120)
+    listN=page.locator('#lqTable tbody tr').count()
+    page.click('#lqTabs button[data-key="oel"]');page.wait_for_timeout(120)
+    oelN=page.locator('#lqTable tbody tr').count()
+    page.click('#lqTabs button[data-key="ghs"]');page.wait_for_timeout(120)
+    ghsN=page.locator('#lqTable tbody tr').count()
+    ok(listN+ghsN+oelN==total and oelN==12 and ghsN<total and listN<total,
+       '三个维度页签互斥且合计等于全部（OEL 页签 12 行 = 欧盟 5 + 中国 7 当前有效限值）')
+    page.evaluate('lawQueryClear()');page.wait_for_timeout(120)
+    page.fill('#lqKw','50-00-0');page.select_option('#lqType','统一分类');page.wait_for_timeout(120)
     page.locator('#lqTable tbody tr').first.get_by_role('button',name='查看').click();page.wait_for_timeout(120)
     ok(page.locator('#modal .modal-hd h3').inner_text().startswith('法规命中详情'),'统一查询结果可查看详情')
     ok('人工验证人' in page.locator('#mBody').inner_text(),'详情展示来源维护和验证信息')

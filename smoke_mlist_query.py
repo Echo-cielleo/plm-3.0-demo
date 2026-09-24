@@ -96,8 +96,9 @@ with sync_playwright() as pw:
                   'cn-prohibited': 2, 'cn-toxic': 2},
        '八库动态行数与来源一致：' + str(counts))
     ok(page.evaluate("""() => listLawQueryProjection(clpSystemToday()).length===43 &&
-      lawQueryAllRows().length===51 && LAW_QUERY_REFERENCE_ROWS.length===3"""),
-       '动态 43 行 + CLP 5 行 + C&L 3 行，共 51 行')
+      lawQueryAllRows().length===63 && LAW_QUERY_REFERENCE_ROWS.length===3 &&
+      lawQueryAllRows().filter(x=>x.sourceType==='oel').length===12"""),
+       '名单 43 行 + CLP 5 行 + C&L 3 行 + OEL 12 行，共 63 行')
     ok(page.evaluate("""() => {var r=listLawQueryProjection(clpSystemToday());return r.every(x=>x.isListProjection&&
       x.id&&x.entryCode&&x.version&&x.source&&x.maintenanceRoute&&
       !['TRIGGERED','NOT_TRIGGERED'].includes(x.result));}"""),
@@ -134,19 +135,22 @@ with sync_playwright() as pw:
 
     print('=== 查询页面 ===')
     page.evaluate("showPage('law:query')")
-    ok(page.locator('#lqTable tbody tr').count() == 51, '统一查询页正常展示 51 行')
+    ok(page.locator('#lqTable tbody tr').count() == 63, '统一查询页正常展示 63 行')
     notice = page.locator('#pageHost').inner_text()
     ok('名单列入仅表示' in notice and '不等同于当前产品已经触发限制' in notice,
        '页面一次性说明列入与触发的区别')
-    ok(page.locator('#lqLaw option').count() == 11 and page.locator('#lqSource option').count() == 7,
-       '法规类别及来源筛选包含 RoHS 与两个中国进出口目录')
+    ok(page.locator('select#lqLaw').count() == 0 and page.locator('select#lqSource').count() == 0,
+       '页签取代原「法规类别」「法规来源」下拉')
+    def goto_lawkey(key):
+        page.evaluate("(k)=>showPage('law:query',{lawKey:k})", key)
+        page.wait_for_timeout(150)
     for key, expected in [('svhc',8),('xiv',6),('xvii',8),('rohs2',10),('zdhc-mrsl',4),('cn-danger',3),
                           ('cn-prohibited',2),('cn-toxic',2)]:
-        page.select_option('#lqLaw', key)
-        ok(page.locator('#lqTable tbody tr').count() == expected, key + ' 筛选行数正确')
-    page.select_option('#lqLaw','')
+        goto_lawkey(key)
+        ok(page.locator('#lqTable tbody tr').count() == expected, key + ' 经 lawKey 带入后行数正确')
+    page.evaluate("showPage('law:query')");page.wait_for_timeout(150)
     page.fill('#lqKw','50-00-0')
-    ok(page.locator('#lqTable tbody tr').count() == 5, '甲醛 CAS 查询命中五个有真实身份的来源')
+    ok(page.locator('#lqTable tbody tr').count() == 7, '甲醛 CAS 查询命中七个来源（含欧盟与中国 OEL）')
     page.fill('#lqKw','多溴联苯')
     ok(page.locator('#lqTable tbody tr').count() == 1 and '多溴联苯' in page.locator('#lqTable').inner_text(),
        '无 CAS 的物质组可按名称搜索')
@@ -154,8 +158,7 @@ with sync_playwright() as pw:
     ok(page.locator('#lqTable tbody tr').count() == 1, 'SVHC 的 CAS 查询正常')
     page.fill('#lqKw','铅（Pb）')
     ok(page.locator('#lqTable tbody tr').count() == 1, 'RoHS 的名称查询正常')
-    page.evaluate("lawQueryClear()")
-    page.select_option('#lqLaw','xvii')
+    goto_lawkey('xvii')
     page.fill('#lqKw','50-00-0')
     page.locator('#lqTable tbody tr').first.get_by_role('button',name='查看').click()
     detail = page.locator('#mBody').inner_text()
@@ -166,18 +169,16 @@ with sync_playwright() as pw:
        '详情底部说明不是产品最终限制判断')
     ok('TRIGGERED' not in detail and 'NOT_TRIGGERED' not in detail,
        '详情不暴露产品级条件状态')
-    page.evaluate("closeModal();lawQueryClear()")
-    page.select_option('#lqLaw','rohs2')
+    page.evaluate("closeModal()")
+    goto_lawkey('rohs2')
     page.locator('#lqTable tbody tr').first.get_by_role('button',name='来源库').click()
     ok(page.evaluate('curPage')=='law:rohs', 'RoHS 行的来源库按钮进入 RoHS 维护页')
-    page.evaluate("showPage('law:query')")
-    page.select_option('#lqLaw','cn-danger')
+    goto_lawkey('cn-danger')
     page.locator('#lqTable tbody tr').first.get_by_role('button',name='来源库').click()
     ok(page.evaluate('curPage')=='law:cn', '国内目录行的来源库按钮进入国内法规维护页')
-    page.evaluate("showPage('law:query')")
-    page.select_option('#lqLaw','cl-inventory')
+    goto_lawkey('cl-inventory')
     ok(page.locator('#lqTable tbody tr').count()==3, 'C&L Inventory 查询仍正常')
-    page.select_option('#lqLaw','clp6')
+    goto_lawkey('clp6')
     ok(page.locator('#lqTable tbody tr').count()==5, 'CLP 动态查询仍正常')
     ok(not errors, '页面 JavaScript 错误为 0')
     browser.close()

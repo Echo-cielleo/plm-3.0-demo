@@ -177,10 +177,12 @@ with sync_playwright() as pw:
         page.evaluate("()=>showPage('law:reach')");page.wait_for_timeout(120)
         page.evaluate("(k)=>rchToQuery(k)",lk);page.wait_for_timeout(350)
         ok(page.evaluate('curPage')=='law:query','跳到法规统一查询（%s）'%lk)
-        ok(page.evaluate("()=>$('lqLaw').value")==lk,'按 lawKey=%s 预置法规类别筛选'%lk)
+        ok(page.evaluate("()=>_lqPresetLawKey")==lk and page.evaluate("()=>_lqTab")=='list',
+           '按 lawKey=%s 定位到名录清单页签并预置该法规类别'%lk)
         ok(page.locator('#lqTable tbody tr').count()==cnt,'%s 类别命中 %d 条'%(lk,cnt))
     page.evaluate("()=>lawQueryClear()");page.wait_for_timeout(150)
-    ok(page.evaluate("()=>$('lqLaw').value")=='' and page.locator('#lqTable tbody tr').count()==51,'重置后恢复全量 51 条动态与参考查询行')
+    ok(page.evaluate("()=>_lqPresetLawKey")=='' and page.evaluate("()=>_lqTab")=='' and
+       page.locator('#lqTable tbody tr').count()==63,'重置后回到全部页签，恢复 63 行全量')
 
     print('\n=== 导入新版本向导（静态演示） ===')
     page.evaluate("()=>showPage('law:reach')");page.wait_for_timeout(250)
