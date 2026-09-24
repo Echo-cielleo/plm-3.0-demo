@@ -75,7 +75,9 @@ with sync_playwright() as pw:
     ok(page.evaluate("()=>{var r=lawQueryAllRows().map(x=>lawEvidence(x,true).lv);return r.filter(x=>x==='green').length>0&&r.filter(x=>x==='due').length>0&&r.filter(x=>x==='red').length>0;}"),
        '全部命中记录同时包含绿、黄、红三色只读证据灯')
     ok(page.locator('#lqTable .ev').count()==20,'当前页每行都展示证据灯')
-    ok('需改版' in page.locator('#lqKpi').inner_text(),'KPI 展示红灯需改版统计')
+    ok(page.locator('#lqKpi').count()==0 and page.locator('#pageHost .kpi').count()==0,
+       '查询页不再展示命中记录 / 命中物质 / 待复核 / 需改版统计卡')
+    ok('共 63 条命中记录' in page.locator('#lqCount').inner_text(),'命中总数改由结果工具条的计数承担')
     ok(page.locator('#lqTable').get_by_role('button',name='确认复审').count()==0 and page.locator('#lqTable').get_by_role('button',name='查看新版本 diff').count()==0,'查询页证据灯只读且无维护操作')
     page.fill('#lqKw','50-00-0');page.wait_for_timeout(100)
     ok(page.locator('#lqTable tbody tr').count()==7,'按 CAS 50-00-0 一次命中 7 条跨库记录（含欧盟与中国 OEL）')
