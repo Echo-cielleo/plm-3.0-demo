@@ -128,7 +128,7 @@ function rohsExempt(){
 function transRender(){
   $('pageHost').innerHTML='<div class="sds-scope law-page">'+
     sdsHead('transTitle','运输法规库','危险货物运输法规（UN TDG / IMDG / IATA 与国内 GB 系列）· 用于 SDS 第 14 章「运输信息」','')+
-    '<div class="notice warn" style="margin-bottom:14px"><div class="ni">!</div><div><b>数据源待确认、本期仅占位。</b>危险货物运输是<b>独立的法规体系</b>——CLP 只管分类与标签、不管运输；运输要求按运输方式（公路 / 铁路 / 海运 / 空运）分别适用不同规则，因此本模块从一开始就按「多运输方式」设计。</div></div>'+
+    '<div class="notice warn" style="margin-bottom:14px"><div class="ni">!</div><div><b>数据源待确认、本期仅占位。</b>运输属于独立的法规体系，CLP 只管分类与标签、不管运输。运输自动规则数据源仍待建立。当前 SDS 第 14 章已支持人工结构化运输结论与发布快照冻结，但不代表系统具备自动运输分类能力。</div></div>'+
     '<div class="kpi-row">'+
       '<div class="kpi"><span>运输方式</span><b>4</b><small>公路 / 铁路 · 海运 · 空运 · 国内</small></div>'+
       '<div class="kpi"><span>数据源</span><b style="font-size:15px">4 类（待确认）</b><small>UN TDG · IMDG · IATA · GB 6944/12268</small></div>'+

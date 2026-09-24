@@ -1,6 +1,23 @@
 /* [23z8b] SDS 草稿合规评估合同：同一次 CLP 执行 + M-LIST，按输入与版本重建快照。 */
-var COMPLIANCE_EVALUATION_SCHEMA='compliance-evaluation-v1';
+var COMPLIANCE_EVALUATION_SCHEMA='compliance-evaluation-v2';
 var _complianceEvaluationSerial=0;
+var CLASSIFICATION_ITEM_CATALOG=[
+  ['ed','内分泌干扰（ED）'],['pmt','PMT / vPvM（持久·迁移·毒性）'],
+  ['acuteOral','急性毒性（经口）'],['skin','皮肤腐蚀/刺激'],['sens','皮肤致敏'],
+  ['eye','严重眼损伤/眼刺激'],['stot','特异性靶器官毒性（一次接触）'],
+  ['carc','致癌性'],['aqua','危害水生环境（长期）'],['resp','呼吸道致敏'],['repr','生殖毒性']
+].map(function(x,i){return {id:x[0],name:x[1],order:i+1,appliesTo:['substance','mixture']};});
+function complianceClassificationFramework(market){
+  return market==='CN'
+    ?{code:'CN_GHS',label:'中国 GHS（GB 30000）',mode:'manual-required',status:'rule-pack-unavailable',
+      reason:'本原型尚未配置经法规专员审核发布的中国 GHS 规则包'}
+    :{code:'EU_CLP',label:'欧盟 CLP',mode:'automatic',status:'available'};
+}
+function complianceManualClassificationItems(){
+  return CLASSIFICATION_ITEM_CATALOG.map(function(x){return {id:x.id,name:x.name,result:'—',code:'—',
+    status:'pending',need:'judge',rule:'中国 GHS 规则包尚未配置',input:'需法规人员核对现有资料',
+    formula:'需法规人员依据 GB 30000 系列人工判定',src:[['reg','中国 GHS · 人工判定']],sug:null};});
+}
 function complianceEvaluationCopy(value){return JSON.parse(JSON.stringify(value));}
 function complianceEvaluationFreeze(value){
   if(value && typeof value==='object' && !Object.isFrozen(value)){
@@ -26,7 +43,7 @@ function complianceEvaluationInputFromWz(){
       targetMarket:p.market||'',targetState:p.state||'',language:p.lang||''},
     formula:(wz.formula||[]).map(function(f){
       var row=DB_CFG.component.rows.find(function(r){return r.cas===f.cas;})||{};
-      var profile=clpSubstanceProfile(f.cas,day);
+      var profile=p.market==='EU'?clpSubstanceProfile(f.cas,day):{};
       return {cas:f.cas||'',ec:f.ec||profile.ec||row.ec||'',name:f.name||'',
         concentration:f.conc===''?null:Number(f.conc),concentrationUnit:'%',
         concentrationBasis:'formula-w/w',secret:!!f.secret};
@@ -52,25 +69,32 @@ function complianceEvaluationNormalize(input){
     datasetKeys:Array.isArray(copy.datasetKeys)?copy.datasetKeys.slice():complianceListDatasetKeysForMarket(market)};
 }
 function complianceEvaluationVersions(input){
-  var pack=clpActivePack(input.asOfDate),vi=clpViDatasetResolve(input.asOfDate),lists={};
+  var eu=input.product.targetMarket!=='CN',pack=eu?clpActivePack(input.asOfDate):null,
+    vi=eu?clpViDatasetResolve(input.asOfDate):null,lists={};
   input.datasetKeys.forEach(function(key){
     var d=listGetDataset(key),available=!!listResolveDataset(key,input.asOfDate);
     lists[key]={version:d?d.version:'',available:available,
       unavailableReason:available?'':d&&d.available===false?d.unavailableReason||'数据集尚不可执行。':'数据集不存在或查询日期无可用版本。'};
   });
-  var profiles=input.formula.map(function(f){
+  var profiles=eu?input.formula.map(function(f){
     var p=clpSubstanceProfile(f.cas,input.asOfDate),s=p.supplemental;
     return {cas:f.cas,dataVersion:p.dataVersion,supplementalUpdatedAt:s&&s.updatedAt||'',
       effectiveData:complianceEvaluationCopy(p.effective)};
-  });
-  var methods=Object.assign({},pack.methodVersions);
+  }):[];
+  var methods=eu?Object.assign({},pack.methodVersions):{};
   var listMethod=complianceGetMethod('M-LIST');
   if(listMethod)methods['M-LIST']=listMethod.version;
+  var set=oelSdsResolveSet(input.product.targetMarket,input.asOfDate);
   return {data:{clpAnnexVi:vi?{id:vi.id,version:vi.version,effectiveFrom:vi.effectiveFrom}:null,
-      componentProfiles:profiles,listDatasets:lists},
-    rules:{clpRulePack:pack.id,ruleSetVersion:pack.ruleSetVersion||pack.modules.rules,
-      ruleIds:pack.ruleIds.slice(),ruleVersions:pack.rules.map(function(r){return {id:r.id,version:r.ver||''};})},
-    methods:methods,labels:pack.modules.labels,template:sdsTemplateVersion()};
+      componentProfiles:profiles,listDatasets:lists,
+      oel:{datasetId:set?set.id:'',version:set?set.ver:'',effectiveFrom:set?set.eff:'',
+        region:oelSdsRegionForMarket(input.product.targetMarket),status:set?'AVAILABLE':'DATASET_UNAVAILABLE'}},
+    rules:eu?{clpRulePack:pack.id,ruleSetVersion:pack.ruleSetVersion||pack.modules.rules,
+      ruleIds:pack.ruleIds.slice(),ruleVersions:pack.rules.map(function(r){return {id:r.id,version:r.ver||''};}),
+      classification:{framework:'EU_CLP',status:'automatic',rulePack:pack.id}}
+      :{classification:{framework:'CN_GHS',status:'manual-required',rulePack:null,
+        reason:'中国 GHS 规则包尚未配置'}},
+    methods:methods,labels:eu?pack.modules.labels:null,template:sdsTemplateVersion()};
 }
 function complianceEvaluationFingerprint(input){
   var normalized=complianceEvaluationNormalize(input);
@@ -79,35 +103,45 @@ function complianceEvaluationFingerprint(input){
 function complianceEvaluateDraft(input){
   var normalized=complianceEvaluationNormalize(input),versions=complianceEvaluationVersions(normalized);
   var formula=normalized.formula.map(function(f){return {cas:f.cas,name:f.name,conc:f.concentration};});
-  var run=clpEvaluateMixture(formula,normalized.asOfDate);
-  var displayItems=buildClassItems(run);
+  var framework=complianceClassificationFramework(normalized.product.targetMarket);
+  var run=framework.code==='EU_CLP'?clpEvaluateMixture(formula,normalized.asOfDate):null;
+  var displayItems=run?buildClassItems(run):complianceManualClassificationItems();
+  var oel=oelSdsEvaluate(normalized.formula,normalized.product.targetMarket,normalized.asOfDate);
   var list=complianceExecuteMethod('M-LIST',{asOfDate:normalized.asOfDate,
     datasetKeys:normalized.datasetKeys,components:normalized.formula,
     context:{targetMarket:normalized.product.targetMarket,objectType:normalized.context.objectType,
       useClass:normalized.context.useClass,productCategory:normalized.context.productCategory,
       materialType:normalized.context.materialType}});
-  var warnings=run.warnings.map(function(w){return w.message;}).concat(list.messages||[]);
+  var classWarnings=run?run.warnings:[{code:'CN_GHS_RULE_PACK_UNAVAILABLE',
+    message:'中国 GHS 自动规则包尚未建立，本次分类需法规人员人工判定。'}];
+  var warnings=classWarnings.map(function(w){return w.message;}).concat(list.messages||[],oel.messages);
   var result={schemaVersion:COMPLIANCE_EVALUATION_SCHEMA,
     id:'CE-'+Date.now()+'-'+(++_complianceEvaluationSerial),status:'draft',
     evaluatedAt:new Date().toISOString(),asOfDate:normalized.asOfDate,
     inputFingerprint:JSON.stringify({input:normalized,versions:versions}),
     inputSnapshot:normalized,versions:versions,
-    results:{classification:{items:displayItems,engineItems:run.items,pack:run.pack,
-      executions:run.executions,labels:run.labels,warnings:run.warnings},
+    results:{classification:{framework:framework,items:displayItems,engineItems:run?run.items:[],pack:run?run.pack:null,
+      executions:run?run.executions:[],labels:run?run.labels:{hCodes:[],pCodes:[],pictograms:[],signalWord:''},warnings:classWarnings},
       lists:{status:list.status,entryResults:list.entryResults,summary:list.summary,
-        coverage:list.coverage,datasetVersions:list.datasetVersions,messages:list.messages}},
-    evidence:{classification:run.executions.reduce(function(all,x){return all.concat(x.evidence||[]);},[]),
-      lists:list.evidence||[]},warnings:warnings,
-    readiness:{classificationReady:!displayItems.some(function(x){return x.status==='pending';})&&!run.warnings.length,
+        coverage:list.coverage,datasetVersions:list.datasetVersions,messages:list.messages},
+      oel:{status:oel.status,market:oel.market,region:oel.region,asOfDate:oel.asOfDate,
+        dataset:oel.dataset,rows:oel.rows,missingComponents:oel.missingComponents,messages:oel.messages}},
+    evidence:{classification:run?run.executions.reduce(function(all,x){return all.concat(x.evidence||[]);},[]):[],
+      lists:list.evidence||[],oel:oel.evidence},warnings:warnings,
+    readiness:{classificationReady:!displayItems.some(function(x){return x.status==='pending';})&&!(run&&run.warnings.length),
       listCoverageComplete:!!(list.coverage&&list.coverage.complete),
       listNeedsContext:(list.summary&&list.summary.needContext||0)>0,
       hasUnavailableDatasets:!!(list.coverage&&list.coverage.unavailable.length),
-      hasExecutionError:list.status==='ERROR'||list.status==='UNSUPPORTED_METHOD'||run.executions.some(function(x){return x.status==='ERROR'||x.status==='UNSUPPORTED_METHOD';})}};
+      oelDatasetAvailable:oel.status!=='DATASET_UNAVAILABLE',oelMissingRecordCount:oel.missingComponents.length,
+      hasExecutionError:list.status==='ERROR'||list.status==='UNSUPPORTED_METHOD'||!!(run&&run.executions.some(function(x){return x.status==='ERROR'||x.status==='UNSUPPORTED_METHOD';}))}};
   return complianceEvaluationFreeze(complianceEvaluationCopy(result));
 }
 function complianceEvaluationInvalidate(reason){
   wz.evaluationDirty=true;
   wz.evaluationInvalidReason=reason||'评估输入已变化';
+  if(typeof transportAssessmentInvalidate==='function'&&
+    /目标市场|产品信息|产品类型|物料变化|组分数据|组分 CAS|添加组分|删除组分|引入实验配方|载入示例配方/.test(reason||''))
+    transportAssessmentInvalidate(reason);
 }
 function complianceEvaluationSetListContext(patch){
   wz.listContext=Object.assign({},wz.listContext||{},complianceEvaluationCopy(patch||{}));

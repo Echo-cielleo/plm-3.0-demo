@@ -340,7 +340,7 @@ function oelRender(){
     '<div class="notice info" style="margin-bottom:12px"><div class="ni">i</div><div>'+OEL_TOP.note+'</div></div>'+
     '<div id="oelTabs" style="margin-bottom:12px"></div>'+
     '<div id="oelTabBody"></div>'+
-    '<div class="notice grey" style="margin-top:14px"><div class="ni">§</div><div><b>本页边界（本期不实现）：</b>系统不自动从 PDF 中识别并直接发布数据；不自动判断哪套清单的限值更严格；不把两套市场的限值合并成一个值；不根据投放市场自动选择 OEL；不实现真实 AI 解析与法规网站监控。'+OEL_TOP.boundary+'「投放市场 → 有效法规版本 → SDS 第 8 节」的关联<b>后续统一实现</b>，本页只负责把限值数据按来源与版本维护清楚。</div></div>'+
+    '<div class="notice grey" style="margin-top:14px"><div class="ni">§</div><div><b>本页边界：</b>系统不自动从 PDF 中识别并直接发布数据；不自动判断哪套清单的限值更严格；不把两套市场的限值合并成一个值；不实现真实 AI 解析与法规网站监控。'+OEL_TOP.boundary+'已接通：SDS 按目标市场与计划投放日期选择有效 OEL 数据集。正式版需维护官方全量数据。</div></div>'+
     '</div>';
   $('oelTabs').appendChild(tabs(OEL_TABS,_oelTab,function(k){_oelTab=k;oelRenderTab();}));
   oelRenderTab();
@@ -786,7 +786,7 @@ function oelCmpDetail(idx){
     '<dt>变化说明</dt><dd>'+esc(r.note)+'</dd>'+
     '<dt>法规出处</dt><dd>'+esc(c.src)+'（'+esc(c.rg)+' · 演示样例）</dd>'+
     '</dl>'+
-    '<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div><b>本次不实现自动影响分析：</b>系统不自动判断该变更影响哪些组分、配方或已发布 SDS；也不自动得出「更严格 / 更宽松」的结论。变更生效需人工审核后发布，发布后按「投放市场 → 有效法规版本 → SDS 第 8 节」的关联逻辑在后续版本统一实现。</div></div>',
+    '<div class="notice warn" style="margin-top:12px"><div class="ni">!</div><div><b>本次不实现自动影响分析：</b>系统不自动判断该变更影响哪些组分、配方或已发布 SDS；也不自动得出「更严格 / 更宽松」的结论。变更经人工审核发布后，后续草稿按目标市场与投放日期选用有效版本；已发布 SDS 正文保持冻结。</div></div>',
     '<button class="btn" onclick="oelDrawerClose()">关闭</button>'+
     '<button class="btn primary" onclick="oelDrawerClose();oelCmpApprove()">审核通过并发布新版本</button>');
 }

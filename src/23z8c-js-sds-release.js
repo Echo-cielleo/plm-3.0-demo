@@ -29,6 +29,7 @@ function sdsReleaseReviewSnapshot(evaluation){
         changed:system.result!==final.result||system.code!==final.code||system.status!==final.status,
         reason:final.note||'',decidedAt:final.noteAt||evaluation.evaluatedAt};
     }),classAdjust:complianceEvaluationCopy(wz.classAdjust||{}),
+    transportAssessment:complianceEvaluationCopy(wz.transportAssessment||transportAssessmentDefault()),
     euhSelections:complianceEvaluationCopy(euhList()),
     finalLabels:{hCodes:hCodesMix(),pCodes:labels.ps.slice(),pictograms:labels.pics.slice(),signalWord:labels.sig}};
 }
@@ -48,6 +49,8 @@ function sdsReleaseCreate(reviewInfo){
     throw new Error('分类结论尚未生成，请先完成第 4 步。');
   if(wz.classItems.some(function(item){return item.status==='pending';}))
     throw new Error('仍有分类项目待人工判定或确认，请先完成第 4 步。');
+  if(['NOT_ASSESSED','STALE'].indexOf(transportAssessmentStatus())>=0)
+    throw new Error('第 14 章运输结论尚未确认，请先完成运输信息维护。');
   var body=sdsDraftBodyHtml('published');
   if(typeof body!=='string'||(body.match(/<section class="doc-sec-wrap">/g)||[]).length!==16)
     throw new Error('SDS 正文未完整生成，请检查 16 个章节后重试。');

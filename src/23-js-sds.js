@@ -41,6 +41,10 @@ var WZ_STEPS=[
 
 /* 向导全局状态 */
 var wz={};
+function transportAssessmentDefault(){return {status:'NOT_ASSESSED',conclusion:'',unNumber:'',
+  properShippingName:'',hazardClass:'',packingGroup:'',marinePollutant:'',
+  applicableModes:['ADR','RID','ADN','IMDG','IATA'],specialPrecautions:'',basis:'',
+  assessedBy:'',assessedAt:'',inputFingerprint:''};}
 function wzInitState(){
   wz={
     step:1,
@@ -77,6 +81,7 @@ function wzInitState(){
     evaluationDirty:true,
     evaluationInvalidReason:'',
     evaluationAt:'',
+    transportAssessment:transportAssessmentDefault(),
     draftEdits:{},     /* 章节临时编辑 */
     draftAt:'',
     view:'edit',       /* 步骤 5 视图：edit 编制态 / deliver 交付预览 */
@@ -710,12 +715,12 @@ var DATA_ITEMS=['物理状态/外观','闪点 / 沸点','急性毒性 LD50','皮
 function clpCollectControlled(i){return [3,4,5,8,9,10,11,12,13].indexOf(i)>=0;}
 /* 各组分 Mock 汇集结果，miss=true 表示缺失待补充 */
 var COLLECT_MOCK={
-  '7732-18-5':[['无色透明液体','lab'],['沸点 100 ℃ / 无闪点','lab'],['LD50 > 90000 mg/kg (大鼠经口)','pub'],null,null,null,[null,'pub'],['不适用','reg'],['未命中其他演示管控清单','reg']],
-  '111-76-2':[['无色液体，微醚味','sup'],['闪点 62 ℃ / 沸点 171 ℃','lab'],['LD50 1480 mg/kg (大鼠经口)','sup'],null,null,null,['LC50 1474 mg/L (96h 鱼)','pub'],['20 ppm (8h TWA, EU IOELV)','reg'],null],
-  '64-17-5':[['无色液体，酒精味','sup'],['闪点 13 ℃ / 沸点 78.4 ℃','lab'],['LD50 7060 mg/kg (大鼠经口)','pub'],null,null,null,['LC50 > 100 mg/L','pub'],['1000 ppm (8h TWA)','reg'],null],
+  '7732-18-5':[['无色透明液体','lab'],['沸点 100 ℃ / 无闪点','lab'],['LD50 > 90000 mg/kg (大鼠经口)','pub'],null,null,null,[null,'pub'],null,['未命中其他演示管控清单','reg']],
+  '111-76-2':[['无色液体，微醚味','sup'],['闪点 62 ℃ / 沸点 171 ℃','lab'],['LD50 1480 mg/kg (大鼠经口)','sup'],null,null,null,['LC50 1474 mg/L (96h 鱼)','pub'],null,null],
+  '64-17-5':[['无色液体，酒精味','sup'],['闪点 13 ℃ / 沸点 78.4 ℃','lab'],['LD50 7060 mg/kg (大鼠经口)','pub'],null,null,null,['LC50 > 100 mg/L','pub'],null,null],
   '79-10-7':[['无色液体，强刺激气味','sup'],[null,'lab'],['LD50 340 mg/kg (大鼠经口)','sup'],null,null,null,['EC50 95 mg/L (48h 溞)','pub'],[null,'reg'],null],
-  '50-00-0':[['无色液体，强刺激气味','sup'],['闪点 59 ℃ (37%水溶液)','sup'],['LD50 100 mg/kg (大鼠经口)','reg'],null,null,null,['LC50 24 mg/L (96h 鱼)','pub'],['0.3 ppm (上限值)','reg'],['SVHC 候选清单','reg']],
-  '9009-54-5':[['淡黄色粘稠液体','lab'],['闪点 > 200 ℃','lab'],[null,'sup'],null,null,null,[null,'pub'],['不适用','reg'],['聚合物豁免注册 (REACH Art.2(9))','reg']]
+  '50-00-0':[['无色液体，强刺激气味','sup'],['闪点 59 ℃ (37%水溶液)','sup'],['LD50 100 mg/kg (大鼠经口)','reg'],null,null,null,['LC50 24 mg/L (96h 鱼)','pub'],null,['SVHC 候选清单','reg']],
+  '9009-54-5':[['淡黄色粘稠液体','lab'],['闪点 > 200 ℃','lab'],[null,'sup'],null,null,null,[null,'pub'],null,['聚合物豁免注册 (REACH Art.2(9))','reg']]
 };
 function clpCollectItems(cas,asOfDate){
   var p=clpSubstanceProfile(cas,asOfDate),e=p.effective,h=e.hazardMap||{},v={};
@@ -748,11 +753,19 @@ function clpCollectSource(p,i){
 }
 function wzCollectData(){
   wz.collect={};
+  var oel=oelSdsEvaluate(wz.formula,wz.project.market,wz.project.date);
   wz.formula.forEach(function(f){
     var mock=COLLECT_MOCK[f.cas]||DATA_ITEMS.map(function(){return [null,'pub'];});
     var day=(wz.project&&wz.project.date)||clpSystemToday(),clp=clpCollectItems(f.cas,day),profile=clpSubstanceProfile(f.cas,day);
     wz.collect[f.cas]=DATA_ITEMS.map(function(k,i){
       var m=mock[i]||[null,'pub'];
+      if(i===7){
+        var found=oel.rows.filter(function(r){return r.component.cas===f.cas;});
+        m=[found.length?found.map(function(r){return r.limit.type+'：'+
+          [r.limit.twa,r.limit.stel,r.limit.ceiling].filter(function(v){return v&&v!=='—';}).join(' / ')+
+          ' '+r.limit.unit+'（'+r.source.version+'）';}).join('；'):
+          '当前有效 OEL 数据集未维护该组分限值','reg'];
+      }
       if(Object.prototype.hasOwnProperty.call(clp,i)&&(i!==8||clp[i]!==null))m=[clp[i],clpCollectSource(profile,i)];
       if(i===8&&clp[8]&&mock[8]&&mock[8][0])m=[clp[8]+' / '+mock[8][0],'reg'];
       return {k:k,v:m[0],src:m[1],miss:m[0]===null};
@@ -762,7 +775,9 @@ function wzCollectData(){
 }
 function wzMissCount(){
   var n=0;
-  Object.keys(wz.collect).forEach(function(c){wz.collect[c].forEach(function(i){if(i.miss)n++;});});
+  Object.keys(wz.collect).forEach(function(c){wz.collect[c].forEach(function(i,index){
+    if(i.miss&&(wz.project.market!=='CN'||!clpCollectControlled(index)))n++;
+  });});
   return n;
 }
 /* 第 3 步辅助：证据引用（每条数据的依据来源，便于人工核对） */
@@ -776,9 +791,7 @@ var EVID_META={
 /* 第 3 步辅助：多来源冲突示例（演示用，定义在数据层而非渲染层） */
 var CONFLICT_MOCK=[
   {cas:'111-76-2',k:'急性毒性 LD50',a:['LD50 1480 mg/kg（大鼠经口）','sup'],b:['LD50 1200 mg/kg（大鼠经口）','pub'],
-   note:'两份来源数值不一致 → 按优先级采用供应商 SDS（1480 mg/kg），PubChem 值仅供参考，需人工复核'},
-  {cas:'79-10-7',k:'职业接触限值 OEL',a:['未提供 OEL','sup'],b:['2 ppm（建议值，非法规限值）','pub'],
-   note:'辅助来源为「建议值」而非法规限值 → 不得作为第 8 章暴露控制依据，需人工按官方来源补录'}
+   note:'两份来源数值不一致 → 按优先级采用供应商 SDS（1480 mg/kg），PubChem 值仅供参考，需人工复核'}
 ];
 /* 第 3 步「一键补录」演示数据源（第 38 轮）——
    模拟法规专员按来源优先级（实测报告 > 供应商 SDS > 法规库 > 辅助资料）把数据补齐。
@@ -787,7 +800,6 @@ var DEMO_FILL={
   /* ① 缺失数据：key 为数据项名称，值为 [内容, 来源, 依据编号] */
   collect:{
     '闪点 / 沸点':      ['闪点 50 ℃（闭杯）/ 沸点 141 ℃','lab','JL-2026-0417'],
-    '职业接触限值 OEL': ['10 ppm（8h TWA，德国 AGW）','reg','AGW-79-10-7'],
     '急性毒性 LD50':    ['LD50 > 5000 mg/kg（大鼠经口，OECD 423）','lab','JL-2026-0418'],
     '严重眼损伤/刺激':  ['轻度刺激，不达分类阈值（OECD 405）','lab','JL-2026-0418'],
     '水生急性毒性':     ['不适用（低溶解度，OECD 202 未检出）','lab','JL-2026-0418']
@@ -805,6 +817,7 @@ function wzEvidence(cas,src){
 }
 /* 第 3 步辅助：会导致危害类别算不动的数据（从组分基础数据推导，不写死） */
 function wzBlockers(){
+  if(wz.project.market==='CN')return [];
   var out=[];
   wz.formula.forEach(function(f){
     var p=clpSubstanceProfile(f.cas,(wz.project&&wz.project.date)||clpSystemToday()),e=p.effective,h=e.hazardMap||{};
@@ -828,17 +841,21 @@ function wzToggleAll(){
 function renderStep3(){
   if(!wz.collected)wzCollectData();
   var evaluation=complianceEvaluationEnsure();
+  var oel=evaluation.results.oel,transport=transportAssessmentStatus();
   var total=0,miss=wzMissCount(),bySrc={lab:0,sup:0,reg:0,pub:0,man:0};
-  Object.keys(wz.collect).forEach(function(c){wz.collect[c].forEach(function(i){total++;if(!i.miss)bySrc[i.src]++;});});
+  Object.keys(wz.collect).forEach(function(c){wz.collect[c].forEach(function(i,index){
+    if(wz.project.market==='CN'&&clpCollectControlled(index))return;
+    total++;if(!i.miss)bySrc[i.src]++;
+  });});
   var pct=total?Math.round((total-miss)/total*100):0;
   /* 低可信度：仅由 PubChem 辅助来源提供，不能单独作为合规依据 */
   var pubOnly=[];
   Object.keys(wz.collect).forEach(function(c){
-    wz.collect[c].forEach(function(i){if(!i.miss&&i.src==='pub')pubOnly.push({cas:c,k:i.k,v:i.v});});
+    wz.collect[c].forEach(function(i,index){if((wz.project.market!=='CN'||!clpCollectControlled(index))&&!i.miss&&i.src==='pub')pubOnly.push({cas:c,k:i.k,v:i.v});});
   });
   var missList=[];
   Object.keys(wz.collect).forEach(function(c){
-    wz.collect[c].forEach(function(i){if(i.miss)missList.push({cas:c,k:i.k});});
+    wz.collect[c].forEach(function(i,index){if(i.miss&&(wz.project.market!=='CN'||!clpCollectControlled(index)))missList.push({cas:c,k:i.k});});
   });
   var blockers=wzBlockers();
   var conflicts=CONFLICT_MOCK.filter(function(x){
@@ -917,11 +934,12 @@ function renderStep3(){
   var allCards=wz.formula.map(function(f){
     var items=wz.collect[f.cas]||[];
     var rows=items.map(function(it,idx){
+      if(wz.project.market==='CN'&&clpCollectControlled(idx))return '';
       var meta=SRC_META[it.src];
       return '<div class="dl-row"><span class="k">'+kTerm(it.k)+'</span>'
         +'<span class="v'+(it.miss?' miss':'')+'">'+(it.miss?'待补充':esc(it.v))+'</span>'
         +'<span class="muted" style="font-size:11.5px">'+esc(wzEvidence(f.cas,it.src))+'</span>'
-        +(it.miss
+        +(idx===7?'<button class="btn sm" onclick="showPage(\'law:oel\')">查看 OEL</button>':it.miss
           ? '<button class="btn sm" onclick="fillData(\''+f.cas+'\','+idx+')">补充</button>'
           : '<span class="tag '+meta.cls+'">'+meta.t+'</span><button class="btn-link" style="margin-left:2px" onclick="fillData(\''+f.cas+'\','+idx+')">修改</button>')
         +'</div>';
@@ -947,6 +965,10 @@ function renderStep3(){
       +kpi('待确认 / 低可信度项',pubOnly.length+conflicts.length,'仅辅助来源 '+pubOnly.length+' · 来源冲突 '+conflicts.length,(pubOnly.length+conflicts.length)?'var(--orange)':'')
       +kpi('是否满足分类计算条件',blockers.length?'不满足':'满足',blockers.length?(blockers.length+' 项参数缺失'):'所需参数齐全',blockers.length?'var(--red)':'var(--green)')
     +'</div>'
+    +'<div class="notice info"><div class="ni">i</div><div>分类数据：'+esc(evaluation.results.classification.framework.label)+
+      '；名单数据：按市场检查；OEL：'+esc(oel.dataset?oel.dataset.version:'数据集不可用')+
+      '，命中 '+oel.rows.length+' 个组分记录，'+oel.missingComponents.length+' 个未维护；运输：'+
+      esc({NOT_ASSESSED:'未评估',NOT_REGULATED:'已人工确认',REGULATED:'已人工确认',STALE:'需重新确认'}[transport])+'.</div></div>'
     +'<div class="card"><div class="card-hd"><h3>数据准备检查 · 异常优先</h3>'
       +'<span class="sub">默认只展示需要处理的项目，共 '+pending+' 项</span>'
       +'<div class="right">'
@@ -1008,10 +1030,10 @@ var SUGGEST={
   '闪点 / 沸点':'闪点 51 ℃（闭杯法 ISO 2719）/ 沸点 141 ℃',
   '急性毒性 LD50':'LD50 2100 mg/kg（大鼠经口，OECD 423）',
   '严重眼损伤/刺激':'刺激 类别2（OECD 405 体内试验）',
-  '水生急性毒性':'EC50 48h 溞类 78 mg/L（OECD 202）',
-  '职业接触限值 OEL':'2 mg/m³（8h TWA，供应商推荐值）'
+  '水生急性毒性':'EC50 48h 溞类 78 mg/L（OECD 202）'
 };
 function fillData(cas,idx){
+  if(idx===7){showPage('law:oel');return;}
   if(clpCollectControlled(idx)){if(idx===8)showPage('law:clp');else gotoCompFill(cas);return;}
   var it=wz.collect[cas][idx];
   var f=wz.formula.filter(function(x){return x.cas===cas;})[0]||{name:''};
@@ -1035,7 +1057,7 @@ function fillBatch(cas){
     return '<tr'+(it.miss?' style="background:var(--red-bg)"':'')+'>'
       +'<td class="it-name">'+esc(it.k)+' '+(g?'<span class="tag '+g.g+'" title="'+esc(g.t)+'" style="cursor:help">ⓘ</span>':'')+'</td>'
       +'<td style="max-width:200px">'+(it.miss?'<span style="color:var(--red);font-weight:600">待补充</span>':esc(it.v)+((it.ref&&!it.miss)?'<br><small style="color:var(--muted)">编号 '+esc(it.ref)+'</small>':'')+'<br><span class="tag '+SRC_META[it.src].cls+'">'+SRC_META[it.src].t+'</span>')+'</td>'
-      +'<td>'+(clpCollectControlled(idx)?'<span class="muted">CLP 数据请到法规库或组分库维护</span>':'<input class="ctrl" style="height:30px;width:100%" id="bt_'+idx+'" placeholder="'+(it.miss?esc(SUGGEST[it.k]||'填写数据内容'):'留空则不修改')+'">')+'</td></tr>';
+      +'<td>'+(idx===7?'<span class="muted">OEL 请到法规库维护</span>':clpCollectControlled(idx)?'<span class="muted">CLP 数据请到法规库或组分库维护</span>':'<input class="ctrl" style="height:30px;width:100%" id="bt_'+idx+'" placeholder="'+(it.miss?esc(SUGGEST[it.k]||'填写数据内容'):'留空则不修改')+'">')+'</td></tr>';
   }).join('');
   openModal({title:'批量补充 / 修改数据 · '+f.name,width:760,
     body:'<div class="notice info" style="margin-bottom:12px"><div class="ni">i</div><div>组分 <b>'+esc(f.name)+'</b>（CAS '+esc(cas)+'）· 红色行为缺失项。填写指引见每行 ⓘ 悬停说明；<b style="display:inline">已补充的数据可反复修改</b>，留空的行保持原值不变。数据源默认记为「人工补充」。</div></div>'
@@ -1134,7 +1156,7 @@ var FIELD_GUIDE={
   '严重眼损伤/刺激':{g:'green',t:'建议实测或供应商 SDS；填「无数据」需 EHS 确认并留痕'},
   '致癌性分类':{g:'green',t:'以法规库统一分类为准，一般无需人工填写'},
   '水生急性毒性':{g:'orange',t:'可引用文献/PubChem 数据；填「无数据」时草案第 12 章需说明'},
-  '职业接触限值 OEL':{g:'orange',t:'按目标市场法规值填写；确无限值可填「未设立」，不建议填「无数据」'},
+  '职业接触限值 OEL':{g:'orange',t:'由已发布 OEL 数据集按市场和投放日期读取；未维护仅提示，不在 SDS 中手填'},
   '法规清单命中':{g:'green',t:'以法规库自动比对结果为准，一般无需人工填写'}
 };
 function guideTag(k){
@@ -1307,6 +1329,7 @@ function unknownStmt(kind){
 /* ---------- B6 收尾：ED / PMT 声明（CLP (EU) 2024/2865 强制） ----------
    法规要求该声明出现在 2.3 / 11.2 / 12.6 三处；即使判为不分类也不可省略。 */
 function edStmt(where){
+  if(wz.project.market==='CN')return '中国 GHS 分类由法规人员依据 GB 30000 系列人工判定；ED / PMT 结论需按适用法规单独核对。';
   var items=wz.classItems||[];
   var g=function(id){return items.filter(function(c){return c.id===id;})[0];};
   var ed=g('ed'),pmt=g('pmt');
@@ -1520,6 +1543,7 @@ function hCodesMix(){
 }
 /* 第 3 章组分表中出现的 H 代码（用于 16.5 全文汇总） */
 function hCodesComp(){
+  if(wz.project.market==='CN')return [];
   var out=[];
   wz.formula.forEach(function(f){
     var q=clpParamOf(f.cas);
@@ -1530,6 +1554,7 @@ function hCodesComp(){
 }
 /* 已选 EUH 补充危害说明 */
 function euhList(){
+  if(wz.project.market==='CN')return [];
   var out=(wz.project.euh||[]).slice();
   euhAuto().forEach(function(e){if(out.indexOf(e)<0)out.push(e);});
   return out;
@@ -1537,6 +1562,7 @@ function euhList(){
 /* G1：第 2.2 标签元素 —— 由分类结论自动推导，替代原硬编码 */
 function labelElements(){
   var hs=hCodesMix(),eu=wz.project.market==='EU';
+  if(!eu)return '2.2 标签元素\n中国 GHS 标签要素需法规人员依据最终人工分类结果核对；本原型未配置自动生成规则。';
   if(!hs.length)return '（尚未生成分类结论，标签元素待定）';
   var pics=[],sig='warning';
   hs.forEach(function(h){
@@ -1707,6 +1733,7 @@ function picIcon(p){
 }
 /* G1：由分类结论导出标签三要素（象形图 / 信号词 / P 语句） */
 function labelParts(){
+  if(wz.project.market==='CN')return {pics:[],ps:[],sig:''};
   var pics=[],ps=[],sig='warning';
   hCodesMix().forEach(function(h){
     var p=PIC_BY_H[h];
@@ -1719,6 +1746,7 @@ function labelParts(){
 }
 /* G1：由 ED / PMT 分类结论自动带出的 EUH（不可手工取消） */
 function euhAuto(){
+  if(wz.project.market==='CN')return [];
   var out=[];
   (wz.classItems||[]).forEach(function(c){
     if(c.status==='pending'||!c.result)return;
@@ -1772,6 +1800,7 @@ function clpPackCallCard(){
 }
 function renderStep4(){
   var evaluation=complianceEvaluationEnsure();
+  var cn=evaluation.results.classification.framework.code==='CN_GHS';
   var items=wz.classItems;
   var pend=items.filter(function(c){return c.status==='pending';});
   var hs=items.filter(function(c){return c.status!=='pending'&&c.code.indexOf('H')===0;});
@@ -1804,11 +1833,11 @@ function renderStep4(){
       +'</div></div>';
   }).join('');
 
-  var pureNote=wz.formType==='pure'
+  var pureNote=!cn&&wz.formType==='pure'
     ? '<div class="notice info"><div class="ni">i</div><div><b>纯物质（单物料）分类</b>直接采用该物质在 CLP Annex VI / GHS 中的<b style="display:inline">统一分类</b>，无需执行混合物浓度加和推导；以下结论即该物质本身的 GHS 分类。</div></div>'
     : '';
   /* B4：混合物才需要加和法输入参数表；纯物质走统一分类，不展示 */
-  var paramTbl=wz.formType==='pure'?'':clpParamTable();
+  var paramTbl=cn||wz.formType==='pure'?'':clpParamTable();
   /* 步骤说明统一渲染在步骤导航下方 */
   wzGuide('<div class="notice warn"><div class="ni">!</div><div><b>第 4 步 · 分类建议与证据追溯</b>'
     +'系统无法自动判定的项目一律标注「待人工判定」，<b style="display:inline">不会默认显示「无危害」</b>；'
@@ -1816,7 +1845,12 @@ function renderStep4(){
     +'带虚线下划线的'+term('GHS')+'术语可悬停查看解释，不确定时可点「问 AI 助手」。</div></div>');
   $('wzBody').innerHTML=
     pureNote
-    +clpPackCallCard()
+    +'<div class="notice info" id="complianceScope"><div class="ni">i</div><div>本原型完整演示欧盟 CLP 自动分类链路。中国市场已接通国内名单、OEL、SDS 模板和人工分类流程，但尚未配置中国 GHS 自动规则包，系统不会使用欧盟 CLP 结果冒充中国 GHS 结论。运输第 14 章支持人工结构化结论，尚未配置自动运输分类数据库与规则。</div></div>'
+    +(cn?'':clpPackCallCard())
+    +'<div class="notice grey"><div class="ni">§</div><div>分类框架：'+esc(evaluation.results.classification.framework.label)+
+      '；分类待处理：'+pend.length+'；名单列入：'+(evaluation.results.lists.entryResults||[]).filter(function(x){return x.assessmentStatus!=='DATASET_UNAVAILABLE';}).length+
+      '；名单待补充：'+(evaluation.results.lists.summary.needContext||0)+'；OEL：'+
+      (evaluation.results.oel.missingComponents.length||evaluation.results.oel.status==='DATASET_UNAVAILABLE'?'存在未维护记录':'已就绪')+'</div></div>'
     +paramTbl
     +'<div class="concl" style="margin-bottom:16px">'
       +'<div class="ghs-box"><h4>混合物 '+term('GHS')+' 危险分类结论</h4><div class="hz-list">'
@@ -1828,7 +1862,7 @@ function renderStep4(){
             +'<span class="code" style="color:'+(conf?'var(--blue)':'var(--orange)')+'">?</span><span>'+esc(c.name)+'</span>'
             +'<span style="margin-left:auto" class="tag '+(conf?'blue':'orange')+' dot-tag">'+(conf?'待人工确认':'待人工判断')+'</span></div>';}).join('')
       +'</div></div>'
-      +'<div class="ghs-box"><h4>标签要素<span class="tag green" style="margin-left:7px">由分类结论自动推导</span></h4>'
+      +'<div class="ghs-box"><h4>标签要素<span class="tag green" style="margin-left:7px">'+(cn?'由人工分类结果整理':'由分类结论自动推导')+'</span></h4>'
         +'<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px"><div><div style="font-size:11.5px;color:var(--muted);margin-bottom:5px">'+term('警示词')+'</div>'
           +'<span class="signal-word '+(lb.sig==='danger'?'danger':'warning')+'">'+(lb.sig==='danger'?'危险':'警告')+'</span></div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
@@ -1842,11 +1876,11 @@ function renderStep4(){
           +(lb.ps.length?lb.ps.map(function(p){
             return esc(p+'：'+((P_STMT[p]||'').split(' / ')[1]||P_STMT[p]||''));}).join('<br>')
             :'<span style="color:var(--muted)">尚无分类结论</span>')+'</div>'
-        +'<div style="font-size:11.5px;color:var(--muted);margin-top:9px">P 语句由危害类别按 CLP Annex IV 选择表自动推导；'
-          +'标签实体排版时最多保留 6 条（另有例外规定），此处为全量候选。</div>'
+        +'<div style="font-size:11.5px;color:var(--muted);margin-top:9px">'
+          +(cn?'中国 GHS 标签要素需法规人员另行核对。':'P 语句由危害类别按 CLP Annex IV 选择表自动推导；标签实体排版时最多保留 6 条（另有例外规定），此处为全量候选。')+'</div>'
       +'</div>'
     +'</div>'
-    +euhCard()
+    +(cn?'':euhCard())
     +'<div class="card"><div class="card-hd"><h3>分类证据追溯</h3>'
       +'<span class="sub">共 '+items.length+' 条分类结论 · 逐条可审计</span>'
       +(pend.filter(function(c){return c.need==='confirm';}).length
@@ -1901,7 +1935,8 @@ function adoptAllSug(){
 }
 function adjClass(i){
   var c=wz.classItems[i];
-  var opts=c.opts||CLASS_OPTS.map(function(o){return {o:o,d:'参见 '+c.rule,hit:''};});
+  var cn=wz.project.market==='CN';
+  var opts=c.opts||CLASS_OPTS.map(function(o){return {o:o,d:cn?'由法规人员依据 GB 30000 系列核对':'参见 '+c.rule,hit:''};});
   /* 系统建议 = 生成时固化的 c.sug，人工判定后不再变化；c.result 是当前生效值 */
   var sug=(c.sug===undefined)?(c.status==='pending'?null:c.result):c.sug;
   var sugg=sug?sug:'—（系统无法自动判定，需人工给出结论）';
@@ -1925,8 +1960,9 @@ function adjClass(i){
   openModal({title:(c.status==='pending'?'人工判定':'手动调整')+'分类结果 · '+c.name,width:760,
     body:'<div class="notice '+(c.status==='pending'?'warn':'info')+'" style="margin-bottom:12px"><div class="ni">'+(c.status==='pending'?'!':'i')+'</div><div><b>系统建议：'+esc(sugg)+'</b>　规则依据：'+esc(c.rule)
       +(changed?'<br><b style="display:inline;color:var(--orange)">当前判定：'+esc(c.result)+'（已改判）</b>':'')
-      +'<br><span class="formula">'+esc(c.formula)+'</span><br><span style="color:var(--muted);font-size:11.8px">正常情况下直接采纳系统建议即可；仅当存在专家判断依据（组分协同效应、实测新数据、成员国从严要求等）时才需要改判，改判原因将写入审计记录。</span></div></div>'
-      +'<div class="card" style="box-shadow:none;margin-bottom:12px"><div class="card-hd"><h3>各类别判定依据与当前证据</h3><span class="sub">依据 '+esc(c.rule.split('·')[0])+' 浓度限值 / 加和法 · 绿色高亮 = 系统建议'+(sug?'':'（本次无建议）')+'</span></div>'
+      +'<br><span class="formula">'+esc(c.formula)+'</span><br><span style="color:var(--muted);font-size:11.8px">'+
+      (cn?'请依据 GB 30000 系列与受控资料人工判定，并填写理由。':'正常情况下直接采纳系统建议即可；仅当存在专家判断依据（组分协同效应、实测新数据、成员国从严要求等）时才需要改判，改判原因将写入审计记录。')+'</span></div></div>'
+      +'<div class="card" style="box-shadow:none;margin-bottom:12px"><div class="card-hd"><h3>各类别判定依据与当前证据</h3><span class="sub">'+(cn?'中国 GHS 人工判定，无系统分类建议':'依据 '+esc(c.rule.split('·')[0])+' 浓度限值 / 加和法 · 绿色高亮 = 系统建议'+(sug?'':'（本次无建议）'))+'</span></div>'
       +'<div class="card-bd tight"><div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:150px">类别选项</th><th>判定依据（标准摘要）</th><th style="width:230px">本配方当前证据</th></tr></thead><tbody>'+critRows+'</tbody></table></div></div></div>'
       +'<div class="form-grid">'
       +'<div class="field"><label class="req">'+(c.status==='pending'?'判定结果':'调整后分类结果')+'</label><select class="ctrl" id="adjRes">'+selOpts+'</select><span class="help">选项与上方判定依据表一一对应，绿色高亮行为系统建议'+(sug?'，系统建议已在上方色块中给出，无需在表格里重复标注':'；本次系统无法自动判定，请依据下表证据人工选择')+'</span></div>'
@@ -1938,6 +1974,7 @@ function adjClass(i){
 function adjSave(i){
   var note=$('adjNote').value.trim();
   var code=$('adjCode').value.trim();
+  if(wz.project.market==='CN'&&$('adjRes').value==='不分类（无需分类）'&&!code)code='—';
   if(!$('adjRes').value){toast('请选择判定结果','warn');return;}
   if(!note){toast('请填写判定/调整理由','warn');return;}
   if(!code){toast('请填写对应危险说明','warn');return;}
@@ -2037,6 +2074,7 @@ function deliverScan(){
    （内部批注见 secNotes()，仅在编制视图展示） */
 function draftText(i,documentStatus){
   var p=wz.project,mk=p.market==='EU'?('欧盟 · '+(p.state||'—')):'中国',eu=p.market==='EU';
+  var oelRows=i===7?complianceEvaluationCurrent().results.oel.rows:[];
   var cls=(wz.classItems||[]).filter(function(c){return c.status!=='pending'&&c.result!=='不分类';})
     .map(function(c){return '　· '+c.name+'：'+c.result+'（'+c.code+'）';}).join('\n')
     ||'　· 本混合物按现有数据判定为无需分类。';
@@ -2092,7 +2130,9 @@ function draftText(i,documentStatus){
        G14：8.2.2 补热危害、8.2.3 补环境暴露控制 */
     7:'8.1 控制参数\n'
       +'8.1.1 职业接触限值（OEL）：见本节限值表 / See the occupational exposure limit table below。\n'
-      +'8.1.2 附加职业接触限值：本节不适用（Not applicable）—— 本产品不含设有限值的生物监测指标组分。\n'
+      +'8.1.2 附加职业接触限值：'+
+        (oelRows.some(function(r){return r.limit.biologicalMonitoring&&r.limit.biologicalMonitoring!=='—';})
+          ?'当前数据集中的生物监测指标见本节限值表备注。':'当前有效 OEL 数据集未维护本配方组分的生物监测指标记录。')+'\n'
       +'8.1.3 DNEL / DMEL 与 PNEC：尚未推导（Not available）。\n'
       +'\n8.2 暴露控制\n'
       +'8.2.1 工程控制：局部排风 + 全面通风，作业区风速 ≥ 0.5 m/s；配置洗眼器与应急淋浴。\n'
@@ -2188,7 +2228,7 @@ function renderStep5(){
       +(i===8?physTableHtml():'')  /* G13：第 9 章理化特性 25 项表 */
       +(i===10?toxTableHtml():'')  /* G4：第 11 章毒理信息表 */
       +(i===11?ecotoxTableHtml():'')  /* G5：第 12 章生态毒性表 */
-      +(i===13?transportTableHtml():'')  /* G10：第 14 章运输信息表 */
+        +(i===13?'<div style="padding:8px 0"><button class="btn sm primary" onclick="transportAssessmentOpen()">维护运输结论</button></div>'+transportTableHtml():'')
       +(i===14?legalTableHtml():'')  /* G6：第 15 章法规 / CSA / Annex XIV */
       +'<div class="sds-text" id="sec'+i+'">'+esc(txt)+'</div>'+tools+'</div></div>';
   }).join('');
@@ -2263,11 +2303,14 @@ function renderStep6(){
   var release=sdsActiveRelease();
   var pend=(wz.classItems||[]).filter(function(c){return c.status==='pending';}).length;
   var miss=wzMissCount();
+  var transport=transportAssessmentStatus();
   var checks=[
     ['项目基础信息完整','ok','产品名称、目标市场、语言、投放日期均已填写'],
     ['配方已冻结','ok','快照 FORM-WPU320-V1.0 · '+wz.frozenAt],
     ['受控数据齐套',miss?'err':'ok',miss?(miss+' 项待补充'):'全部数据项已具备来源'],
     ['分类结论已判定',pend?'err':'ok',pend?(pend+' 项待人工判定'):'含 '+(wz.classItems||[]).filter(function(c){return c.status==='manual';}).length+' 项人工调整'],
+    ['第 14 章运输结论',transport==='NOT_ASSESSED'||transport==='STALE'?'err':'ok',
+      transport==='NOT_ASSESSED'?'尚未人工评估':transport==='STALE'?'原结论需重新确认':'已人工确认'],
     ['16 章节结构齐套','ok','已生成 16 章，其中 '+Object.keys(wz.draftEdits).length+' 章经人工编辑'],
     ['保密组分披露方式合规','warn','2 项保密组分采用浓度区间披露，替代名称申请待提交'],
     ['EHS 与法规人员签署',wz.published?'ok':'warn',wz.published?'已由 EHS 负责人批准':'尚未完成人工签署']
@@ -2308,8 +2351,11 @@ function renderStep6(){
     +(release?'<div class="card" id="sdsReleaseInfo"><div class="card-hd"><h3>已发布 SDS 快照</h3><span class="tag green">'+esc(release.documentVersion)+'</span></div><div class="card-bd" style="font-size:12.5px;line-height:1.9">'
       +'发布时间：'+esc(release.publishedAt)+'　审核人：'+esc(release.reviewer.name)+'<br>'
       +'快照 ID：'+esc(release.id)+'<br>'
+      +'分类框架：'+esc(release.evaluation.results.classification.framework&&release.evaluation.results.classification.framework.label||'欧盟 CLP')+'<br>'
       +'CLP 数据：'+esc(release.evaluation.versions.data.clpAnnexVi&&release.evaluation.versions.data.clpAnnexVi.version||'—')
-      +'　CLP 规则：'+esc(release.evaluation.versions.rules.clpRulePack)
+      +'　CLP 规则：'+esc(release.evaluation.versions.rules.clpRulePack||'—')
+      +'　OEL 数据：'+esc(release.evaluation.versions.data.oel&&release.evaluation.versions.data.oel.version||'—')
+      +'　运输结论：'+esc(release.review.transportAssessment&&release.review.transportAssessment.status||'旧版未记录')
       +'　SDS 模板：'+esc(release.evaluation.versions.template)
       +'<div class="muted">本版本已冻结，后续法规或模板升级不会改变本次发布内容。</div></div></div>':'')
     +'<div class="notice warn"><div class="ni">!</div><div><b>合规责任提示</b>正式发布版本需通过 EHS 与法规人员审核，<b style="display:inline">系统不替代人工合规责任</b>。系统生成内容仅作为编制辅助，最终文本的准确性由发布责任人承担。</div></div>';
