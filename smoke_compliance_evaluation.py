@@ -218,7 +218,8 @@ with sync_playwright() as pw:
     ok(page.evaluate("() => typeof exportSdsWord==='function'&&typeof sdsDocBodyHtml()==='string'&&sdsDocBodyHtml().includes('法规或清单')"),
        'Word 草案导出调用链仍可生成第 15 章正文')
     page.evaluate("() => {wz.project.market='EU';complianceEvaluationInvalidate('恢复市场');showPage('law:query');}")
-    ok(page.locator('#lqTable tbody tr').count()==63, '法规统一查询展示 63 行（含两个中国进出口目录与 OEL 投影）')
+    ok(page.evaluate('()=>lawQueryAllRows().length')==63 and page.locator('#lqTable tbody tr').count()==20,
+       '法规统一查询展示 63 行（含两个中国进出口目录与 OEL 投影），首页 20 行')
     page.evaluate("showPage('law:clp')")
     ok('CLP 法规库' in page.locator('#pageHost').inner_text(), 'CLP 页面正常')
     page.evaluate("showPage('law:reach')")

@@ -50,15 +50,27 @@ with sync_playwright() as pw:
     text=page.locator('#pageHost').inner_text()
     ok('法规统一查询' in text and '统一查询、分库维护' in text,'页面清楚说明查询与维护的分工')
     total=page.evaluate('()=>lawQueryAllRows().length')
-    ok(page.locator('#lqTable tbody tr').count()==total and total==63,
-       '默认跨库展示 63 行（名单 43 + CLP 5 + C&L 3 + OEL 12）')
+    ok(total==63,'全部命中记录 63 条（名单 43 + CLP 5 + C&L 3 + OEL 12）')
+    ok(page.locator('#lqTable tbody tr').count()==20 and '共 63 条记录' in page.locator('#lqPager').inner_text(),
+       '结果列表分页：首页 20 行，分页条显示全部 63 条')
+    ok(page.locator('#lqPager .pg-btn').count()==6 and '第 1 / 4 页' in page.locator('#lqPager').inner_text(),
+       '63 条按每页 20 条分为 4 页')
+    page.evaluate('lawQueryPageGo(4)');page.wait_for_timeout(120)
+    ok(page.locator('#lqTable tbody tr').count()==3 and '第 4 / 4 页' in page.locator('#lqPager').inner_text(),
+       '末页只渲染剩余 3 条')
+    page.evaluate('lawQueryPageGo(2)');page.wait_for_timeout(120)
+    page.fill('#lqKw','甲醛');page.wait_for_timeout(120)
+    ok(page.locator('#lqPager').inner_text().find('第 1 / ')>=0 or page.locator('#lqPager .pg-btn').count()==0,
+       '改搜索词后回到第 1 页，不会停在上一页页码')
+    page.fill('#lqKw','');page.wait_for_timeout(120)
     ok(page.locator('#lqTabs button').count()==4 and
        [t.strip() for t in page.locator('#lqTabs button').all_text_contents()]==['全部','GHS 分类','名录清单','OEL 限值'],
        '页签按查询维度分为 4 个：全部 / GHS 分类 / 名录清单 / OEL 限值')
     ok(page.locator('select#lqLaw').count()==0 and page.locator('select#lqSource').count()==0,
        '页签取代了原「法规类别」「法规来源」两个下拉')
-    lamps=page.locator('#lqTable .ev')
-    ok(lamps.count()==total and page.locator('#lqTable .ev-green').count()>0 and page.locator('#lqTable .ev-due').count()>0 and page.locator('#lqTable .ev-red').count()>0,'查询结果同时展示绿、黄、红三色只读证据灯')
+    ok(page.evaluate("()=>{var r=lawQueryAllRows().map(x=>lawEvidence(x,true).lv);return r.filter(x=>x==='green').length>0&&r.filter(x=>x==='due').length>0&&r.filter(x=>x==='red').length>0;}"),
+       '全部命中记录同时包含绿、黄、红三色只读证据灯')
+    ok(page.locator('#lqTable .ev').count()==20,'当前页每行都展示证据灯')
     ok('需改版' in page.locator('#lqKpi').inner_text(),'KPI 展示红灯需改版统计')
     ok(page.locator('#lqTable').get_by_role('button',name='确认复审').count()==0 and page.locator('#lqTable').get_by_role('button',name='查看新版本 diff').count()==0,'查询页证据灯只读且无维护操作')
     page.fill('#lqKw','50-00-0');page.wait_for_timeout(100)
@@ -74,11 +86,14 @@ with sync_playwright() as pw:
     ok(len(set(sources))==7,'同一物质可同时看到 7 个法规来源')
     page.fill('#lqKw','');page.wait_for_timeout(120)
     page.click('#lqTabs button[data-key="list"]');page.wait_for_timeout(120)
-    listN=page.locator('#lqTable tbody tr').count()
+    listN=page.evaluate('()=>lawQueryRows().length')
+    ok(page.locator('#lqTable tbody tr').count()==20,'名录清单页签同样分页展示')
     page.click('#lqTabs button[data-key="oel"]');page.wait_for_timeout(120)
-    oelN=page.locator('#lqTable tbody tr').count()
+    oelN=page.evaluate('()=>lawQueryRows().length')
+    ok(page.locator('#lqTable tbody tr').count()==12 and page.locator('#lqPager .pg-btn').count()==0,
+       'OEL 页签 12 条不足一页，不显示分页条')
     page.click('#lqTabs button[data-key="ghs"]');page.wait_for_timeout(120)
-    ghsN=page.locator('#lqTable tbody tr').count()
+    ghsN=page.evaluate('()=>lawQueryRows().length')
     ok(listN+ghsN+oelN==total and oelN==12 and ghsN<total and listN<total,
        '三个维度页签互斥且合计等于全部（OEL 页签 12 行 = 欧盟 5 + 中国 7 当前有效限值）')
     page.evaluate('lawQueryClear()');page.wait_for_timeout(120)

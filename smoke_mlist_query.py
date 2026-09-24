@@ -135,7 +135,9 @@ with sync_playwright() as pw:
 
     print('=== 查询页面 ===')
     page.evaluate("showPage('law:query')")
-    ok(page.locator('#lqTable tbody tr').count() == 63, '统一查询页正常展示 63 行')
+    ok(page.evaluate('()=>lawQueryAllRows().length') == 63, '统一查询页共 63 条命中记录')
+    ok(page.locator('#lqTable tbody tr').count() == 20 and '共 63 条记录' in page.locator('#lqPager').inner_text(),
+       '结果列表分页，首页展示 20 行')
     notice = page.locator('#pageHost').inner_text()
     ok('名单列入仅表示' in notice and '不等同于当前产品已经触发限制' in notice,
        '页面一次性说明列入与触发的区别')

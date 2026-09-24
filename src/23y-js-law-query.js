@@ -207,7 +207,11 @@ function lawQuerySubstanceCard(rows){
       (c&&c.iupac&&c.iupac!=='—'?'<dt>IUPAC 名称</dt><dd style="grid-column:span 3">'+esc(c.iupac)+'</dd>':'')+'</dl>':'')+
     '</div></div>';
 }
-function lawQueryRender(){
+var LAW_QUERY_PAGE_SIZE=20;   /* 统一查询一页最多展示 20 条命中记录 */
+var _lqPage=1;
+/* resetPage=true 表示搜索词 / 筛选 / 页签发生变化，回到第 1 页；翻页不传 */
+function lawQueryRender(resetPage){
+  if(resetPage)_lqPage=1;
   var rows=lawQueryRows(),groups={};rows.forEach(function(r){groups[r.cas&&r.cas!=='—'?r.cas:r.id]=1;});
   $('lqKpi').innerHTML='<div class="kpi"><span>命中记录</span><b>'+rows.length+'</b><small>按已接入数据集查询</small></div>'+
     '<div class="kpi"><span>命中物质</span><b>'+Object.keys(groups).length+'</b><small>无 CAS 条目单独计数</small></div>'+
@@ -215,18 +219,24 @@ function lawQueryRender(){
     '<div class="kpi"><span>需改版</span><b style="color:var(--red)">'+rows.filter(function(r){return lawEvidence(r,true).lv==='red';}).length+'</b><small>红灯 · 引用未同步</small></div>';
   $('lqSubstance').innerHTML=lawQuerySubstanceCard(rows);
   $('lqCount').textContent='共 '+rows.length+' 条命中记录';
+  /* 分页：KPI 与物质基础信息始终基于全部命中，只有表格按页切片 */
+  var size=LAW_QUERY_PAGE_SIZE,tp=Math.max(1,Math.ceil(rows.length/size));
+  if(_lqPage>tp)_lqPage=tp; if(_lqPage<1)_lqPage=1;
+  var page=rows.slice((_lqPage-1)*size,_lqPage*size);
   $('lqTable').innerHTML='<thead><tr><th style="width:110px">CAS 号</th><th style="width:130px">物质名称</th><th style="width:105px">EC 号</th><th style="width:150px">法规来源</th><th style="width:95px">证据灯</th><th style="width:110px">复审到期</th><th style="width:90px">地区</th><th style="width:110px">数据类型</th><th style="width:130px">查询结果</th><th>分类 / 限值 / 条件</th><th style="width:105px">版本</th><th style="width:130px">操作</th></tr></thead><tbody>'+
-    (rows.length?rows.map(function(r){var cls={clp:'purple',reach:'blue',rohs:'orange',cl:'grey',cn:'orange',zdhc:'green'}[r.sourceType]||'grey';var ev=lawEvidence(r,true);return '<tr class="'+(ev.lv==='red'?'row-red':(ev.lv==='due'?'row-due':''))+'"><td class="mono">'+esc(r.cas)+'</td><td><b>'+esc(r.name)+'</b></td><td class="mono">'+esc(r.ec)+'</td><td><span class="tag '+cls+'">'+esc(r.source)+'</span></td><td>'+lawEvidenceLamp(r,true)+'</td><td>'+esc(r.reviewDue)+'</td><td>'+esc(r.region)+'</td><td>'+esc(r.dataType)+'</td><td>'+esc(r.result)+'</td><td>'+esc(r.value)+'</td><td class="mono">'+esc(r.version)+'</td><td><button class="btn-link" onclick="lawQueryView(\''+r.id+'\')">查看</button><button class="btn-link" onclick="showPage(\''+(r.maintenanceRoute||lawMaintenanceRoute(r.sourceType))+'\')">来源库</button></td></tr>';}).join(''):'<tr><td colspan="12" class="tbl-empty"><span class="big">⌕</span>没有匹配的法规记录</td></tr>')+'</tbody>';
+    (page.length?page.map(function(r){var cls={clp:'purple',reach:'blue',rohs:'orange',cl:'grey',cn:'orange',zdhc:'green'}[r.sourceType]||'grey';var ev=lawEvidence(r,true);return '<tr class="'+(ev.lv==='red'?'row-red':(ev.lv==='due'?'row-due':''))+'"><td class="mono">'+esc(r.cas)+'</td><td><b>'+esc(r.name)+'</b></td><td class="mono">'+esc(r.ec)+'</td><td><span class="tag '+cls+'">'+esc(r.source)+'</span></td><td>'+lawEvidenceLamp(r,true)+'</td><td>'+esc(r.reviewDue)+'</td><td>'+esc(r.region)+'</td><td>'+esc(r.dataType)+'</td><td>'+esc(r.result)+'</td><td>'+esc(r.value)+'</td><td class="mono">'+esc(r.version)+'</td><td><button class="btn-link" onclick="lawQueryView(\''+r.id+'\')">查看</button><button class="btn-link" onclick="showPage(\''+(r.maintenanceRoute||lawMaintenanceRoute(r.sourceType))+'\')">来源库</button></td></tr>';}).join(''):'<tr><td colspan="12" class="tbl-empty"><span class="big">⌕</span>没有匹配的法规记录</td></tr>')+'</tbody>';
+  var pd=$('lqPager');if(pd)pd.innerHTML=tp>1?pagerHtml(rows.length,_lqPage,tp,'lawQueryPageGo'):'';
 }
+function lawQueryPageGo(p){_lqPage=p;lawQueryRender();}
 function lawQueryRenderTabs(){
   var host=$('lqTabs');if(!host)return;
   host.innerHTML='';
-  host.appendChild(tabs(LAW_TABS,_lqTab,function(k){_lqTab=k;_lqPresetLawKey='';lawQueryRender();}));
+  host.appendChild(tabs(LAW_TABS,_lqTab,function(k){_lqTab=k;_lqPresetLawKey='';lawQueryRender(true);}));
 }
 function lawQueryClear(){
   ['lqKw','lqType','lqRegion','lqStatus'].forEach(function(id){var el=$(id);if(el)el.value='';});
   _lqTab='';_lqPresetLawKey='';
-  lawQueryRenderTabs();lawQueryRender();
+  lawQueryRenderTabs();lawQueryRender(true);
 }
 function lawQueryView(id){
   var r=lawQueryAllRows().find(function(x){return x.id===id;});if(!r)return;
@@ -249,8 +259,8 @@ function renderLawQuery(params){
   _lqTab=preset?lawTabForLawKey(preset):'';
   _lqPresetLawKey=preset;
   $('pageHost').innerHTML='<div class="sds-scope">'+sdsHead('','法规统一查询','按 CAS、物质名称或 EC 号一次检索全部法规库，无需预先判断数据来自哪个法规来源。','<button class="btn" onclick="toast(\'查询结果已导出（演示）\',\'ok\')">导出结果</button>','','law-query')+
-    '<div class="notice info" style="margin-bottom:14px"><div class="ni">i</div><div><b>统一查询、分库维护：</b>本页证据灯只读；上传新版本、版本 diff 与确认复审仍在各法规库维护页完成。</div></div><div class="notice grey" style="margin-bottom:14px"><div class="ni">§</div><div>名单列入仅表示该物质出现在对应法规或行业清单中，不等同于当前产品已经触发限制。产品级判断还需结合浓度、用途、产品类型、材质和豁免信息。</div></div><div id="lqTabs" style="margin-bottom:12px"></div><div class="kpi-row" id="lqKpi"></div><div id="lqSubstance"></div><div class="card"><div class="toolbar" style="flex-wrap:wrap"><div class="search" style="width:250px"><i class="si">⌕</i><input id="lqKw" placeholder="CAS / 物质名称 / 别名 / EC 号" oninput="lawQueryRender()"></div><select class="ctrl" id="lqType" style="width:150px" onchange="lawQueryRender()"><option value="">全部数据类型</option><option>统一分类</option><option>限制</option><option>授权</option><option>高关注物质</option><option>企业申报分类</option><option>危化品分类</option><option>制造限用</option><option>职业接触限值</option></select><select class="ctrl" id="lqRegion" style="width:120px" onchange="lawQueryRender()"><option value="">全部地区</option><option>欧盟</option><option>中国</option><option>行业标准</option></select><select class="ctrl" id="lqStatus" style="width:120px" onchange="lawQueryRender()"><option value="">全部状态</option><option>已生效</option><option>待复核</option></select><button class="btn sm" onclick="lawQueryClear()">重置</button><div class="grow"></div><span id="lqCount" class="muted"></span></div><div class="tbl-wrap"><table class="tbl" id="lqTable" style="min-width:1700px"></table></div></div></div>';
-  lawQueryRenderTabs();lawQueryRender();
+    '<div class="notice info" style="margin-bottom:14px"><div class="ni">i</div><div><b>统一查询、分库维护：</b>本页证据灯只读；上传新版本、版本 diff 与确认复审仍在各法规库维护页完成。</div></div><div class="notice grey" style="margin-bottom:14px"><div class="ni">§</div><div>名单列入仅表示该物质出现在对应法规或行业清单中，不等同于当前产品已经触发限制。产品级判断还需结合浓度、用途、产品类型、材质和豁免信息。</div></div><div id="lqTabs" style="margin-bottom:12px"></div><div class="kpi-row" id="lqKpi"></div><div id="lqSubstance"></div><div class="card"><div class="toolbar" style="flex-wrap:wrap"><div class="search" style="width:250px"><i class="si">⌕</i><input id="lqKw" placeholder="CAS / 物质名称 / 别名 / EC 号" oninput="lawQueryRender(true)"></div><select class="ctrl" id="lqType" style="width:150px" onchange="lawQueryRender(true)"><option value="">全部数据类型</option><option>统一分类</option><option>限制</option><option>授权</option><option>高关注物质</option><option>企业申报分类</option><option>危化品分类</option><option>制造限用</option><option>职业接触限值</option></select><select class="ctrl" id="lqRegion" style="width:120px" onchange="lawQueryRender(true)"><option value="">全部地区</option><option>欧盟</option><option>中国</option><option>行业标准</option></select><select class="ctrl" id="lqStatus" style="width:120px" onchange="lawQueryRender(true)"><option value="">全部状态</option><option>已生效</option><option>待复核</option></select><button class="btn sm" onclick="lawQueryClear()">重置</button><div class="grow"></div><span id="lqCount" class="muted"></span></div><div class="tbl-wrap"><table class="tbl" id="lqTable" style="min-width:1700px"></table></div><div class="pager" id="lqPager"></div></div></div>';
+  lawQueryRenderTabs();lawQueryRender(true);
 }
 
 /* 分库维护：证据灯、复审信息与版本差异操作。 */

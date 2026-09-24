@@ -182,7 +182,8 @@ with sync_playwright() as pw:
         ok(page.locator('#lqTable tbody tr').count()==cnt,'%s 类别命中 %d 条'%(lk,cnt))
     page.evaluate("()=>lawQueryClear()");page.wait_for_timeout(150)
     ok(page.evaluate("()=>_lqPresetLawKey")=='' and page.evaluate("()=>_lqTab")=='' and
-       page.locator('#lqTable tbody tr').count()==63,'重置后回到全部页签，恢复 63 行全量')
+       page.locator('#lqTable tbody tr').count()==20 and page.evaluate('()=>lawQueryRows().length')==63,
+       '重置后回到全部页签，恢复 63 条全量（首页 20 行）')
 
     print('\n=== 导入新版本向导（静态演示） ===')
     page.evaluate("()=>showPage('law:reach')");page.wait_for_timeout(250)
