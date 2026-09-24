@@ -35,11 +35,11 @@ with sync_playwright() as pw:
         ok(page.evaluate("""(key)=>{
           var d=listGetDataset(key),r=complianceExecuteMethod('M-LIST',{asOfDate:clpSystemToday(),
             datasetKeys:[key],components:[{cas:'50-00-0'}]});
-          return d && d.available===false && d.entries.length===0 && !!d.unavailableReason &&
-            !listDatasetAvailable(key,clpSystemToday()) && r.status==='BLOCKED' &&
-            r.entryResults[0].assessmentStatus==='DATASET_UNAVAILABLE' &&
-            r.entryResults[0].unavailableReason===d.unavailableReason;
-        }""", key), key + ' 仅有不可用元数据，不会产生未列入结论')
+          return d && d.available!==false && d.entries.length>0 && !!d.version && !!d.source &&
+            d.effectiveFrom<=clpSystemToday() && listDatasetAvailable(key,clpSystemToday()) &&
+            r.status==='NO_MATCH' && r.entryResults.length===0 &&
+            r.coverage.evaluated[0]===key && r.coverage.complete;
+        }""", key), key + ' 已建立演示子集，检查后如实给出未命中而非不可判定')
     ok(not any(x in keys for x in ['cl-inventory','oel']), 'C&L Inventory 和 OEL 均不属于 M-LIST')
     ok(page.evaluate("""() => listGetDataset('reach-xiv').entries.length===REACH_XIV.length &&
       listGetDataset('reach-xiv').version===REACH_MODULES.xiv.ver &&
@@ -92,11 +92,12 @@ with sync_playwright() as pw:
       var rows=listLawQueryProjection(clpSystemToday()),out={};
       rows.forEach(r=>out[r.lawKey]=(out[r.lawKey]||0)+1);return out;
     }""""")
-    ok(counts == {'svhc': 8, 'xiv': 6, 'xvii': 8, 'rohs2': 10, 'zdhc-mrsl': 4, 'cn-danger': 3},
-       '六库动态行数与来源一致：' + str(counts))
-    ok(page.evaluate("""() => listLawQueryProjection(clpSystemToday()).length===39 &&
-      lawQueryAllRows().length===47 && LAW_QUERY_REFERENCE_ROWS.length===3"""),
-       '动态 39 行 + CLP 5 行 + C&L 3 行，共 47 行')
+    ok(counts == {'svhc': 8, 'xiv': 6, 'xvii': 8, 'rohs2': 10, 'zdhc-mrsl': 4, 'cn-danger': 3,
+                  'cn-prohibited': 2, 'cn-toxic': 2},
+       '八库动态行数与来源一致：' + str(counts))
+    ok(page.evaluate("""() => listLawQueryProjection(clpSystemToday()).length===43 &&
+      lawQueryAllRows().length===51 && LAW_QUERY_REFERENCE_ROWS.length===3"""),
+       '动态 43 行 + CLP 5 行 + C&L 3 行，共 51 行')
     ok(page.evaluate("""() => {var r=listLawQueryProjection(clpSystemToday());return r.every(x=>x.isListProjection&&
       x.id&&x.entryCode&&x.version&&x.source&&x.maintenanceRoute&&
       !['TRIGGERED','NOT_TRIGGERED'].includes(x.result));}"""),
@@ -117,8 +118,9 @@ with sync_playwright() as pw:
        'RoHS 的 CAS、EC、限值原文与路由正确')
     ok(page.evaluate("() => listLawQueryProjection(clpSystemToday()).filter(x=>x.lawKey==='rohs2'&&x.cas==='—').length===2"),
        '无 CAS 的 RoHS 物质组保留在查询投影')
-    ok(page.evaluate("() => listLawQueryProjection(clpSystemToday()).every(x=>!['cn-prohibited-import-export','cn-toxic-chemicals'].includes(x.lawKey))"),
-       '两个不可用数据集不产生普通查询行')
+    ok(page.evaluate("""() => {var r=listLawQueryProjection(clpSystemToday()).filter(x=>['cn-prohibited','cn-toxic'].includes(x.lawKey));
+      return r.length===4 && r.every(x=>x.isListProjection&&x.region==='中国'&&x.maintenanceRoute==='law:cn'&&!['TRIGGERED','NOT_TRIGGERED'].includes(x.result));}"""),
+       '两个中国进出口目录进入查询投影且只表述列入')
     ok(page.evaluate("""() => LAW_QUERY_REFERENCE_ROWS.every(x=>x.lawKey==='cl-inventory') &&
       LAW_QUERY_REFERENCE_ROWS.map(x=>x.id).join()==='Q004,Q008,Q010'"""),
        '参考数组只保留 C&L Inventory，旧手工名单事实均已清除')
@@ -132,13 +134,14 @@ with sync_playwright() as pw:
 
     print('=== 查询页面 ===')
     page.evaluate("showPage('law:query')")
-    ok(page.locator('#lqTable tbody tr').count() == 47, '统一查询页正常展示 47 行')
+    ok(page.locator('#lqTable tbody tr').count() == 51, '统一查询页正常展示 51 行')
     notice = page.locator('#pageHost').inner_text()
     ok('名单列入仅表示' in notice and '不等同于当前产品已经触发限制' in notice,
        '页面一次性说明列入与触发的区别')
-    ok(page.locator('#lqLaw option').count() == 9 and page.locator('#lqSource option').count() == 7,
-       '法规类别及来源筛选包含 RoHS')
-    for key, expected in [('svhc',8),('xiv',6),('xvii',8),('rohs2',10),('zdhc-mrsl',4),('cn-danger',3)]:
+    ok(page.locator('#lqLaw option').count() == 11 and page.locator('#lqSource option').count() == 7,
+       '法规类别及来源筛选包含 RoHS 与两个中国进出口目录')
+    for key, expected in [('svhc',8),('xiv',6),('xvii',8),('rohs2',10),('zdhc-mrsl',4),('cn-danger',3),
+                          ('cn-prohibited',2),('cn-toxic',2)]:
         page.select_option('#lqLaw', key)
         ok(page.locator('#lqTable tbody tr').count() == expected, key + ' 筛选行数正确')
     page.select_option('#lqLaw','')

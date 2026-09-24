@@ -96,9 +96,19 @@ function complianceEvaluationVersions(input){
         reason:'中国 GHS 规则包尚未配置'}},
     methods:methods,labels:eu?pack.modules.labels:null,template:sdsTemplateVersion()};
 }
+/* 只有会影响合规结论的字段才进指纹。编制语言与物料编码不参与分类、名单或限值判定，
+   改这两项不应让第 4 步已做的人工判定失效；两者仍完整留在 inputSnapshot 里供展示与归档。 */
+function complianceEvaluationFingerprintInput(input){
+  var n=complianceEvaluationNormalize(input);
+  return {asOfDate:n.asOfDate,
+    product:{name:n.product.name,formType:n.product.formType,
+      targetMarket:n.product.targetMarket,targetState:n.product.targetState},
+    formula:n.formula,context:n.context,datasetKeys:n.datasetKeys};
+}
 function complianceEvaluationFingerprint(input){
   var normalized=complianceEvaluationNormalize(input);
-  return JSON.stringify({input:normalized,versions:complianceEvaluationVersions(normalized)});
+  return JSON.stringify({input:complianceEvaluationFingerprintInput(normalized),
+    versions:complianceEvaluationVersions(normalized)});
 }
 function complianceEvaluateDraft(input){
   var normalized=complianceEvaluationNormalize(input),versions=complianceEvaluationVersions(normalized);
@@ -118,7 +128,7 @@ function complianceEvaluateDraft(input){
   var result={schemaVersion:COMPLIANCE_EVALUATION_SCHEMA,
     id:'CE-'+Date.now()+'-'+(++_complianceEvaluationSerial),status:'draft',
     evaluatedAt:new Date().toISOString(),asOfDate:normalized.asOfDate,
-    inputFingerprint:JSON.stringify({input:normalized,versions:versions}),
+    inputFingerprint:complianceEvaluationFingerprint(normalized),
     inputSnapshot:normalized,versions:versions,
     results:{classification:{framework:framework,items:displayItems,engineItems:run?run.items:[],pack:run?run.pack:null,
       executions:run?run.executions:[],labels:run?run.labels:{hCodes:[],pCodes:[],pictograms:[],signalWord:''},warnings:classWarnings},

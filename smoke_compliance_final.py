@@ -82,7 +82,7 @@ with sync_playwright() as pw:
     check(all(x['status']=='pending' and x['need']=='judge' and x['sug'] is None for x in split['cn']['items']), '中国分类项目全为无系统建议的人工待判定')
     check(any(x['code']=='CN_GHS_RULE_PACK_UNAVAILABLE' for x in split['cn']['warnings']), '中国规则包未配置说明进入评估结果')
     check(any(x['datasetKey']=='cn-danger' for x in split['cnLists']['entryResults']), '国内危化品目录继续走 M-LIST')
-    check(len(split['cnLists']['coverage']['unavailable'])==2, '两个未建立的国内名单仍标不可用')
+    check(len(split['cnLists']['coverage']['unavailable'])==0 and len(split['cnLists']['coverage']['evaluated'])==4, '中国四个国内名单均可检查，覆盖完整')
     page.evaluate("() => {showPage('sds:wizard');wzGo(4)}")
     text4=page.locator('#wzBody').inner_text()
     check('中国 GHS' in text4 and '尚未配置中国 GHS 自动规则包' in text4 and '系统自动判定' not in text4, '第 4 步明确人工范围且无伪自动状态')

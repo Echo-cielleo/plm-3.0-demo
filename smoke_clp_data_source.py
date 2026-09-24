@@ -51,7 +51,7 @@ with sync_playwright() as pw:
     }"""), 'OEL 从已发布数据集读取并按警告展示，非 CLP 缺失项一键填充后归零')
 
     print('=== 跨入口同步 ===')
-    ok(page.evaluate("()=>lawQueryAllRows().length===47&&lawQueryAllRows().some(x=>x.cas==='108-88-3'&&x.sourceType==='clp')"), '法规统一查询为 47 行，包含补入的甲苯 CLP 命中')
+    ok(page.evaluate("()=>lawQueryAllRows().length===51&&lawQueryAllRows().some(x=>x.cas==='108-88-3'&&x.sourceType==='clp')"), '法规统一查询为 51 行，包含补入的甲苯 CLP 命中')
     ok(page.evaluate("()=>clpLawQueryProjection().length===clpViRecords().length&&lawQueryAllRows().filter(x=>x.sourceType==='clp').length===clpViRecords().length"), '统一查询的 CLP 行为动态投影')
     ok(page.evaluate("()=>LAW_DETAIL.clp6.rows.length===clpViRecords().length"), 'CLP 来源库明细为动态投影')
     before = page.evaluate("()=>({s:clpSubstanceProfile('9009-54-5').effective.ateValues.oral,q:clpParamOf('9009-54-5').ateO})")

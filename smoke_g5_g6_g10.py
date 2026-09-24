@@ -74,8 +74,8 @@ with sync_playwright() as pw:
     b15c = pg.evaluate("()=>document.getElementById('acc14')?.textContent||''")
     ok('15.1 中国法规' in b15c, "CN 市场下第15章显示中国法规表")
     ok('15.1 欧盟法规' not in b15c, "CN 市场下不混入欧盟法规表")
-    ok('禁止进出口目录' in b15c and '本期未建立可执行数据集' in b15c,
-       "CN 市场下两个待建目录如实标记不可用")
+    ok('本期未建立可执行数据集' not in b15c and '未形成自动判断' not in b15c,
+       "CN 市场下四个国内名单均已检查，不再标记待建")
 
     print("\n=== 无 JS 错误 ===")
     ok(len(errs) == 0, "运行期 0 JS 错误" + ("" if not errs else " -> "+str(errs[:2])))

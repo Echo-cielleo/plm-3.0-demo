@@ -180,7 +180,7 @@ with sync_playwright() as pw:
         ok(page.evaluate("()=>$('lqLaw').value")==lk,'按 lawKey=%s 预置法规类别筛选'%lk)
         ok(page.locator('#lqTable tbody tr').count()==cnt,'%s 类别命中 %d 条'%(lk,cnt))
     page.evaluate("()=>lawQueryClear()");page.wait_for_timeout(150)
-    ok(page.evaluate("()=>$('lqLaw').value")=='' and page.locator('#lqTable tbody tr').count()==47,'重置后恢复全量 47 条动态与参考查询行')
+    ok(page.evaluate("()=>$('lqLaw').value")=='' and page.locator('#lqTable tbody tr').count()==51,'重置后恢复全量 51 条动态与参考查询行')
 
     print('\n=== 导入新版本向导（静态演示） ===')
     page.evaluate("()=>showPage('law:reach')");page.wait_for_timeout(250)

@@ -64,7 +64,7 @@ with sync_playwright() as pw:
     ok(page.evaluate("() => complianceListDatasetKeysForMarket('EU').join()==='reach-svhc,reach-xiv,reach-xvii,eu-rohs-annex-ii,zdhc-mrsl'"),
        '欧盟选择 REACH、RoHS、ZDHC，不含国内目录')
     ok(page.evaluate("() => complianceListDatasetKeysForMarket('CN').join()==='cn-danger,zdhc-mrsl,cn-prohibited-import-export,cn-toxic-chemicals'"),
-       '中国选择国内目录、ZDHC、两个待建目录，不含 REACH / RoHS')
+       '中国选择国内目录、ZDHC、两个进出口目录，不含 REACH / RoHS')
     ok(page.evaluate("() => {var r=ceDirect.results.lists;return r.entryResults.some(x=>x.datasetKey==='reach-svhc'&&x.assessmentStatus==='LISTED_ONLY')&&r.entryResults.some(x=>x.datasetKey==='reach-xvii'&&x.assessmentStatus==='LISTED_ONLY')&&r.coverage.complete;}"),
        '默认欧盟配方有有效名单命中，真实条目仅为 LISTED_ONLY')
     ok(page.evaluate("() => ceDirect.results.lists.entryResults.filter(x=>x.assessmentStatus!=='DATASET_UNAVAILABLE').every(x=>x.conditionResults.length===0)"),
@@ -76,12 +76,12 @@ with sync_playwright() as pw:
     ok(page.evaluate("() => {var x=complianceEvaluationInputFromWz();x.formula=[{cas:'',name:'多溴联苯',concentration:0.35}];return complianceEvaluateDraft(x).results.lists.entryResults.length===0;}"),
        '无 CAS / EC 的 RoHS 物质组不通过名称匹配配方')
     page.evaluate("() => {wzInitState();wz.project.market='CN';window.ceCn=complianceEvaluationEnsure();}")
-    ok(page.evaluate("() => ceCn.results.lists.coverage.unavailable.join()==='cn-prohibited-import-export,cn-toxic-chemicals'&&!ceCn.results.lists.coverage.complete&&ceCn.results.lists.status==='AUTO'"),
-       '中国两个待建目录保留局部不可用，不覆盖可用库结果')
-    ok(page.evaluate("() => Object.keys(ceCn.versions.data.listDatasets).length===4&&ceCn.versions.data.listDatasets['cn-toxic-chemicals'].available===false&&!!ceCn.versions.data.listDatasets['cn-toxic-chemicals'].unavailableReason"),
-       '不可用状态和原因进入版本快照，未请求欧盟库不进入')
-    ok(page.evaluate("() => ceCn.readiness.hasUnavailableDatasets&&!ceCn.readiness.listCoverageComplete&&ceCn.results.lists.entryResults.filter(x=>x.assessmentStatus==='DATASET_UNAVAILABLE').length===2"),
-       '部分覆盖进入 readiness，待建目录不被解释为未列入')
+    ok(page.evaluate("() => ceCn.results.lists.coverage.unavailable.length===0&&ceCn.results.lists.coverage.complete&&ceCn.results.lists.coverage.evaluated.length===4"),
+       '中国四个目录均可检查且覆盖完整，不再有局部不可用')
+    ok(page.evaluate("() => Object.keys(ceCn.versions.data.listDatasets).length===4&&ceCn.versions.data.listDatasets['cn-toxic-chemicals'].available===true&&!!ceCn.versions.data.listDatasets['cn-toxic-chemicals'].version"),
+       '可用状态与版本进入版本快照，未请求欧盟库不进入')
+    ok(page.evaluate("() => !ceCn.readiness.hasUnavailableDatasets&&ceCn.readiness.listCoverageComplete&&ceCn.results.lists.entryResults.every(x=>x.assessmentStatus!=='DATASET_UNAVAILABLE')"),
+       '完整覆盖进入 readiness，命中条目只表述列入')
 
     print('=== 失效、指纹与旧快照 ===')
     page.evaluate("() => {wzInitState();wz.project.market='EU';window.ceFirst=complianceEvaluationEnsure();}")
@@ -95,7 +95,6 @@ with sync_playwright() as pw:
       ('投放日期', "wz.project.date='2027-03-01'"),
       ('产品类型', "wz.formType='pure'"),
       ('产品名称', "wz.project.product='另一个产品'"),
-      ('物料编码', "wz.materialCode='MAT-TEST'"),
       ('目标国家', "wz.project.state='法国'"),
       ('名单上下文', "wz.listContext.useClass='industrial'"),
       ('数据版本', "listGetDataset('reach-svhc').version='TEST-VERSION'"),
@@ -113,6 +112,19 @@ with sync_playwright() as pw:
         if label == '规则版本': page.evaluate("() => {clpRuleVersionResolve(wz.project.date).version=CLP_MODULES.rules.ver;}")
         if label == '方法版本': page.evaluate("() => {complianceGetMethod('M-LIST').version='1.0.0-demo';}")
         if label == '模板版本': page.evaluate("() => {REACH_SDS_CH.forEach(x=>x.det.tpl='SDS-TPL-2026.1');}")
+
+    print('=== 与判定无关的字段不触发重算 ===')
+    ok(page.evaluate("() => {wzInitState();wz.project.market='EU';wz.materialCode='MAT-TEST';wz.project.lang='英文';var f=complianceEvaluationFingerprint(complianceEvaluationInputFromWz());return f.indexOf('MAT-TEST')<0&&f.indexOf('英文')<0&&complianceEvaluationInputFromWz().product.language==='英文';}"),
+       '指纹不含编制语言与物料编码，但两者仍留在输入快照里')
+    for label, mutation in [('编制语言', "wz.project.lang='英文'"),
+                            ('物料编码', "wz.materialCode='MAT-TEST'")]:
+        page.evaluate("() => {wzInitState();wz.project.market='EU';window.ceKeep=complianceEvaluationEnsure();wz.classItems[0].status='manual';wz.classItems[0].note='人工判定';}")
+        page.evaluate('() => {' + mutation + ';}')
+        ok(page.evaluate("() => {var s=complianceEvaluationEnsure();return s===ceKeep&&wz.classItems[0].status==='manual'&&wz.classItems[0].note==='人工判定';}"),
+           label + ' 变化后复用同一快照，第 4 步人工判定不被清空')
+    ok(page.evaluate("() => {wzInitState();wz.project.market='EU';var before=complianceEvaluationEnsure();wz.classItems[0].status='manual';wz.classItems[0].note='人工判定';wz.formula[0].conc='44.00';var s=complianceEvaluationEnsure();return s.id!==before.id&&wz.classItems[0].status!=='manual';}"),
+       '配方变化仍照常重算并刷新判定项，未被豁免误伤')
+
     page.evaluate("() => {wzInitState();wz.project.market='EU';window.ceOld=complianceEvaluationEnsure();complianceEvaluationInvalidate('测试主动失效');}")
     ok(page.evaluate("() => wz.evaluationDirty&&wz.evaluationInvalidReason==='测试主动失效'&&complianceEvaluationEnsure().id!==ceOld.id"),
        '主动失效原因留痕且触发重算')
@@ -199,13 +211,14 @@ with sync_playwright() as pw:
     }"""), '测试夹具产生 NEED_CONTEXT 后第 3 步和第 15 章显示缺少的产品用途')
     page.evaluate("() => {wz.project.market='CN';complianceEvaluationInvalidate('市场变化');}")
     cn15=page.evaluate('legalTableHtml()')
-    ok('禁止进出口目录' in cn15 and '有毒化学品名录' in cn15 and '本期未建立可执行数据集' in cn15,
-       '第 15 章中国市场展示两个不可用目录，未形成自动判断')
+    ok(page.evaluate("() => {var s=complianceEvaluationEnsure();return s.results.lists.coverage.complete&&s.results.lists.coverage.evaluated.length===4&&s.results.lists.coverage.unavailable.length===0;}")
+       and '本期未建立可执行数据集' not in cn15 and '未形成自动判断' not in cn15,
+       '第 15 章中国市场四个目录均已检查，不再出现待建提示')
     ok(not any(x in cn15 for x in ['不合规','禁止销售','允许销售']), '第 15 章没有整体产品合规结论')
     ok(page.evaluate("() => typeof exportSdsWord==='function'&&typeof sdsDocBodyHtml()==='string'&&sdsDocBodyHtml().includes('法规或清单')"),
        'Word 草案导出调用链仍可生成第 15 章正文')
     page.evaluate("() => {wz.project.market='EU';complianceEvaluationInvalidate('恢复市场');showPage('law:query');}")
-    ok(page.locator('#lqTable tbody tr').count()==47, '法规统一查询保持阶段 4B-1 的 47 行')
+    ok(page.locator('#lqTable tbody tr').count()==51, '法规统一查询展示 51 行（含两个中国进出口目录）')
     page.evaluate("showPage('law:clp')")
     ok('CLP 法规库' in page.locator('#pageHost').inner_text(), 'CLP 页面正常')
     page.evaluate("showPage('law:reach')")
