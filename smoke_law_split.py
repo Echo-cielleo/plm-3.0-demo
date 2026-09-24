@@ -68,6 +68,10 @@ with sync_playwright() as pw:
        '页签按查询维度分为 4 个：全部 / GHS 分类 / 名录清单 / OEL 限值')
     ok(page.locator('select#lqLaw').count()==0 and page.locator('select#lqSource').count()==0,
        '页签取代了原「法规类别」「法规来源」两个下拉')
+    ok(page.evaluate("()=>{var a=$('lqKw'),b=$('lqTabs');return !!(a&&b)&&(a.compareDocumentPosition(b)&4)>0;}"),
+       '搜索框位于页签上方，是全局检索入口而非结果内过滤')
+    ok('CLP 附录 VI' in page.locator('#pageHost').inner_text() and '检索范围' in page.locator('#pageHost').inner_text(),
+       '搜索区标明检索覆盖的全部法规来源')
     ok(page.evaluate("()=>{var r=lawQueryAllRows().map(x=>lawEvidence(x,true).lv);return r.filter(x=>x==='green').length>0&&r.filter(x=>x==='due').length>0&&r.filter(x=>x==='red').length>0;}"),
        '全部命中记录同时包含绿、黄、红三色只读证据灯')
     ok(page.locator('#lqTable .ev').count()==20,'当前页每行都展示证据灯')
