@@ -35,10 +35,15 @@ with sync_playwright() as pw:
 
     # 第14章 运输
     body14 = pg.evaluate("()=>document.querySelector('#acc13')?.textContent||''")
-    ok('ADN' in body14, "第14章运输表含 ADN（内河）")
+    ok('运输分类尚未评估' in body14 and '非危险货物' not in body14,
+       "第14章默认提示未评估，不预设非危险货物")
+    pg.evaluate("() => {transportAssessmentSave({status:'NOT_REGULATED',basis:'人工核对',assessedBy:'EHS'});renderStep5();}")
+    body14 = pg.evaluate("()=>document.querySelector('#acc13')?.textContent||''")
+    ok('ADN' in body14, "人工结论第14章含 ADN（内河）")
     ok('IMDG' in body14 and 'IATA' in body14 and 'ADR' in body14,
-       "第14章含 ADR/RID/ADN/IMDG/IATA 多模式")
-    ok('不适用' in body14, "第14章非危险货物标注「不适用」")
+       "人工结论第14章含 ADR/RID/ADN/IMDG/IATA 多模式")
+    ok('经人工确认：非危险货物 / 不受管制' in body14,
+       "非危险货物仅在人工确认后显示")
 
     # 第15章 动态名单/CSA
     body15 = pg.evaluate("()=>document.querySelector('#acc14')?.textContent||''")

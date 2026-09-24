@@ -70,6 +70,7 @@ with sync_playwright() as pw:
         c.status='manual';c.result='不分类（无需分类）';c.code='—';
         c.note='依据人工审核报告判定';c.noteAt=nowStr();
       }});
+      transportAssessmentSave({status:'NOT_REGULATED',basis:'人工核对运输资料',assessedBy:'EHS 负责人'});
       window._draftBodyAtPublish=sdsDraftBodyHtml('published');
       var release=sdsReleaseCreate({name:'EHS 负责人'});
       window._firstRelease=release;
@@ -146,6 +147,7 @@ with sync_playwright() as pw:
       wz.docVer='V1.1';wz.classItems.forEach(c=>{if(c.status==='pending'){
         c.status='manual';c.result='不分类（无需分类）';c.code='—';c.note='新版复核';c.noteAt=nowStr();
       }});
+      transportAssessmentSave({status:'NOT_REGULATED',basis:'新版运输资料复核',assessedBy:'EHS 负责人'});
       var second=sdsReleaseCreate({name:'EHS 负责人'});
       return {duplicate,count:sdsReleaseList().length,firstSame:before===JSON.stringify(sdsReleaseGet(window._firstRelease.id)),
         secondId:second.id,active:wz.activeReleaseId,secondBody:second.document.bodyHtml,
@@ -184,6 +186,7 @@ with sync_playwright() as pw:
       wz.classItems.forEach(c=>{if(c.status==='pending'){
         c.status='manual';c.result='不分类（无需分类）';c.code='—';c.note='人工复核';c.noteAt=nowStr();
       }});
+      transportAssessmentSave({status:'NOT_REGULATED',basis:'人工核对运输资料',assessedBy:'EHS 负责人'});
       wz.submitted=true;wzGo(6);
       var old=sdsConfirm;sdsConfirm=function(title,body,callback){callback();};
       try{wzPublish();}finally{sdsConfirm=old;}

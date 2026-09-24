@@ -75,26 +75,25 @@ with sync_playwright() as pw:
     ok(pg.evaluate("()=>document.querySelectorAll('#acc7 table').length===1"),
        "第 8 章渲染出 1 张表格")
     ok(pg.evaluate("(%s)(7)" % HEADS) ==
-       "国家 / 地区|物质|EC 号|CAS 号|8h（ppm / mg/m³）|15min（ppm / mg/m³）|Note",
-       "7 列含 8h / 15min 双时段与 Note 脚注")
+       "国家 / 地区|物质|EC|CAS|原始限值类型|长期限值|短期限值|上限值|单位|皮肤 / 致敏|备注|数据版本",
+       "第 8 章 12 列保留原始限值类型、单位和语义槽位")
     r7 = pg.evaluate("(%s)(7)" % ROWS)
     ok(not any("乙二醇单丁醚：20 ppm（8h TWA，EU IOELV）" in r for r in r7),
        "旧的硬编码文本已移除")
-    ok(all(any(f["cas"] in r for r in r7) for f in
-           pg.evaluate("()=>wz.formula")), "表里每一行都对应当前配方的组分")
-    ok(any("欧盟（IOELV）" in r for r in r7), "欧盟市场显示 IOELV")
-    ok(any("德国（TRGS 900）" in r for r in r7), "并按成员国列出不同限值")
-    ok(any("波兰" in r for r in r7), "含波兰成员国限值（与示例文档口径一致）")
-    ok(any("未设立" in r for r in r7), "无限值的物质如实标注「未设立」而非留空")
-    ok(any("20 / 98" in r for r in r7), "8h 双单位显示正确（20 ppm / 98 mg/m³）")
+    ok(all(any(f["cas"] in r for r in r7) for f in pg.evaluate("()=>wz.formula")),
+       "表里每一行都对应当前配方的组分")
+    ok(any("欧盟（EU）" in r and "0.37" in r for r in r7), "欧盟甲醛限值读取 IOELV")
+    ok(not any("德国" in r or "波兰" in r for r in r7), "不合并成员国限值")
+    ok(any("当前有效 OEL 数据集未维护该组分限值" in r for r in r7), "未维护记录不写成不适用")
+    ok("V2026.1" in pg.evaluate("()=>document.querySelector('#acc7').textContent"), "第 8 章显示有效数据集版本")
 
     print("\n=== G3 · 随目标市场联动 ===")
     pg.evaluate("pickMarket('CN')"); pg.wait_for_timeout(600)
     pg.evaluate("wzGo(5)"); pg.wait_for_timeout(800)
     r7cn = pg.evaluate("(%s)(7)" % ROWS)
-    ok(any("中国（GBZ 2.1）" in r for r in r7cn), "切到中国后改用 GBZ 2.1 限值")
-    ok(not any("欧盟（IOELV）" in r for r in r7cn), "不再出现欧盟限值")
-    ok(any("— / 0.5" in r for r in r7cn), "中国限值按 mg/m³ 口径给出（甲醛 0.5）")
+    ok(any("中国" in r and "0.5" in r and "MAC" in r for r in r7cn), "中国甲醛使用 GBZ 2.1 MAC 上限值")
+    ok(not any("欧盟（EU）" in r for r in r7cn), "不合并欧盟限值")
+    ok("2019 版" in pg.evaluate("()=>document.querySelector('#acc7').textContent"), "中国数据版本显示 2019 版")
     pg.evaluate("pickMarket('EU')"); pg.wait_for_timeout(600)
     pg.evaluate("wzGo(5)"); pg.wait_for_timeout(800)
 
@@ -103,8 +102,8 @@ with sync_playwright() as pw:
     for s in ['8.1.1 职业接触限值', '8.1.2 附加职业接触限值', '8.1.3 DNEL / DMEL 与 PNEC',
               '8.2.1 工程控制', '8.2.2 个人防护装备', '热危害', '8.2.3 环境暴露控制']:
         ok(s in t7, "含 %s" % s)
-    ok("Not applicable" in t7 and "Not available" in t7,
-       "空缺项用法规惯用表述，不编造数据")
+    ok("未维护本配方组分的生物监测指标记录" in t7 and "Not available" in t7,
+       "生物监测记录缺失按当前 OEL 数据集说明，不编造不存在")
 
     print("\n=== 回归 ===")
     ok(pg.evaluate("()=>document.querySelectorAll('#acc2 table,#acc7 table').length===2"),

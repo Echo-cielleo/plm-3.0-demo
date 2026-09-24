@@ -192,11 +192,11 @@ with sync_playwright() as pw:
         return ts.indexOf('SCL')<0&&ts.indexOf('M 因子')<0&&ts.indexOf('ATE')<0;}"""),
        "灰色说明框里已不再重复这三个词")
     ok(pg.evaluate("""()=>{
-        var g=document.querySelector('#wzBody .notice.grey');
+        var g=[...document.querySelectorAll('#wzBody .notice.grey')].find(x=>x.textContent.includes('表头带下划线'));
         return !!g&&/表头带下划线.*悬停查看/.test(g.textContent);}"""),
        "说明框改为指向表头悬停")
     ok(pg.evaluate("""()=>{
-        var g=document.querySelector('#wzBody .notice.grey');
+        var g=[...document.querySelectorAll('#wzBody .notice.grey')].find(x=>x.textContent.includes('表头带下划线'));
         return !!g&&/橙底行.*没有可用的 ATE/.test(g.textContent)
               &&g.textContent.indexOf('已知安全')>=0
               &&g.textContent.indexOf('组分基础数据')>=0;}"""),

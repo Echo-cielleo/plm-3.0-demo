@@ -47,8 +47,8 @@ with sync_playwright() as pw:
       showPage('sds:wizard');wzGo(3);var before=wzMissCount();
       var label=document.querySelector('#wzBody button[onclick="wzFillDemo(1)"]').textContent.trim();
       wzFillDemo(1);var after=wzMissCount();
-      wz.collected=false;wz.collect={};return before===5&&after===0&&label==='一键填充演示数据';
-    }"""), '默认 SDS 第 3 步为 5 项缺失，原按钮一键填充后归零')
+      wz.collected=false;wz.collect={};return before===4&&after===0&&label==='一键填充演示数据';
+    }"""), 'OEL 从已发布数据集读取并按警告展示，非 CLP 缺失项一键填充后归零')
 
     print('=== 跨入口同步 ===')
     ok(page.evaluate("()=>lawQueryAllRows().length===47&&lawQueryAllRows().some(x=>x.cas==='108-88-3'&&x.sourceType==='clp')"), '法规统一查询为 47 行，包含补入的甲苯 CLP 命中')

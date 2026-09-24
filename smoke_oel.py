@@ -51,7 +51,7 @@ with sync_playwright() as pw:
     ok(all(x in flow for x in ['官方来源','数据集版本','限值明细','版本对比','审核发布']),'五步命名与需求一致')
     ok('欧盟 / 中国官方清单' in flow,'流程条第 1 步写明来源范围为欧盟 / 中国')
     ok('OEL 不是一部单独法规' in t and '欧盟与中国' in t,'顶部写明 OEL 是多套官方限值清单（以数据集版本为单位维护）')
-    for b in ['不自动从 PDF 中识别并直接发布数据','不自动判断哪套清单的限值更严格','不把两套市场的限值合并成一个值','不根据投放市场自动选择 OEL','不实现真实 AI 解析与法规网站监控']:
+    for b in ['不自动从 PDF 中识别并直接发布数据','不自动判断哪套清单的限值更严格','不把两套市场的限值合并成一个值','已接通：SDS 按目标市场与计划投放日期选择有效 OEL 数据集。','不实现真实 AI 解析与法规网站监控']:
         ok(b in t,'边界声明：%s'%b)
     ok('只对齐语义、不换算数值' in t,'边界声明写明语义对齐只对齐类型、不换算数值')
 
@@ -269,7 +269,7 @@ with sync_playwright() as pw:
     allp=txt('#pageHost')+txt('#oelDw') if page.locator('#oelDw').count() else txt('#pageHost')
     ok('已实现自动监控' not in allp and '自动抓取' not in allp,'无「已实现自动监控 / 自动抓取」类表述')
     ok('不实现真实 AI 解析' in allp,'明确标注不实现真实 AI 解析与法规网站监控')
-    ok('后续统一实现' in allp and 'SDS 第 8 节' in allp,'写明投放市场 → 有效法规版本 → SDS 第 8 节关联后续统一实现')
+    ok('已接通：SDS 按目标市场与计划投放日期选择有效 OEL 数据集。' in allp,'写明 OEL 与 SDS 第 8 章已接通')
     ok('德国' not in allp and '英国' not in allp and '法国' not in allp and '西班牙' not in allp,'页面不再出现其他国家来源表述')
 
     print('\n=== 运行时 ===')

@@ -29,7 +29,7 @@ with sync_playwright() as pw:
        '输入与 wz.formula 深度隔离')
     ok(page.evaluate("() => {var before=JSON.stringify(wz.formula);window.ceDirect=complianceEvaluateDraft(complianceEvaluationInputFromWz());return JSON.stringify(wz.formula)===before;}"),
        '统一评估不修改 wz.formula')
-    ok(page.evaluate("() => ceDirect.schemaVersion==='compliance-evaluation-v1'&&!!ceDirect.id&&ceDirect.status==='draft'&&ceDirect.asOfDate===wz.project.date&&!!ceDirect.evaluatedAt&&!!ceDirect.inputFingerprint"),
+    ok(page.evaluate("() => ceDirect.schemaVersion==='compliance-evaluation-v2'&&!!ceDirect.id&&ceDirect.status==='draft'&&ceDirect.asOfDate===wz.project.date&&!!ceDirect.evaluatedAt&&!!ceDirect.inputFingerprint"),
        '快照标识、schema、草稿状态、日期和指纹齐全')
     ok(page.evaluate("() => {var x=JSON.parse(JSON.stringify(ceDirect));return x.results.classification.items.length>0&&x.results.lists.coverage.requested.length===5&&!!x.inputSnapshot.formula.length;}"),
        '快照可完整 JSON 序列化，没有函数或循环引用')
@@ -117,7 +117,7 @@ with sync_playwright() as pw:
     ok(page.evaluate("() => wz.evaluationDirty&&wz.evaluationInvalidReason==='测试主动失效'&&complianceEvaluationEnsure().id!==ceOld.id"),
        '主动失效原因留痕且触发重算')
     page.evaluate("() => {wzInitState();wz.project.market='EU';complianceEvaluationEnsure();wzSave();wzInitState();wzLoad();}")
-    ok(page.evaluate("() => wz.evaluationSnapshot&&wz.evaluationSnapshot.schemaVersion==='compliance-evaluation-v1'&&complianceEvaluationCurrent().id===wz.evaluationSnapshot.id&&Object.isFrozen(wz.evaluationSnapshot)"),
+    ok(page.evaluate("() => wz.evaluationSnapshot&&wz.evaluationSnapshot.schemaVersion==='compliance-evaluation-v2'&&complianceEvaluationCurrent().id===wz.evaluationSnapshot.id&&Object.isFrozen(wz.evaluationSnapshot)"),
        '草稿持久化与恢复后继续复用不可变快照')
     page.evaluate('wzSave()')
     page.reload(wait_until='load')
