@@ -424,7 +424,15 @@ with sync_playwright() as pw:
     ok('规则引擎方法未匹配' in chk and '规则测试未通过' in chk, 'Annex I 规则专属校验项出现')
     ok('引擎支持状态' in chk and '由系统自动判断' in chk and '已忽略' in chk,
        '数据校验页展示系统自动判断的引擎支持状态，并提示上传文件中的该列已忽略')
-    ok(page.evaluate('()=>clpImpBlkN()') == 2, 'Annex I 同样 2 项阻断（引擎未匹配 / 测试未通过）')
+    ok(page.evaluate('()=>clpImpBlkN()') == 0 and page.evaluate("()=>clpImpBlockTypeN('defer')") == 2
+       and page.evaluate("()=>clpImpBlockSum('defer')") == 4,
+       'Annex I 引擎未匹配 / 测试未通过属改表解决不了的问题，不计入阻断门禁（2 类 4 处走本次排除发布）')
+    ok(page.evaluate("()=>$('cipNext4').disabled") is False,
+       'Annex I 无需点「上传修正版」即可提交审核（不再靠假动作清零阻断）')
+    ok(page.locator('#mBody .cip-check-table').inner_text().count('本次排除发布 · 无需重传') == 2,
+       '改表解决不了的两条阻断项状态标为「本次排除发布 · 无需重传」')
+    ok('改表无法解决' in chk and '旧版继续生效' in chk,
+       '处理方式说明改表无法解决项由系统排除本次发布、旧版继续生效')
     segs = page.locator('#mBody .clpimp-seg button').all_text_contents()
     ok(len(segs) == 3 and '规则测试' in segs[1], 'Annex I 才有子 Tab：%s' % ' / '.join(segs))
     gs = page.evaluate("()=>clpImpGates().summary")
@@ -452,7 +460,19 @@ with sync_playwright() as pw:
        '未确认的候选停用规则不进入停用清单（旧规则继续有效）')
     ok(sorted([x['ruleId'] for x in man['deferredRules']]) == ['CLP-R-0002', 'CLP-R-0006', 'CLP-R-0008', 'CLP-R-0009'],
        '延后清单含测试失败与计算方法未实现的规则，不静默丢弃')
-    ok(reupload_fixed(page), 'Annex I 上传修正版并复检后清空 2 类阻断')
+    ok(reupload_fixed(page), 'Annex I 仍可走上传修正版路径，阻断门禁保持为 0')
+    ok(page.evaluate("()=>clpImpBlockSum('defer')") == 4,
+       '重传不消除改表解决不了的问题：4 处仍走本次排除发布（旧口径下重传是无效动作）')
+    ok(page.evaluate("""()=>{
+      var r={id:'CLP-R-9001',name:'字典测试规则',cat:'皮肤致敏',target:'混合物',method:'CLP-M-SCL',h:'H999',
+        ref:'Annex I 3.4',run:{skinSensGcl:0.1},det:{src:'Annex I 3.4.3'}};
+      var e=clpEvaluateRuleGate(r,{changeType:'新增规则',isNew:true});
+      var okDict=e.gateStatus==='待补充字典'&&e.dictIssue.indexOf('H999')>=0&&e.dictIssue.indexOf('标签字典')>=0
+        &&e.engineSupport==='已支持'&&!e.includedInRelease;
+      r.h='H317';
+      var e2=clpEvaluateRuleGate(r,{changeType:'新增规则',isNew:true});
+      return okDict&&!e2.dictIssue&&e2.gateStatus==='待补充';
+    }"""), 'H 码不在标签字典中单独归为「待补充字典」，引擎已支持也不误判为待研发实现')
     page.wait_for_timeout(160)
     page.evaluate("()=>clpLImpNext(5)")
     page.wait_for_timeout(220)

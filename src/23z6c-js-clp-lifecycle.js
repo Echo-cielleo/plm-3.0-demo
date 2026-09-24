@@ -30,7 +30,7 @@ var CLP_RULE_VERSION_STORE = [];
 /* 版本状态（中文口径，单一审核流程） */
 var CLP_VERSION_STATUS = ['草稿', '校验失败', '待补充', '待研发实现', '测试失败', '待审核', '待生效', '已生效', '已失效', '已撤回'];
 /* 规则级处理状态（由系统计算，法规专员不得手工填写） */
-var CLP_RULE_GATE_STATUS = ['未变化', '可发布', '待补充', '待研发实现', '测试失败', '待确认停用', '不进入本次发布'];
+var CLP_RULE_GATE_STATUS = ['未变化', '可发布', '待补充', '待补充字典', '待研发实现', '测试失败', '待确认停用', '不进入本次发布'];
 /* 引擎支持状态（由系统根据方法注册表自动生成） */
 var CLP_ENGINE_SUPPORT_STATUS = ['已支持', '需要配置参数', '需要研发实现'];
 /* Diff 变化类型 */
@@ -507,10 +507,16 @@ function clpEvaluateRuleGate(rule, context){
       if(!clpRuleNormText(v))issues.push('规则 ' + id + ' 缺少「' + p[1] + '」。');
     });
   if(!clpRuleNormText(clpRuleFieldGet(rule, 'det.src')))issues.push('规则 ' + id + ' 未填写来源章节及条款号。');
-  /* H 码字典引用 */
+  /* ---------- H 码字典引用 ----------
+     ⚠️ 单独归类，不混进通用 issues：H 码不在标签字典里是**字典维护问题**，
+        与「计算方法是否已研发实现」毫无关系。若混进 issues，门禁会把它判成
+        「待研发实现」，页面上就会出现「H 码没录入 → 请研发实现计算方法」这种
+        答非所问的提示，研发接到也无从下手。
+     处理方式：先在标签字典模块导入含该 H 码的版本，再回来校验规则版本。 */
   var h = clpRuleNormText(rule.h);
+  var dictIssue = '';
   if(h && !(typeof CLP_LABELS === 'object' && CLP_LABELS.some(function(r){return r.code === h;})))
-    issues.push('规则 ' + id + ' 输出的 ' + h + ' 在标签字典中未找到。');
+    dictIssue = '规则 ' + id + ' 输出的 ' + h + ' 在当前标签字典中未找到，请先在标签字典模块导入含该 ' + h + ' 的版本，再重新校验本规则版本。';
 
   var cases = CLP_RULE_TEST_CASES[id] || [];
   var reuse = clpRuleTestReusable(context.baseRule, rule, context.baseVersion);
@@ -521,6 +527,11 @@ function clpEvaluateRuleGate(rule, context){
     gateStatus = '待确认停用';
   }else if(issues.length){
     gateStatus = support.status === '需要配置参数' ? '待补充' : '待研发实现';
+    /* 引擎问题优先归类，但字典缺口不隐藏：两条都进 issues 供审核人一次看全 */
+    if(dictIssue)issues.push(dictIssue);
+  }else if(dictIssue){
+    gateStatus = '待补充字典';
+    issues.push(dictIssue);
   }else if(changeType === '未变化'){
     if(reuse){
       testResult.reused = true;
@@ -568,7 +579,7 @@ function clpEvaluateRuleGate(rule, context){
   }
   return {
     ruleId: id, name: rule.name, changeType: changeType, gateStatus: gateStatus,
-    issues: issues, testResult: testResult, engineSupport: support.status,
+    issues: issues, dictIssue: dictIssue, testResult: testResult, engineSupport: support.status,
     includedInRelease: gateStatus === '可发布'
   };
 }
@@ -635,22 +646,24 @@ function clpRuleVersionRunGates(draftVersion){
       includedInRelease: false, affectsExecution: false
     });
   });
-  var summary = {publishable: 0, deferred: 0, needInput: 0, needDev: 0, testFailed: 0, unchanged: 0, deactivationPending: 0};
+  var summary = {publishable: 0, deferred: 0, needInput: 0, needDict: 0, needDev: 0, testFailed: 0, unchanged: 0, deactivationPending: 0};
   entries.forEach(function(e){
     if(e.gateStatus === '可发布')summary.publishable++;
     else if(e.gateStatus === '测试失败')summary.testFailed++;
     else if(e.gateStatus === '待研发实现')summary.needDev++;
+    else if(e.gateStatus === '待补充字典')summary.needDict++;
     else if(e.gateStatus === '待补充')summary.needInput++;
     else if(e.gateStatus === '未变化')summary.unchanged++;
     else if(e.gateStatus === '待确认停用')summary.deactivationPending++;
   });
-  summary.deferred = summary.testFailed + summary.needDev + summary.needInput;
+  summary.deferred = summary.testFailed + summary.needDev + summary.needInput + summary.needDict;
   draftVersion.diffSummary = diff;
   draftVersion.gateSummary = {entries: entries, summary: summary, baseVersion: active.version};
   /* 版本状态：有可发布变化 → 待审核；否则落到对应的待处理状态 */
   if(!draftVersion.frozen){
     draftVersion.status = summary.publishable > 0 ? '待审核'
-      : (summary.needDev > 0 ? '待研发实现' : (summary.needInput > 0 ? '待补充' : (summary.testFailed > 0 ? '测试失败' : '草稿')));
+      : (summary.needDev > 0 ? '待研发实现'
+        : ((summary.needInput > 0 || summary.needDict > 0) ? '待补充' : (summary.testFailed > 0 ? '测试失败' : '草稿')));
   }
   var val = clpRuleVersionValidate(draftVersion);
   if(!val.ok && draftVersion.status !== '待审核')draftVersion.status = '校验失败';
