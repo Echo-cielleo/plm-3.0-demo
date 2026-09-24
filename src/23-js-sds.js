@@ -83,7 +83,9 @@ function wzInitState(){
     docVer:'V1.0',     /* 文档版本号（第 16.1 修订说明） */
     submitted:false,
     published:false,
-    publishedAt:''
+    publishedAt:'',
+    releaseSnapshots:[],
+    activeReleaseId:''
   };
 }
 wzInitState();
@@ -2033,7 +2035,7 @@ function deliverScan(){
 }
 /* 交付态正文 —— 只含对客户/监管的内容，不含任何内部标记
    （内部批注见 secNotes()，仅在编制视图展示） */
-function draftText(i){
+function draftText(i,documentStatus){
   var p=wz.project,mk=p.market==='EU'?('欧盟 · '+(p.state||'—')):'中国',eu=p.market==='EU';
   var cls=(wz.classItems||[]).filter(function(c){return c.status!=='pending'&&c.result!=='不分类';})
     .map(function(c){return '　· '+c.name+'：'+c.result+'（'+c.code+'）';}).join('\n')
@@ -2115,7 +2117,7 @@ function draftText(i){
     13:'14 运输信息见下表 / See the transport information table below。',
     14:'15.1 安全、健康和环境法规见下表 / See the regulatory information table below。',
     15:'16.1 修订说明（Indication of changes）\n'
-      +'版本：'+(wz.docVer||'V1.0')+'　编制日期：'+todayStr()+'　状态：'+(wz.published?'已发布':'草案 Draft')+'\n'
+      +'版本：'+(wz.docVer||'V1.0')+'　编制日期：'+todayStr()+'　状态：'+(documentStatus==='published'||wz.published?'已发布':'草案 Draft')+'\n'
       +'编制语言：'+(p.lang||'—')+'　目标市场：'+mk+'\n'
       +'编制依据（G8：须点名 CLP 1272/2008 及其 2024/2865 修订）：\n'+legalBasis(p.market)+'\n'
       +'\n16.2 缩略语和首字母缩写（Abbreviations and acronyms）\n'+abbrTable()+'\n'
@@ -2156,9 +2158,9 @@ function renderStep5(){
   var dv=wz.view==='deliver',p=wz.project;
   var stat={'高':0,'中高':0,'中':0,'低':0};
   SDS_16.forEach(function(s){stat[s.cov]++;});
-  var notes=0;for(var k=0;k<16;k++)if(secNotes(k).length)notes++;
-  var dirty=deliverScan();
-  var acc=SDS_16.map(function(s,i){
+  var notes=0;if(!dv)for(var k=0;k<16;k++)if(secNotes(k).length)notes++;
+  var dirty=dv?[]:deliverScan();
+  var acc=dv?'':SDS_16.map(function(s,i){
     var txt=wz.draftEdits[i]!==undefined?wz.draftEdits[i]:draftText(i);
     var nt=secNotes(i),manual=nt.length>0||!s.auto;
     var head='<button class="acc-hd" onclick="accToggle('+i+')">'
@@ -2258,6 +2260,7 @@ function secReset(i){
    ------------------------------------------------------------------ */
 function renderStep6(){
   var p=wz.project;
+  var release=sdsActiveRelease();
   var pend=(wz.classItems||[]).filter(function(c){return c.status==='pending';}).length;
   var miss=wzMissCount();
   var checks=[
@@ -2276,7 +2279,7 @@ function renderStep6(){
   $('wzBody').innerHTML=
     '<div class="kpi-row">'
       +'<div class="kpi"><span>草案状态</span><b style="font-size:18px;color:var(--'+(st[1]==='grey'?'muted':st[1])+')">'+st[0]+'</b><small>'+(wz.publishedAt||'—')+'</small></div>'
-      +'<div class="kpi"><span>生成时间</span><b style="font-size:16px">'+(wz.draftAt||'—').slice(5)+'</b><small>草案版本 V1.0</small></div>'
+      +'<div class="kpi"><span>生成时间</span><b style="font-size:16px">'+(wz.draftAt||'—').slice(5)+'</b><small>文档版本 '+esc(wz.docVer||'—')+'</small></div>'
       +'<div class="kpi"><span>数据完整性</span><b style="color:'+((miss||pend)?'var(--orange)':'var(--green)')+'">'+(miss||pend?'存在提示项':'通过')+'</b><small>'+checks.filter(function(c){return c[1]==='ok';}).length+'/'+checks.length+' 项校验通过</small></div>'
       +'<div class="kpi"><span>目标市场</span><b style="font-size:16px">'+(p.market==='EU'?('欧盟·'+(p.state||'').split(' ')[0]):'中国')+'</b><small>'+esc(p.lang||'—')+'</small></div>'
     +'</div>'
@@ -2302,6 +2305,13 @@ function renderStep6(){
         +'<span class="tag '+(wz.published?'green':'grey')+' dot-tag">③ 正式发布并归档</span>'
       +'</div>'
       +'</div></div>'
+    +(release?'<div class="card" id="sdsReleaseInfo"><div class="card-hd"><h3>已发布 SDS 快照</h3><span class="tag green">'+esc(release.documentVersion)+'</span></div><div class="card-bd" style="font-size:12.5px;line-height:1.9">'
+      +'发布时间：'+esc(release.publishedAt)+'　审核人：'+esc(release.reviewer.name)+'<br>'
+      +'快照 ID：'+esc(release.id)+'<br>'
+      +'CLP 数据：'+esc(release.evaluation.versions.data.clpAnnexVi&&release.evaluation.versions.data.clpAnnexVi.version||'—')
+      +'　CLP 规则：'+esc(release.evaluation.versions.rules.clpRulePack)
+      +'　SDS 模板：'+esc(release.evaluation.versions.template)
+      +'<div class="muted">本版本已冻结，后续法规或模板升级不会改变本次发布内容。</div></div></div>':'')
     +'<div class="notice warn"><div class="ni">!</div><div><b>合规责任提示</b>正式发布版本需通过 EHS 与法规人员审核，<b style="display:inline">系统不替代人工合规责任</b>。系统生成内容仅作为编制辅助，最终文本的准确性由发布责任人承担。</div></div>';
 }
 function wzSubmit(){
@@ -2312,11 +2322,15 @@ function wzSubmit(){
 }
 function wzPublish(){
   sdsConfirm('模拟批准发布','确认以 <b>EHS 负责人</b> 身份批准发布？<br><span style="color:var(--muted)">发布后状态变更为「已正式发布」，并解锁 PDF / Word 导出。</span>',function(){
-    wz.published=true;wz.publishedAt=nowStr();renderStep6();
-    toast('SDS 已正式发布（版本 V1.0）','ok');
+    try{
+      var release=sdsReleaseCreate({name:'EHS 负责人'});
+      renderStep6();
+      toast('SDS 已正式发布（版本 '+release.documentVersion+'）','ok');
+    }catch(e){toast(e.message,'warn');}
   },'批准发布');
 }
 function wzExport(type){
+  if(type==='Word'){exportSdsWord();return;}
   openModal({title:'导出 '+type+' 文件',width:460,
     body:'<div style="text-align:center;padding:8px 0 4px"><div style="font-size:13px;margin-bottom:12px">正在生成 <b>'+esc(wz.project.product||'SDS')+'_'+(wz.project.market==='EU'?'EU':'CN')+'_V1.0.'+(type==='PDF'?'pdf':'docx')+'</b></div>'
       +'<div class="bar" id="expBar"><i></i></div><div style="margin-top:8px;color:var(--muted);font-size:12.5px" id="expTxt">0%</div></div>',

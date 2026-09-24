@@ -37,6 +37,9 @@ function wzLoad(){
     if(!o || o.s !== PERSIST_SCHEMA || !o.w) return false;
     wzInitState();                        /* 重置为出厂默认（wzInitState 无返回值，直接重置全局 wz） */
     wz = Object.assign(wz, o.w || {});    /* 用户草稿覆盖对应字段 */
+    if(!Array.isArray(wz.releaseSnapshots))wz.releaseSnapshots=[];
+    if(typeof wz.activeReleaseId!=='string')wz.activeReleaseId='';
+    if(typeof sdsReleaseFreezeStored==='function')sdsReleaseFreezeStored();
     return true;
   }catch(e){ return false; }
 }

@@ -10,7 +10,7 @@
    ================================================================== */
 
 /* 文档正文（封面 + 16 章连续正文，不含顶部工具条 / 切换栏） */
-function sdsDocBodyHtml(){
+function sdsDraftBodyHtml(documentStatus){
   var p = wz.project, eu = p.market === 'EU';
   var dirty = deliverScan();
   var cover =
@@ -32,7 +32,7 @@ function sdsDocBodyHtml(){
       + '<div class="cover-badge">' + deliverBadge(dirty) + '</div>'
     + '</div>';
   var secs = SDS_16.map(function (s, i) {
-    var txt = wz.draftEdits[i] !== undefined ? wz.draftEdits[i] : draftText(i);
+    var txt = wz.draftEdits[i] !== undefined ? wz.draftEdits[i] : draftText(i,documentStatus);
     var body = esc(txt).replace(/\n/g, '<br>');
     var extra = (i === 2 ? compTableHtml() : '') + (i === 7 ? oelTableHtml() : '')
       + (i === 8 ? physTableHtml() : '') + (i === 10 ? toxTableHtml() : '')
@@ -46,22 +46,29 @@ function sdsDocBodyHtml(){
   }).join('');
   return cover + secs;
 }
+function sdsEffectiveBodyHtml(){
+  var release=wz.published&&sdsActiveRelease();
+  return release?release.document.bodyHtml:sdsDraftBodyHtml();
+}
+function sdsDocBodyHtml(){return sdsEffectiveBodyHtml();}
 
 /* 预览外壳：灰底 + 白纸 + 页脚（依赖页面 CSS 视觉） */
 function sdsDocPreviewHtml(){
+  var release=wz.published&&sdsActiveRelease();
   return '<div class="doc-shell"><div class="doc-page">'
     + sdsDocBodyHtml()
     + '<div class="doc-foot">PLM 3.0 演示原型 · 第 5 步交付预览 · '
-      + esc(wz.project.product || '未命名产品') + '</div>'
+      + esc(release?release.document.productName:wz.project.product || '未命名产品') + '</div>'
     + '</div></div>';
 }
 
 /* 无交互导出 Word：拼一份 Word 可识别的 HTML（自带内联样式），
    点击即下载，不弹窗、不受发布状态限制（草案亦可导出预览副本） */
 function exportSdsWord(){
-  var p = wz.project, eu = p.market === 'EU';
-  var name = (p.product || 'SDS') + '_' + (eu ? 'EU' : 'CN') + '_' + (wz.docVer || 'V1.0')
-           + (wz.published ? '' : '_草案') + '.doc';
+  var release=wz.published&&sdsActiveRelease(),p=release?release.document:wz.project;
+  var name = (p.productName || p.product || 'SDS') + '_' + (p.market === 'EU' ? 'EU' : 'CN') + '_'
+           + (release?release.documentVersion:(wz.docVer || 'V1.0'))
+           + (release ? '' : '_草案') + '.doc';
   var style = '<style>'
     + 'body{font-family:Calibri,\'Microsoft YaHei\',sans-serif;font-size:10.5pt;color:#1a1a1a;line-height:1.6;margin:34px}'
     + 'h1.cover-title{text-align:center;font-size:22pt;letter-spacing:2px;margin:0}'
@@ -83,7 +90,7 @@ function exportSdsWord(){
     + sdsDocBodyHtml()
     + '</body></html>';
   downloadFile(name, html, 'application/msword');
-  toast('已导出 Word 文档' + (wz.published ? '' : '（草案副本，演示）'), 'ok');
+  toast('已导出 Word 文档' + (release ? '' : '（草案副本，演示）'), 'ok');
 }
 
 /* 预览视觉样式（仅交付预览文档流生效，不影响编制视图） */
