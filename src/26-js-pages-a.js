@@ -382,7 +382,7 @@ regPage('subst:list',{
       ],
       pageSize:10,
       headActs:'<button class="btn" onclick="showPage(\'law:query\')">统一查询法规</button>'+
-               '<button class="btn btn-primary" onclick="toast(\'受限物质清单已导出（演示）\',\'ok\')">导出清单</button>',
+               '<button class="btn" disabled title="本原型未生成清单文件">导出清单（未接入）</button>',
       acts:function(r){
         return '<button class="btn btn-link" onclick="substCheck(\''+esc(r.cn)+'\')">配方命中检查</button>';
       },
@@ -408,7 +408,7 @@ function substCheck(cn){
         used.map(function(u){return '<tr><td class="mono">'+esc(u[0])+'</td><td>'+esc(u[1])+'</td><td class="num">'+esc(u[2])+'</td></tr>';}).join('')+
         '</tbody></table>':''),
     footer:'<button class="btn" onclick="closeModal()">关闭</button>'+
-           (used.length?'<button class="btn btn-primary" onclick="closeModal();toast(\'已生成替代方案评估任务\',\'ok\')">发起替代评估</button>':'')});
+           (used.length?'<button class="btn" disabled title="本原型尚未接入任务派发">发起替代评估（未接入）</button>':'')});
 }
 
 /* ==================================================================
@@ -519,7 +519,7 @@ function renderProjectMatrix(){
   var cats=PROJECTS.map(function(p){return p.category;}).filter(function(v,i,a){return v&&a.indexOf(v)===i;});
   var depts=(typeof DEPTS!=='undefined'?DEPTS:[]);
   var h='<div class="page-hd"><div class="t"><h1>研发项目管理</h1><div class="page-sub">覆盖评审、预研、小试、中试、推广与验收节点的研发项目台账</div></div>'+
-    '<div class="page-acts"><button class="btn" onclick="toast(\'已导出当前项目台账\',\'ok\')">⇩ 导出</button><button class="btn btn-primary" onclick="showPage(\'proj:new\')">＋ 添加</button></div></div>'+
+    '<div class="page-acts"><button class="btn" disabled title="本原型尚未生成项目台账文件">⇩ 导出（未接入）</button><button class="btn btn-primary" onclick="showPage(\'proj:new\')">＋ 添加</button></div></div>'+
     '<div class="card proj-filter-card"><div class="card-b"><div class="proj-filter-grid">'+
       '<label><span>立项年份</span><select class="ctrl" id="projYear"><option value="">全部年份</option>'+projListOptions(years,projListState.year)+'</select></label>'+
       '<label class="proj-search"><span>搜索</span><input class="input" id="projKw" value="'+esc(projListState.kw)+'" placeholder="项目名称 / 项目负责人 / 产品名称 / 项目来源 / 备注" onkeydown="if(event.key===\'Enter\')projListApply()"></label>'+
@@ -901,9 +901,9 @@ function renderProjDetail(p){
      (p.oa?' · <span class="tag tag-orange">OA 立项</span>':'')+'</div></div>'+
      '<div class="page-acts">'+
        '<button class="btn" onclick="showPage(\'proj:list\')">返回</button>'+
-       '<button class="btn" onclick="toast(\'请调整项目负责人\',\'info\')">更换负责人</button>'+
-       '<button class="btn" onclick="toast(\'请修改项目名称\',\'info\')">修改项目名称</button>'+
-       '<button class="btn" onclick="toast(\'请调整归属部门\',\'info\')">调整部门</button>'+
+       '<button class="btn" disabled title="本原型尚未接入负责人变更">更换负责人</button>'+
+       '<button class="btn" disabled title="本原型尚未接入项目名称修改">修改项目名称</button>'+
+       '<button class="btn" disabled title="本原型尚未接入部门调整">调整部门</button>'+
      '</div></div>';
 
   /* ---- 项目信息：主信息，位于 Tab 容器之外 ---- */
@@ -1076,7 +1076,7 @@ function stageFormHTML(st,p){
     st.files.forEach(function(f){
       h+='<tr><td>📎 '+esc(f.n)+'</td><td>'+esc(f.t)+'</td><td class="num">'+esc(f.s)+'</td>'+
          '<td class="op"><button class="btn btn-link" onclick="toast(\'预览 '+esc(f.n)+'（演示）\',\'info\')">预览</button>'+
-         '<button class="btn btn-link" onclick="toast(\'已下载 '+esc(f.n)+'\',\'ok\')">下载</button></td></tr>';
+         '<button class="btn btn-link" disabled title="演示附件未提供实际文件">下载（未接入）</button></td></tr>';
     });
     h+='</tbody></table>';
   }

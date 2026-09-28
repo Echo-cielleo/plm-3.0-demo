@@ -136,13 +136,18 @@ with sync_playwright() as pw:
     print('=== 查询页面 ===')
     page.evaluate("showPage('law:query')")
     ok(page.evaluate('()=>lawQueryAllRows().length') == 63, '统一查询页共 63 条命中记录')
-    ok(page.locator('#lqTable tbody tr').count() == 20 and '共 63 条记录' in page.locator('#lqPager').inner_text(),
-       '结果列表分页，首页展示 20 行')
-    notice = page.locator('#pageHost').inner_text()
+    ok(page.locator('#lqTable tbody tr').count() == 8 and '共 8 条命中记录' in page.locator('#lqCount').inner_text(),
+       '默认进入 GHS 分类页签：8 条（CLP 5 + C&L 3）')
+    page.locator('#nb-law-query').click();page.wait_for_timeout(180)
+    notice = page.locator('#np-law-query').inner_text()
     ok('名单列入仅表示' in notice and '不等同于当前产品已经触发限制' in notice,
-       '页面一次性说明列入与触发的区别')
+       '说明面板一次性说明列入与触发的区别')
+    page.locator('#nb-law-query').click();page.wait_for_timeout(120)
     ok(page.locator('select#lqLaw').count() == 0 and page.locator('select#lqSource').count() == 0,
        '页签取代原「法规类别」「法规来源」下拉')
+    def goto_tab(key):
+        page.click('#lqTabs button[data-key="%s"]' % key)
+        page.wait_for_timeout(150)
     def goto_lawkey(key):
         page.evaluate("(k)=>showPage('law:query',{lawKey:k})", key)
         page.wait_for_timeout(150)
@@ -151,15 +156,19 @@ with sync_playwright() as pw:
         goto_lawkey(key)
         ok(page.locator('#lqTable tbody tr').count() == expected, key + ' 经 lawKey 带入后行数正确')
     page.evaluate("showPage('law:query')");page.wait_for_timeout(150)
-    page.fill('#lqKw','50-00-0')
-    ok(page.locator('#lqTable tbody tr').count() == 7, '甲醛 CAS 查询命中七个来源（含欧盟与中国 OEL）')
-    page.fill('#lqKw','多溴联苯')
+    page.fill('#lqKw','50-00-0');page.wait_for_timeout(120)
+    ok(page.locator('#lqTable tbody tr').count() == 2, 'GHS 页签按甲醛 CAS 命中 2 条（CLP 统一分类 + C&L 企业申报）')
+    goto_tab('list')
+    ok(page.locator('#lqTable tbody tr').count() == 3 and '名录名称' in page.locator('#lqTable thead').inner_text(),
+       '名录清单页签对同一 CAS 给出 3 条名单条目')
+    page.fill('#lqKw','多溴联苯');page.wait_for_timeout(120)
     ok(page.locator('#lqTable tbody tr').count() == 1 and '多溴联苯' in page.locator('#lqTable').inner_text(),
        '无 CAS 的物质组可按名称搜索')
-    page.fill('#lqKw','80-09-1')
+    page.fill('#lqKw','80-09-1');page.wait_for_timeout(120)
     ok(page.locator('#lqTable tbody tr').count() == 1, 'SVHC 的 CAS 查询正常')
-    page.fill('#lqKw','铅（Pb）')
+    page.fill('#lqKw','铅（Pb）');page.wait_for_timeout(120)
     ok(page.locator('#lqTable tbody tr').count() == 1, 'RoHS 的名称查询正常')
+    page.fill('#lqKw','');page.wait_for_timeout(120)
     goto_lawkey('xvii')
     page.fill('#lqKw','50-00-0')
     page.locator('#lqTable tbody tr').first.get_by_role('button',name='查看').click()

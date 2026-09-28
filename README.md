@@ -55,11 +55,13 @@ python3 smoke_oel.py
 
 ### ChatGPT 网页协作
 
-`integrations/chatgpt-github/` 提供仅针对本仓库的 GitHub Issue Action。配置后，网页 ChatGPT 可以读取需求、创建 Issue、补充评论和更新 Issue 状态；详细步骤见该目录的说明。
+`integrations/github-mcp-server/` 提供仅针对本仓库的 GitHub MCP Server，包含仓库/代码读取及 Issue 创建、更新、评论工具，支持本地 STDIO 和带鉴权的 Streamable HTTP；详细步骤见该目录的说明。
+
+`integrations/chatgpt-github/` 保留为 GPT Action 方案，适用于不接 MCP 的客户端。
 
 ## 当前合规管理主线
 
-CLP 法规库与 SDS 分类演示链路已经建立；REACH、OEL 已有维护页面。下一阶段重点是统一法规数据来源，并依次打通 REACH 名单匹配、OEL 第 8 章取数、国内法规路径和运输法规第 14 章取数。
+CLP 法规库与 SDS 分类演示链路已经建立；REACH、OEL 和国内法规有维护或查询演示页面。法规统一查询仅覆盖当前接入的示例数据；法规版本差异、影响分析及部分导入结果为预置示例。运输法规库仍是规划占位页，SDS 第 14 章由法规 / EHS 人员人工填写并确认，尚无自动运输分类。下一阶段需统一法规数据来源、核实各名单与限值的真实取数链路，并建立运输法规数据和规则。
 
 ## 许可
 

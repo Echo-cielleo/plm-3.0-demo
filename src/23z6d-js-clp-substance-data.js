@@ -306,11 +306,21 @@ function clpCompProjection(asOfDate){
     if(s&&s.ateState==='na')out[k].ate='—（经评估不适用急性毒性估算）';
   });return out;
 }
+/* 统一查询 · GHS 分类页签需要「危险类别和项别 / H 代码 / 象形图 / 警示词」，
+   这四项都取 Annex VI 原始条目，不做二次加工。 */
 function clpLawQueryProjection(asOfDate){
   var d=clpViDatasetResolve(asOfDate);if(!d)return [];
-  return clpViRowsProjection(asOfDate).map(function(r){return {id:d.id+':'+r.idx,cas:r.cas,name:r.name,ec:r.ec,source:'CLP 附录 VI',sourceType:'clp',region:'欧盟',
-    dataType:'统一分类',result:'已统一分类',value:r.cls,version:d.version,latestVersion:d.version,status:'已生效',reviewDue:CLP_MODULES.vi.due,lawKey:'clp6',
-    scl:r.scl,mFactor:r.m,ate:r.ate,sourceClause:r.src};});
+  var byIdx={};clpViRecords(asOfDate).forEach(function(r){byIdx[r.indexNo]=r;});
+  return clpViRowsProjection(asOfDate).map(function(r){
+    var rec=byIdx[r.idx]||{classifications:[],pictograms:[],signalWord:''};
+    var classes=rec.classifications||[];
+    return {id:d.id+':'+r.idx,cas:r.cas,name:r.name,ec:r.ec,source:'CLP 附录 VI',sourceType:'clp',region:'欧盟',
+      dataType:'统一分类',result:'已统一分类',value:r.cls,
+      clsList:classes.map(function(c){return c.hazardClass+' '+c.category+(c.route?'（'+c.route+'）':'');}),
+      hCodes:clpDataCodes(classes),pictograms:(rec.pictograms||[]).slice(),signalWord:rec.signalWord||'',
+      version:d.version,latestVersion:d.version,status:'已生效',reviewDue:CLP_MODULES.vi.due,lawKey:'clp6',
+      scl:r.scl,mFactor:r.m,ate:r.ate,sourceClause:r.src};
+  });
 }
 function clpLawDetailProjection(asOfDate){return {cols:['Index No.','物质名称','EC No.','CAS 号','危害类别与分类','H 代码','标签要素','SCL','M 因子','ATE','Notes'],
   rows:clpViRowsProjection(asOfDate).map(function(r){return [r.idx,r.name,r.ec,r.cas,r.cls,r.h,r.picto+' · '+r.signal,r.scl,r.m,r.ate,r.notes];})};}

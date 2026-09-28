@@ -91,7 +91,7 @@ with sync_playwright() as pw:
     print("\n=== A7 操作按状态区分 ===")
     acts=pg.evaluate("""()=>{var m={};SDS_ROWS.forEach(function(r){m[r.status]=sdsActs(r);});return m;}""")
     ok("提交审核" in acts.get('编制中','') and "编辑" in acts.get('编制中',''),"编制中 → 编辑 / 提交审核")
-    ok("导出 PDF" in acts.get('已发布','') and "申请改版" in acts.get('已发布',''),"已发布 → 导出 PDF / Word / 申请改版")
+    ok("导出摘要 TXT" in acts.get('已发布','') and "申请改版" in acts.get('已发布',''),"已发布 → 导出摘要 TXT / 申请改版")
     ok("开始改版" in acts.get('待改版',''),"待改版 → 开始改版")
     ok("导出" not in acts.get('已归档',''),"已归档 → 无导出按钮")
     ok("导出" not in acts.get('审核中',''),"审核中 → 无导出按钮")
@@ -101,10 +101,10 @@ with sync_playwright() as pw:
         pg.evaluate("()=>{var w=document.getElementById('toastWrap');if(w)w.innerHTML='';}")
         pg.evaluate(call); pg.wait_for_timeout(350)
         return pg.evaluate("()=>{var t=document.querySelector('#toastWrap .toast');return t?t.textContent:'';}")
-    r={'arcToast':toast_of("()=>sdsExport('SDS-2026-0081','PDF')"),
-       'pubToast':toast_of("()=>sdsExport('SDS-2026-0158','PDF')")}
+    r={'arcToast':toast_of("()=>sdsExport('SDS-2026-0081')"),
+       'pubToast':toast_of("()=>sdsExport('SDS-2026-0158')")}
     ok("仅" in r['arcToast'] and "已发布" in r['arcToast'],"归档文档导出被拦截：%s"%r['arcToast'].strip()[:30])
-    ok("已导出" in r['pubToast'],"已发布文档可导出：%s"%r['pubToast'].strip()[:30])
+    ok("已导出" in r['pubToast'] and "TXT" in r['pubToast'],"已发布文档可导出摘要 TXT：%s"%r['pubToast'].strip()[:30])
 
     print("\n=== A10 置顶 + 首页预警联动 ===")
     order=pg.evaluate("""()=>Array.from(document.querySelectorAll('#lpHost tbody tr'))

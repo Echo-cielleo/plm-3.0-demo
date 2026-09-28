@@ -48,60 +48,92 @@ with sync_playwright() as pw:
     print('\n=== 法规统一查询 ===')
     page.evaluate("showPage('law:query')");page.wait_for_timeout(250)
     text=page.locator('#pageHost').inner_text()
-    ok('法规统一查询' in text and '统一查询、分库维护' in text,'页面清楚说明查询与维护的分工')
+    ok('法规统一查询' in text,'页面标题为「法规统一查询」')
+    ok(not page.locator('#np-law-query').is_visible(),'页面说明默认收起')
+    page.locator('#nb-law-query').click();page.wait_for_timeout(180)
+    note=page.locator('#np-law-query').inner_text()
+    ok('统一查询、分库维护' in note and '名单列入仅表示' in note and '检索范围' in note,
+       '说明面板交代查询与维护分工、名单列入含义与检索范围')
     total=page.evaluate('()=>lawQueryAllRows().length')
     ok(total==63,'全部命中记录 63 条（名单 43 + CLP 5 + C&L 3 + OEL 12）')
-    ok(page.locator('#lqTable tbody tr').count()==20 and '共 63 条记录' in page.locator('#lqPager').inner_text(),
-       '结果列表分页：首页 20 行，分页条显示全部 63 条')
-    ok(page.locator('#lqPager .pg-btn').count()==6 and '第 1 / 4 页' in page.locator('#lqPager').inner_text(),
-       '63 条按每页 20 条分为 4 页')
-    page.evaluate('lawQueryPageGo(4)');page.wait_for_timeout(120)
-    ok(page.locator('#lqTable tbody tr').count()==3 and '第 4 / 4 页' in page.locator('#lqPager').inner_text(),
+    ok(page.locator('#lqTabs button').count()==3 and
+       [t.strip() for t in page.locator('#lqTabs button').all_text_contents()]==['GHS 分类','名录清单','OEL 限值'],
+       '页签按查询维度分为 3 个，不再保留「全部」')
+    ok(page.evaluate("()=>_lqTab")=='ghs' and '共 8 条命中记录' in page.locator('#lqCount').inner_text(),
+       '默认进入 GHS 分类页签：8 条（CLP 5 + C&L 3）')
+    ghsHead=page.locator('#lqTable thead').inner_text()
+    ok(all(x in ghsHead for x in ['危险类别和项别','H 代码','象形图','警示词']),
+       'GHS 页签列头含危险类别、H 代码、象形图、警示词')
+    ok('列入情况' not in ghsHead,'GHS 页签不再出现名录维度的「列入情况」列')
+    ok(page.locator('#lqTable tbody svg').count()>0,'GHS 页签用内联矢量图展示象形图，不引入外部图片')
+    ok('H350' in page.locator('#lqTable').inner_text(),'GHS 页签展示 H 代码')
+    page.locator('#lqTable tbody tr').first.get_by_role('button',name='查看').click();page.wait_for_timeout(150)
+    ghsDetail=page.locator('#mBody').inner_text()
+    ok('危险类别和项别' in ghsDetail and 'H 代码' in ghsDetail and '警示词' in ghsDetail,
+       'GHS 命中详情补充标签要素：危险类别、H 代码、象形图、警示词')
+    page.evaluate('closeModal()')
+    page.click('#lqTabs button[data-key="list"]');page.wait_for_timeout(150)
+    listHead=page.locator('#lqTable thead').inner_text()
+    ok(all(x in listHead for x in ['名录名称','列入情况','条目号','阈值 / 用途原文']),
+       '名录清单页签列头含名录名称、列入情况、条目号与原文摘要')
+    ok('H 代码' not in listHead,'名录清单页签不再出现 GHS 维度的「H 代码」列')
+    ok(page.evaluate('()=>lawQueryRows().length')==43,'名录清单页签 43 条（八个名单数据集）')
+    ok(page.locator('#lqTable tbody tr').count()==20 and '共 43 条记录' in page.locator('#lqPager').inner_text(),
+       '名录清单分页：首页 20 行，分页条显示全部 43 条')
+    ok(page.locator('#lqPager .pg-btn').count()==5 and '第 1 / 3 页' in page.locator('#lqPager').inner_text(),
+       '43 条按每页 20 条分为 3 页')
+    page.evaluate('lawQueryPageGo(3)');page.wait_for_timeout(120)
+    ok(page.locator('#lqTable tbody tr').count()==3 and '第 3 / 3 页' in page.locator('#lqPager').inner_text(),
        '末页只渲染剩余 3 条')
     page.evaluate('lawQueryPageGo(2)');page.wait_for_timeout(120)
-    page.fill('#lqKw','甲醛');page.wait_for_timeout(120)
+    page.fill('#lqKw','苯');page.wait_for_timeout(150)
     ok(page.locator('#lqPager').inner_text().find('第 1 / ')>=0 or page.locator('#lqPager .pg-btn').count()==0,
        '改搜索词后回到第 1 页，不会停在上一页页码')
-    page.fill('#lqKw','');page.wait_for_timeout(120)
-    ok(page.locator('#lqTabs button').count()==4 and
-       [t.strip() for t in page.locator('#lqTabs button').all_text_contents()]==['全部','GHS 分类','名录清单','OEL 限值'],
-       '页签按查询维度分为 4 个：全部 / GHS 分类 / 名录清单 / OEL 限值')
+    page.fill('#lqKw','');page.wait_for_timeout(150)
     ok(page.locator('select#lqLaw').count()==0 and page.locator('select#lqSource').count()==0,
        '页签取代了原「法规类别」「法规来源」两个下拉')
     ok(page.evaluate("()=>{var a=$('lqKw'),b=$('lqTabs');return !!(a&&b)&&(a.compareDocumentPosition(b)&4)>0;}"),
        '搜索框位于页签上方，是全局检索入口而非结果内过滤')
-    ok('CLP 附录 VI' in page.locator('#pageHost').inner_text() and '检索范围' in page.locator('#pageHost').inner_text(),
-       '搜索区标明检索覆盖的全部法规来源')
+    ok('CLP 附录 VI' in page.locator('#np-law-query').inner_text(),
+       '说明面板标明检索覆盖的全部法规来源')
     ok(page.evaluate("()=>{var r=lawQueryAllRows().map(x=>lawEvidence(x,true).lv);return r.filter(x=>x==='green').length>0&&r.filter(x=>x==='due').length>0&&r.filter(x=>x==='red').length>0;}"),
        '全部命中记录同时包含绿、黄、红三色只读证据灯')
-    ok(page.locator('#lqTable .ev').count()==20,'当前页每行都展示证据灯')
     ok(page.locator('#lqKpi').count()==0 and page.locator('#pageHost .kpi').count()==0,
        '查询页不再展示命中记录 / 命中物质 / 待复核 / 需改版统计卡')
-    ok('共 63 条命中记录' in page.locator('#lqCount').inner_text(),'命中总数改由结果工具条的计数承担')
     ok(page.locator('#lqTable').get_by_role('button',name='确认复审').count()==0 and page.locator('#lqTable').get_by_role('button',name='查看新版本 diff').count()==0,'查询页证据灯只读且无维护操作')
-    page.fill('#lqKw','50-00-0');page.wait_for_timeout(100)
-    ok(page.locator('#lqTable tbody tr').count()==7,'按 CAS 50-00-0 一次命中 7 条跨库记录（含欧盟与中国 OEL）')
+    page.click('#lqTabs button[data-key="oel"]');page.wait_for_timeout(150)
+    oelHead=page.locator('#lqTable thead').inner_text()
+    ok(all(x in oelHead for x in ['数据集（名录）','列入情况','长期 · 短期 · 上限','数据量']),
+       'OEL 页签列头含数据集、列入情况、语义槽位与数据量')
+    ok(page.evaluate('()=>lawQueryRows().length')==62 and page.locator('#lqTable tbody tr').count()==20,
+       'OEL 页签按「物质 × 当前有效数据集」展开：62 行（31 个物质 × 欧盟 / 中国），首页 20 行')
+    oelText=page.locator('#lqTable tbody').inner_text()
+    ok('已列入' in oelText and '未列入' in oelText,'OEL 页签同时给出已列入与未列入两类结论')
+    ok('长期 0.37' in oelText and '上限 0.5' in oelText,'OEL 限值按长期 / 短期 / 上限语义槽位展示')
+    page.locator('#lqTable tbody tr').first.get_by_role('button',name='查看').click();page.wait_for_timeout(150)
+    oelDetail=page.locator('#mBody').inner_text()
+    ok('数据集数据量' in oelDetail and '列入情况' in oelDetail and '未列入' in oelDetail,
+       'OEL 详情展示数据集列入情况、数据量，并说明未列入的含义')
+    page.evaluate('closeModal()')
+    page.evaluate('lawQueryClear()');page.wait_for_timeout(150)
+    ok(page.evaluate("()=>_lqTab")=='ghs' and page.evaluate("()=>_lqPresetLawKey")=='',
+       '清空条件后回到默认 GHS 分类页签，不残留外部带入的法规类别')
+    page.fill('#lqKw','50-00-0');page.wait_for_timeout(150)
+    ok(page.locator('#lqTable tbody tr').count()==2,'GHS 页签按 CAS 50-00-0 命中 2 条（CLP 统一分类 + C&L 企业申报）')
     summary=page.locator('#lqSubstance').inner_text()
     ok('物质基础信息' in summary and '甲醛' in summary and '50-00-0' in summary and
-       '共命中 7 条记录' in summary and '覆盖 7 个法规来源' in summary,
-       '同一 CAS 先展示物质身份与跨法规命中汇总')
+       '共命中 2 条记录' in summary and '覆盖 2 个法规来源' in summary,
+       '同一 CAS 先展示物质身份与本维度命中汇总')
     ok('来自组分基础信息' in summary and 'SMILES' in summary and 'C=O' in summary and '分子量' in summary,
        '物质基础信息区读组分基础信息，展示 SMILES / 分子量等结构字段')
     ok('605-001-00-5' in summary,'CLP Index No. 从 Annex VI 单一事实源派生展示')
-    sources=page.locator('#lqTable tbody tr td:nth-child(4)').all_text_contents()
-    ok(len(set(sources))==7,'同一物质可同时看到 7 个法规来源')
-    page.fill('#lqKw','');page.wait_for_timeout(120)
-    page.click('#lqTabs button[data-key="list"]');page.wait_for_timeout(120)
-    listN=page.evaluate('()=>lawQueryRows().length')
-    ok(page.locator('#lqTable tbody tr').count()==20,'名录清单页签同样分页展示')
-    page.click('#lqTabs button[data-key="oel"]');page.wait_for_timeout(120)
-    oelN=page.evaluate('()=>lawQueryRows().length')
-    ok(page.locator('#lqTable tbody tr').count()==12 and page.locator('#lqPager .pg-btn').count()==0,
-       'OEL 页签 12 条不足一页，不显示分页条')
-    page.click('#lqTabs button[data-key="ghs"]');page.wait_for_timeout(120)
-    ghsN=page.evaluate('()=>lawQueryRows().length')
-    ok(listN+ghsN+oelN==total and oelN==12 and ghsN<total and listN<total,
-       '三个维度页签互斥且合计等于全部（OEL 页签 12 行 = 欧盟 5 + 中国 7 当前有效限值）')
+    page.click('#lqTabs button[data-key="list"]');page.wait_for_timeout(150)
+    ok(page.evaluate("()=>$('lqKw').value")=='50-00-0' and page.locator('#lqTable tbody tr').count()==3 and
+       '名录名称' in page.locator('#lqTable thead').inner_text(),
+       '切到名录清单页签保留关键词，改按名单维度出结果（3 条）')
+    page.click('#lqTabs button[data-key="oel"]');page.wait_for_timeout(150)
+    ok(page.locator('#lqTable tbody tr').count()==2 and '数据集（名录）' in page.locator('#lqTable thead').inner_text(),
+       'OEL 页签对同一物质给出欧盟 / 中国两个数据集的列入情况（2 条）')
     page.evaluate('lawQueryClear()');page.wait_for_timeout(120)
     page.fill('#lqKw','50-00-0');page.select_option('#lqType','统一分类');page.wait_for_timeout(120)
     page.locator('#lqTable tbody tr').first.get_by_role('button',name='查看').click();page.wait_for_timeout(120)
@@ -155,7 +187,7 @@ with sync_playwright() as pw:
     ok('RoHS 限用物质' in rohs_txt and page.locator('#rohsTable tbody tr').count()==10,'RoHS 限用物质页直接列全 10 条受限物质')
     page.evaluate("showPage('law:zdhc')");page.wait_for_timeout(100)
     page.get_by_role('button',name='＋ 新增法规清单').click();page.wait_for_timeout(100)
-    ok('上传官方渠道下载的法规清单文件' in page.locator('#mBody').inner_text(),'维护页保留分库上传导入流程')
+    ok('真实法规文件解析尚未接入' in page.locator('#mBody').inner_text() and '使用预置示例清单' in page.locator('#mBody').inner_text(),'维护页保留分库导入流程（真实文件解析已标注未接入）')
     page.evaluate('closeModal()')
 
     page.evaluate("showPage('law:query')");page.wait_for_timeout(120)

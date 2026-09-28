@@ -59,4 +59,9 @@ for f in "${SCRIPTS[@]}"; do
   fi
 done
 echo "===== 完成：失败脚本 $fail 个 ====="
-[ $fail -eq 0 ] && echo "✅ 全绿" || echo "❌ 有失败，详见 $LOGDIR"
+if [ "$fail" -eq 0 ]; then
+  echo "✅ 全绿"
+else
+  echo "❌ 有失败，详见 $LOGDIR"
+  exit 1
+fi

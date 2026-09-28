@@ -71,7 +71,7 @@ with sync_playwright() as pw:
     for source in ['ECHA 官网','mem.gov.cn','ZDHC 官网']:
         ok(source in text, '法规来源包含 %s' % source)
     ok(page.locator('.flow-reg-card').count() == 5, '展示 5 类法规库维护方式')
-    for title, route in [('查询法规','law:query'),('生成 SDS 草稿','sds:wizard'),('审核发布','sds:list'),('上传导入','law:reach'),('影响分析','law:query')]:
+    for title, route in [('查询法规','law:query'),('生成 SDS 草稿','sds:wizard'),('审核发布','sds:list'),('导入向导演示','law:reach'),('查询已接入记录','law:query')]:
         click_node('comp:guide', title, route)
     page.evaluate("showPage('comp:guide')"); page.screenshot(path='/private/tmp/flow-guide-compliance.png', full_page=True)
 

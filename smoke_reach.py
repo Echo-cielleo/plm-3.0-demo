@@ -181,9 +181,9 @@ with sync_playwright() as pw:
            '按 lawKey=%s 定位到名录清单页签并预置该法规类别'%lk)
         ok(page.locator('#lqTable tbody tr').count()==cnt,'%s 类别命中 %d 条'%(lk,cnt))
     page.evaluate("()=>lawQueryClear()");page.wait_for_timeout(150)
-    ok(page.evaluate("()=>_lqPresetLawKey")=='' and page.evaluate("()=>_lqTab")=='' and
-       page.locator('#lqTable tbody tr').count()==20 and page.evaluate('()=>lawQueryRows().length')==63,
-       '重置后回到全部页签，恢复 63 条全量（首页 20 行）')
+    ok(page.evaluate("()=>_lqPresetLawKey")=='' and page.evaluate("()=>_lqTab")=='ghs' and
+       page.locator('#lqTable tbody tr').count()==8 and page.evaluate('()=>lawQueryRows().length')==8,
+       '重置后回到默认 GHS 分类页签（8 条），不保留外部带入的法规类别')
 
     print('\n=== 导入新版本向导（静态演示） ===')
     page.evaluate("()=>showPage('law:reach')");page.wait_for_timeout(250)

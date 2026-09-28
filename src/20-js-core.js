@@ -398,6 +398,12 @@ function renderListPage(cfg){
     host.innerHTML=h;
 
     /* 事件 */
+    var resetEl=host.querySelector('[data-lp-reset]');
+    if(resetEl)resetEl.onclick=function(){
+      st.kw='';st.page=1;
+      Object.keys(st.flt).forEach(function(k){st.flt[k]='';});
+      render();
+    };
     var kwEl=$('lpKw');
     if(kwEl){
       kwEl.oninput=function(){ st.kw=this.value.trim().toLowerCase(); st.page=1; render();

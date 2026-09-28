@@ -2785,6 +2785,12 @@ function renderListPage(cfg){
     host.innerHTML=h;
 
     /* 事件 */
+    var resetEl=host.querySelector('[data-lp-reset]');
+    if(resetEl)resetEl.onclick=function(){
+      st.kw='';st.page=1;
+      Object.keys(st.flt).forEach(function(k){st.flt[k]='';});
+      render();
+    };
     var kwEl=$('lpKw');
     if(kwEl){
       kwEl.oninput=function(){ st.kw=this.value.trim().toLowerCase(); st.page=1; render();
@@ -3948,11 +3954,11 @@ regPage('proj:guide',{
 
 function regulationCards(){
   var rows=[
-    ['CLP 附录 VI','ECHA 官网；有反爬，只能由专员人工下载 ATP 包。',['主数据 + History','上传导入','版本链 diff']],
-    ['REACH 限制 / 授权清单','ECHA 官网；更新频率较低，建议半年至年度检查。',['人工下载 Excel','上传导入']],
-    ['C&L Inventory','ECHA 官网提供欧盟批量分类数据。',['人工下载','批量导入']],
-    ['国内危化品分类信息表','应急管理部官网 mem.gov.cn；目录随公告增补。',['人工下载 PDF','系统解析导入']],
-    ['ZDHC MRSL','ZDHC 官网发布的制造限用物质清单。',['人工下载','上传导入']]
+    ['CLP 附录 VI','ECHA 官网；有反爬，只能由专员人工下载 ATP 包。',['主数据 + History','导入向导演示','版本差异示例']],
+    ['REACH 限制 / 授权清单','ECHA 官网；更新频率较低，建议半年至年度检查。',['人工下载 Excel','导入向导演示']],
+    ['C&L Inventory','ECHA 官网提供欧盟批量分类数据。',['人工下载','导入向导演示']],
+    ['国内危化品分类信息表','应急管理部官网 mem.gov.cn；目录随公告增补。',['人工下载 PDF','结构化示例导入']],
+    ['ZDHC MRSL','ZDHC 官网发布的制造限用物质清单。',['人工下载','导入向导演示']]
   ];
   return '<div class="flow-maint-title">各法规库维护口径</div><div class="flow-maint-grid">'+rows.map(function(r){return '<article class="flow-reg-card"><h4>'+esc(r[0])+'</h4><div class="flow-reg-source">'+esc(r[1])+'</div><div class="flow-node-tags">'+r[2].map(function(t){return '<span class="flow-node-tag">'+esc(t)+'</span>';}).join('')+'</div></article>';}).join('')+'</div>';
 }
@@ -3967,9 +3973,9 @@ regPage('comp:guide',{
     ],'<button class="btn btn-primary" onclick="showPage(\'sds:wizard\')">新建 SDS</button>');
     var law='<section class="card flow-guide-card"><div class="card-hd"><h3>法规库维护 <span class="sub">明确数据来源、维护责任与版本变化处理</span></h3></div><div class="flow-guide-body">'+guideLine([
       guideNode('01','官网人工下载','法规专员按复审周期从各法规官网取得正式文件。',null,['线下操作','官网来源']),
-      guideNode('02','上传导入','进入对应法规库维护页使用批量导入。',"showPage('law:reach')",['分库维护']),
-      guideNode('03','系统解析与版本比对','系统解析文件并对新旧版本执行差异比对。',null,['系统自动','版本 diff']),
-      guideNode('04','影响分析','查看新版法规影响的在用物质与已发布 SDS。',"showPage('law:query')",['跨库影响分析'])
+      guideNode('02','导入向导演示','进入对应法规库维护页查看导入步骤；原型不解析真实上传文件。',"showPage('law:reach')",['分库维护']),
+      guideNode('03','核对版本差异示例','当前差异内容为演示数据，正式使用须由法规专员核对。',null,['人工核对','示例 diff']),
+      guideNode('04','查询已接入记录','按物质查看当前已接入的示例数据；受影响配方与 SDS 数量仅作展示。',"showPage('law:query')",['统一查询'])
     ])+regulationCards()+'<div class="notice warn flow-guide-alert"><div class="ni">!</div><div><b>维护模式：</b>法规库采用“专员定期下载维护”，系统不支持自动联网更新；法规超过复审期时，SDS 编写页面会以黄色或红色状态灯提醒。</div></div><div class="flow-guide-actions"><button class="btn" onclick="showPage(\'law:query\')">统一查询</button><button class="btn btn-primary" onclick="showPage(\'law:reach\')">维护法规库</button></div></div></section>';
     guidePage('流程引导','合规管理以受控组分数据和法规库为基础，完成 SDS 编写发布，并由法规专员持续维护法规版本。',sds+law);
   }
@@ -7355,9 +7361,9 @@ function renderStep6(){
         +'<button class="btn lg '+(wz.submitted?'disabled':'primary')+'" '+(wz.submitted?'disabled':'')+' onclick="wzSubmit()">提交审核</button>'
         +'<button class="btn lg '+(wz.published?'disabled':(wz.submitted?'ok':'disabled'))+'" '+((!wz.submitted||wz.published)?'disabled':'')+' onclick="wzPublish()">模拟批准发布</button>'
         +'<span style="width:1px;height:26px;background:var(--line)"></span>'
-        +'<button class="btn lg '+(wz.published?'':'disabled')+'" '+(wz.published?'':'disabled')+' onclick="wzExport(\'PDF\')">⤓ 导出 PDF</button>'
+        +'<button class="btn lg disabled" disabled title="PDF 导出尚未接入">⤓ 导出 PDF（未接入）</button>'
         +'<button class="btn lg '+(wz.published?'':'disabled')+'" '+(wz.published?'':'disabled')+' onclick="wzExport(\'Word\')">⤓ 导出 Word</button>'
-        +'<span style="font-size:12.3px;color:var(--muted)">'+(wz.published?'导出功能已解锁':'导出功能在批准发布后解锁')+'</span>'
+        +'<span style="font-size:12.3px;color:var(--muted)">'+(wz.published?'Word 导出已解锁':'Word 导出在批准发布后解锁')+'</span>'
       +'</div>'
       +'<div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
         +'<span class="tag '+(wz.submitted?'green':'grey')+' dot-tag">① 提交审核</span><span style="color:var(--muted)">→</span>'
@@ -7384,7 +7390,7 @@ function wzSubmit(){
   },'提交审核');
 }
 function wzPublish(){
-  sdsConfirm('模拟批准发布','确认以 <b>EHS 负责人</b> 身份批准发布？<br><span style="color:var(--muted)">发布后状态变更为「已正式发布」，并解锁 PDF / Word 导出。</span>',function(){
+  sdsConfirm('模拟批准发布','确认以 <b>EHS 负责人</b> 身份批准发布？<br><span style="color:var(--muted)">发布后状态变更为「已正式发布」，并解锁 Word 导出；PDF 导出尚未接入。</span>',function(){
     try{
       var release=sdsReleaseCreate({name:'EHS 负责人'});
       renderStep6();
@@ -7394,14 +7400,7 @@ function wzPublish(){
 }
 function wzExport(type){
   if(type==='Word'){exportSdsWord();return;}
-  openModal({title:'导出 '+type+' 文件',width:460,
-    body:'<div style="text-align:center;padding:8px 0 4px"><div style="font-size:13px;margin-bottom:12px">正在生成 <b>'+esc(wz.project.product||'SDS')+'_'+(wz.project.market==='EU'?'EU':'CN')+'_V1.0.'+(type==='PDF'?'pdf':'docx')+'</b></div>'
-      +'<div class="bar" id="expBar"><i></i></div><div style="margin-top:8px;color:var(--muted);font-size:12.5px" id="expTxt">0%</div></div>',
-    footer:''});
-  progress('expBar','expTxt',function(){
-    closeModal();
-    toast(type+' 文件已生成并下载（演示）','ok');
-  },20);
+  toast('PDF 导出尚未接入；本原型可导出 Word','info');
 }
 
 /* ==================================================================
@@ -7970,29 +7969,29 @@ function dbImport(){
   var c=dbCur();
   openModal({title:'批量导入 · '+c.title,width:560,cls:'sds-scope',
     body:'<div class="mini-steps"><div class="mini-step on"><span class="n">1</span>选择文件</div><div class="mini-line"></div>'
-      +'<div class="mini-step"><span class="n">2</span>上传解析</div><div class="mini-line"></div>'
+      +'<div class="mini-step"><span class="n">2</span>加载示例</div><div class="mini-line"></div>'
       +'<div class="mini-step"><span class="n">3</span>导入结果</div></div>'
       +'<div id="impBody">'
-      +'<div class="drop" onclick="document.getElementById(\'impFile\').click()"><div class="ic">⇪</div><p>点击选择文件，或将文件拖拽到此处</p><small>支持 .xlsx / .csv 格式，单次最多 500 条</small></div>'
+      +'<div class="drop"><div class="ic">⇪</div><p>真实文件导入尚未接入</p><small>请使用下方预置示例体验导入流程</small></div>'
       +'<input type="file" id="impFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="impPick(this)">'
       +'<div id="impFileRow" style="margin-top:12px"></div>'
-      +'<div style="margin-top:12px;font-size:12.5px;color:var(--muted)">没有文件？<a onclick="impPickDemo()" style="cursor:pointer">使用系统示例文件</a> · <a onclick="toast(\'模板已下载（演示）\',\'ok\')" style="cursor:pointer">下载导入模板</a></div>'
+      +'<div style="margin-top:12px;font-size:12.5px;color:var(--muted)"><a onclick="impPickDemo()" style="cursor:pointer">使用预置示例数据</a> · 导入模板尚未接入</div>'
       +'</div>',
     footer:'<button class="btn" onclick="closeModal()">取消</button><button class="btn primary disabled" id="impBtn" disabled onclick="impRun()">开始导入</button>'});
 }
 function impPick(el){
   if(!el.files.length)return;
-  _impFile=el.files[0].name;impShowFile();
+  toast('真实文件解析尚未接入，请使用预置示例数据','info');el.value='';
 }
 function impPickDemo(){_impFile=dbCur().title+'_导入模板_示例.xlsx';impShowFile();}
 function impShowFile(){
-  $('impFileRow').innerHTML='<div class="file-row"><span style="font-size:16px">▤</span><div><b>'+esc(_impFile)+'</b><div style="color:var(--muted);font-size:11.5px">待导入 '+dbCur().sample.length+' 条记录 · 128 KB</div></div><button class="btn sm" style="margin-left:auto" onclick="_impFile=\'\';document.getElementById(\'impFileRow\').innerHTML=\'\';document.getElementById(\'impBtn\').classList.add(\'disabled\');document.getElementById(\'impBtn\').disabled=true">移除</button></div>';
+  $('impFileRow').innerHTML='<div class="file-row"><span style="font-size:16px">▤</span><div><b>'+esc(_impFile)+'</b><div style="color:var(--muted);font-size:11.5px">预置示例 '+dbCur().sample.length+' 条 · 无实际文件</div></div><button class="btn sm" style="margin-left:auto" onclick="_impFile=\'\';document.getElementById(\'impFileRow\').innerHTML=\'\';document.getElementById(\'impBtn\').classList.add(\'disabled\');document.getElementById(\'impBtn\').disabled=true">移除</button></div>';
   $('impBtn').classList.remove('disabled');$('impBtn').disabled=false;
 }
 function impRun(){
   var steps=document.querySelectorAll('.mini-step'),lines=document.querySelectorAll('.mini-line');
   steps[0].classList.add('fin');steps[0].classList.remove('on');lines[0].classList.add('fin');steps[1].classList.add('on');
-  $('impBody').innerHTML='<div style="padding:16px 0"><div style="font-size:13px;margin-bottom:10px">正在上传并解析 <b>'+esc(_impFile)+'</b>…</div>'
+  $('impBody').innerHTML='<div style="padding:16px 0"><div style="font-size:13px;margin-bottom:10px">正在加载预置示例 <b>'+esc(_impFile)+'</b>…</div>'
     +'<div class="bar" id="impBar"><i></i></div><div style="margin-top:8px;color:var(--muted);font-size:12.5px" id="impTxt">0%</div></div>';
   $('impBtn').classList.add('disabled');$('impBtn').disabled=true;
   progress('impBar','impTxt',impDone,14);
@@ -8002,20 +8001,20 @@ function impDone(){
   var steps=document.querySelectorAll('.mini-step'),lines=document.querySelectorAll('.mini-line');
   steps[1].classList.add('fin');steps[1].classList.remove('on');lines[1].classList.add('fin');steps[2].classList.add('on');
   $('impBody').innerHTML='<div class="stat-row">'
-    +'<div class="stat"><b>'+(ok+fail)+'</b><span>解析总数</span></div>'
+    +'<div class="stat"><b>'+(ok+fail)+'</b><span>示例总数</span></div>'
     +'<div class="stat" style="border-color:var(--green-b);background:var(--green-bg)"><b style="color:var(--green)">'+ok+'</b><span>导入成功</span></div>'
     +'<div class="stat" style="border-color:var(--red-b);background:var(--red-bg)"><b style="color:var(--red)">'+fail+'</b><span>导入失败</span></div></div>'
     +'<div style="font-size:12.5px;font-weight:600;margin:12px 0 7px">失败明细</div>'
     +'<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px"><table class="tbl"><thead><tr><th style="width:70px">行号</th><th>失败原因</th><th style="width:110px">处理建议</th></tr></thead>'
     +'<tbody><tr><td>第 5 行</td><td style="color:var(--red)">主键重复：该编号在系统中已存在</td><td>改为更新或修改编号</td></tr></tbody></table></div>'
-    +'<div style="margin-top:12px;font-size:12.5px;color:var(--muted)">成功数据已写入列表，可在列表首部查看。</div>';
-  $('mFoot').innerHTML='<button class="btn" onclick="toast(\'失败明细已导出（演示）\',\'ok\')">导出失败明细</button><button class="btn primary" onclick="closeModal()">完成</button>';
+    +'<div style="margin-top:12px;font-size:12.5px;color:var(--muted)">预置示例数据已写入演示列表，可在列表首部查看。</div>';
+  $('mFoot').innerHTML='<button class="btn" disabled title="未生成失败明细文件">导出失败明细（未接入）</button><button class="btn primary" onclick="closeModal()">完成</button>';
   c.sample.forEach(function(s){
     var o={};Object.keys(s).forEach(function(k){o[k]=s[k];});
     o._id=sdsUid();o.created=nowStr();c.rows.unshift(o);
   });
   dbPage=1;dbRender();
-  toast('批量导入完成：成功 '+ok+' 条，失败 '+fail+' 条','ok');
+  toast('预置示例导入完成：演示成功 '+ok+' 条，失败 '+fail+' 条','ok');
 }
 
 /* ==================================================================
@@ -8227,10 +8226,10 @@ function lawRender(){
     return (r.name+r.org+r.ver).toLowerCase().indexOf(kw)>=0;
   });
   $('lawKpi').innerHTML=
-    '<div class="kpi"><span>法规清单总数</span><b>'+lawRows.length+'</b><small>人工导入并验证</small></div>'
-    +'<div class="kpi"><span>已生效</span><b style="color:var(--green)">'+lawRows.filter(function(r){return r.status==='已生效';}).length+'</b><small>可被 SDS 引用</small></div>'
+    '<div class="kpi"><span>法规清单总数</span><b>'+lawRows.length+'</b><small>演示台账记录</small></div>'
+    +'<div class="kpi"><span>已生效（示例）</span><b style="color:var(--green)">'+lawRows.filter(function(r){return r.status==='已生效';}).length+'</b><small>不作真实合规依据</small></div>'
     +'<div class="kpi"><span>待复核</span><b style="color:var(--orange)">'+lawRows.filter(function(r){return r.status==='待复核';}).length+'</b><small>未确认入库不可引用</small></div>'
-    +'<div class="kpi"><span>受影响已发布 SDS</span><b style="color:var(--red)">6</b><small>需执行影响分析</small></div>';
+    +'<div class="kpi"><span>受影响 SDS（示例）</span><b style="color:var(--red)">6</b><small>非自动计算结果</small></div>';
   var tp=Math.max(1,Math.ceil(f.length/PAGE_SIZE));
   if(lawPage>tp)lawPage=tp;
   var rows=f.slice((lawPage-1)*PAGE_SIZE,lawPage*PAGE_SIZE);
@@ -8262,8 +8261,8 @@ function lawView(id){
       +d.cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'
       +d.rows.map(function(row){return '<tr>'+row.map(function(c){return '<td>'+esc(c)+'</td>';}).join('')+'</tr>';}).join('')
       +'</tbody></table></div>'
-      +'<div class="notice grey" style="margin:14px 0 0"><div class="ni">§</div><div>本清单由合规人员从官方渠道下载后导入并逐条验证，合规人员对数据质量负责。</div></div>',
-    footer:'<button class="btn" onclick="toast(\'清单已导出 Excel（演示）\',\'ok\')">导出清单</button><button class="btn primary" onclick="closeModal()">关闭</button>'});
+      +'<div class="notice grey" style="margin:14px 0 0"><div class="ni">§</div><div>当前展示预置演示数据；正式使用前须从官方渠道获取清单并由合规人员逐条验证。</div></div>',
+    footer:'<button class="btn" disabled title="未生成清单文件">导出清单（未接入）</button><button class="btn primary" onclick="closeModal()">关闭</button>'});
 }
 /* 上传新版本：3 步 —— 上传文件 → 系统解析预览 → 人工确认入库 */
 var _lawCur=null,_lawFile='';
@@ -8283,7 +8282,7 @@ function lawBack1(){
   if(_lawFile)lawShowFile();
 }
 function lawMini(n){
-  var t=['上传文件','系统解析预览','人工确认入库'];
+  var t=['选择示例','查看预置结果','确认演示版本'];
   return '<div class="mini-steps">'+t.map(function(x,i){
     var cls=i+1<n?'fin':(i+1===n?'on':'');
     return '<div class="mini-step '+cls+'"><span class="n">'+(i+1<n?'✓':(i+1))+'</span>'+x+'</div>'+(i<2?'<div class="mini-line '+(i+1<n?'fin':'')+'"></div>':'');
@@ -8298,22 +8297,22 @@ function lawStep1Html(){
     +'<div class="field"><label class="req">新版本号</label><input class="ctrl" id="lwVer" value="'+esc(t.ver||'')+'" placeholder="例如：V2026.3 / ATP 22"></div>'
     +'<div class="field"><label class="req">生效日期</label><input class="ctrl" type="date" id="lwEff" value="'+esc(t.eff||'2026-09-01')+'"></div>'
     +'</div>'
-    +'<div style="margin-top:14px"><div class="drop" onclick="document.getElementById(\'lwFile\').click()"><div class="ic">⇪</div><p>上传官方渠道下载的法规清单文件</p><small>支持 .xlsx / .csv / .pdf，务必来自官方发布页面</small></div>'
+    +'<div style="margin-top:14px"><div class="drop"><div class="ic">⇪</div><p>真实法规文件解析尚未接入</p><small>请使用下方预置示例体验维护流程</small></div>'
     +'<input type="file" id="lwFile" accept=".xlsx,.csv,.pdf" style="display:none" onchange="lawPick(this)">'
     +'<div id="lwFileRow" style="margin-top:12px"></div>'
-    +'<div style="margin-top:10px;font-size:12.5px;color:var(--muted)">没有文件？<a onclick="lawPickDemo()" style="cursor:pointer">使用官方示例清单</a></div></div>';
+    +'<div style="margin-top:10px;font-size:12.5px;color:var(--muted)"><a onclick="lawPickDemo()" style="cursor:pointer">使用预置示例清单</a></div></div>';
 }
-function lawPick(el){if(!el.files.length)return;_lawFile=el.files[0].name;lawShowFile();}
-function lawPickDemo(){_lawFile='ECHA_official_list_2026_v3.xlsx';lawShowFile();}
+function lawPick(el){if(!el.files.length)return;toast('真实法规文件解析尚未接入，请使用预置示例清单','info');el.value='';}
+function lawPickDemo(){_lawFile='法规清单_预置示例.xlsx';lawShowFile();}
 function lawShowFile(){
-  $('lwFileRow').innerHTML='<div class="file-row"><span style="font-size:16px">▤</span><div><b>'+esc(_lawFile)+'</b><div style="color:var(--muted);font-size:11.5px">官方渠道文件 · 待解析</div></div><span class="tag orange" style="margin-left:auto">待人工验证</span></div>';
+  $('lwFileRow').innerHTML='<div class="file-row"><span style="font-size:16px">▤</span><div><b>'+esc(_lawFile)+'</b><div style="color:var(--muted);font-size:11.5px">预置示例 · 不读取真实文件</div></div><span class="tag orange" style="margin-left:auto">演示流程</span></div>';
   $('lawNext').classList.remove('disabled');$('lawNext').disabled=false;
 }
 function lawStep2(){
   var name=$('lwName').value.trim(),org=$('lwOrg').value.trim(),ver=$('lwVer').value.trim(),eff=$('lwEff').value;
   if(!name||!org||!ver||!eff){toast('请填写法规名称、发布机构、版本号与生效日期','warn');return;}
   window._lawTmp={name:name,org:org,ver:ver,eff:eff};
-  $('mBody').innerHTML=lawMini(2)+'<div style="padding:10px 0"><div style="font-size:13px;margin-bottom:10px">正在解析 <b>'+esc(_lawFile)+'</b>…</div><div class="bar" id="lwBar"><i></i></div><div style="margin-top:8px;color:var(--muted);font-size:12.5px" id="lwTxt">0%</div></div>';
+  $('mBody').innerHTML=lawMini(2)+'<div style="padding:10px 0"><div style="font-size:13px;margin-bottom:10px">正在加载预置示例 <b>'+esc(_lawFile)+'</b>…</div><div class="bar" id="lwBar"><i></i></div><div style="margin-top:8px;color:var(--muted);font-size:12.5px" id="lwTxt">0%</div></div>';
   $('mFoot').innerHTML='<div class="left">第 2 步 / 共 3 步</div><button class="btn disabled" disabled>解析中…</button>';
   progress('lwBar','lwTxt',lawStep2Done,15);
 }
@@ -8323,26 +8322,26 @@ function lawStep2Done(){
     +'<div class="stat-row"><div class="stat"><b>128</b><span>解析条目总数</span></div>'
     +'<div class="stat" style="border-color:var(--green-b);background:var(--green-bg)"><b style="color:var(--green)">12</b><span>新增条目</span></div>'
     +'<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">5</b><span>变更条目</span></div></div>'
-    +'<div style="font-size:12.5px;font-weight:600;margin:6px 0 7px">解析结果预览（节选）</div>'
+    +'<div style="font-size:12.5px;font-weight:600;margin:6px 0 7px">预置解析示例（节选，未读取上传文件内容）</div>'
     +'<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px;max-height:220px;overflow:auto"><table class="tbl"><thead><tr><th style="width:70px">变更</th>'
     +d.cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'
     +d.rows.map(function(row,i){
       var t=i===0?'<span class="tag orange">变更</span>':(i===1?'<span class="tag green">新增</span>':'<span class="tag grey">无变化</span>');
       return '<tr><td>'+t+'</td>'+row.map(function(c){return '<td>'+esc(c)+'</td>';}).join('')+'</tr>';
     }).join('')+'</tbody></table></div>'
-    +'<div class="notice warn" style="margin:14px 0 0"><div class="ni">!</div><div>解析结果尚未入库。<b>必须经人工逐条核对确认后</b>方可生效并被 SDS 生成流程引用。</div></div>';
+    +'<div class="notice warn" style="margin:14px 0 0"><div class="ni">!</div><div>以上为预置示例，并非上传文件的解析结果；本次确认只更新演示台账。</div></div>';
   $('mFoot').innerHTML='<div class="left">第 2 步 / 共 3 步</div><button class="btn" onclick="lawBack1()">上一步</button><button class="btn primary" onclick="lawStep3()">下一步：人工确认</button>';
 }
 function lawStep3(){
   $('mBody').innerHTML=lawMini(3)
-    +'<div class="notice grey" style="margin-bottom:14px"><div class="ni">§</div><div>合规人员需确认已核对全部解析条目，确认后清单版本将正式入库并对 SDS 生效。</div></div>'
+    +'<div class="notice grey" style="margin-bottom:14px"><div class="ni">§</div><div>本步只演示人工核对与版本入库交互；数据来自预置示例，不能用于真实 SDS 合规判断。</div></div>'
     +'<dl class="desc-list" style="margin-bottom:14px"><dt>法规名称</dt><dd>'+esc(_lawTmp.name)+'</dd>'
     +'<dt>发布机构</dt><dd>'+esc(_lawTmp.org)+'</dd><dt>新版本号</dt><dd>'+esc(_lawTmp.ver)+'</dd>'
     +'<dt>生效日期</dt><dd>'+esc(_lawTmp.eff)+'</dd><dt>来源文件</dt><dd>'+esc(_lawFile)+'</dd></dl>'
     +'<div class="form-grid one">'
     +'<div class="field"><label class="req">人工验证人</label><input class="ctrl" id="lwVerifier" value="法规专员 · 陈工"></div>'
     +'<div class="field"><label>核对说明</label><textarea class="ctrl" id="lwNote" placeholder="记录核对范围、差异处理方式等">已逐条比对官方发布版本，差异条目 5 项已确认。</textarea></div>'
-    +'<div class="field"><label class="inline-chk"><input type="checkbox" class="chk" id="lwOk"> 我确认已完成人工核对，并对本次入库数据质量负责</label></div>'
+    +'<div class="field"><label class="inline-chk"><input type="checkbox" class="chk" id="lwOk"> 我确认仅在演示台账中保存此示例版本</label></div>'
     +'</div>';
   $('mFoot').innerHTML='<div class="left">第 3 步 / 共 3 步</div><button class="btn" onclick="lawStep2Done()">上一步</button><button class="btn primary" onclick="lawFinish()">确认入库</button>';
 }
@@ -8351,12 +8350,12 @@ function lawFinish(){
   var v=$('lwVerifier').value.trim();
   if(!v){toast('请填写人工验证人','warn');return;}
   if(_lawCur){
-    _lawCur.ver=_lawTmp.ver;_lawCur.eff=_lawTmp.eff;_lawCur.upd=nowStr();_lawCur.status='已生效';_lawCur.verifier=v;_lawCur.items+=12;
+    _lawCur.ver=_lawTmp.ver;_lawCur.eff=_lawTmp.eff;_lawCur.upd=nowStr();_lawCur.status='演示版本';_lawCur.verifier=v;_lawCur.items+=12;
   }else{
-    lawRows.unshift({_id:sdsUid(),key:'xvii',name:_lawTmp.name,org:_lawTmp.org,eff:_lawTmp.eff,ver:_lawTmp.ver,upd:nowStr(),status:'已生效',items:128,verifier:v});
+    lawRows.unshift({_id:sdsUid(),key:'xvii',name:_lawTmp.name,org:_lawTmp.org,eff:_lawTmp.eff,ver:_lawTmp.ver,upd:nowStr(),status:'演示版本',items:128,verifier:v});
   }
   closeModal();lawPage=1;lawRender();
-  toast('新版本已人工确认入库并生效','ok');
+  toast('示例版本已写入本次演示数据','ok');
 }
 /* 影响分析 */
 var IMPACT=[
@@ -8369,17 +8368,18 @@ var IMPACT=[
 ];
 function lawImpact(id){
   var r=lawRows.filter(function(x){return x._id===id;})[0];
-  openModal({title:'法规更新影响分析 · '+r.name,width:820,
-    body:'<div class="stat-row"><div class="stat"><b>'+IMPACT.length+'</b><span>受影响已发布 SDS</span></div>'
-      +'<div class="stat" style="border-color:var(--red-b);background:var(--red-bg)"><b style="color:var(--red)">2</b><span>需重新分类改版</span></div>'
-      +'<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">4</b><span>需更新法规章节</span></div></div>'
+  openModal({title:'法规更新影响分析（示例） · '+r.name,width:820,
+    body:'<div class="notice warn" style="margin-bottom:14px"><div class="ni">!</div><div>以下 6 条 SDS 为预置演示数据，不是根据当前法规条目自动计算的影响结果；本原型尚不能自动派发改版任务。</div></div>'+
+      '<div class="stat-row"><div class="stat"><b>'+IMPACT.length+'</b><span>示例受影响 SDS</span></div>'
+      +'<div class="stat" style="border-color:var(--red-b);background:var(--red-bg)"><b style="color:var(--red)">2</b><span>示例：需重新分类</span></div>'
+      +'<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">4</b><span>示例：需更新章节</span></div></div>'
       +'<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px"><table class="tbl"><thead><tr><th style="width:140px">SDS 编号</th><th>产品名称</th><th style="width:110px">目标市场</th><th style="width:110px">发布日期</th><th>影响项</th><th style="width:150px">建议动作</th></tr></thead><tbody>'
       +IMPACT.map(function(x){
         return '<tr><td class="mono">'+x[0]+'</td><td>'+x[1]+'</td><td>'+x[2]+'</td><td>'+x[3]+'</td><td style="color:var(--ink2)">'+x[4]+'</td>'
           +'<td><span class="tag '+(x[5].indexOf('改版')>=0?'red':'orange')+'">'+x[5]+'</span></td></tr>';
       }).join('')+'</tbody></table></div>'
-      +'<div class="notice info" style="margin:14px 0 0"><div class="ni">i</div><div>影响分析基于「法规清单条目 ↔ 组分 ↔ 已发布 SDS」的关联关系计算，可一键生成改版任务派发给编制人。</div></div>',
-    footer:'<button class="btn" onclick="toast(\'影响清单已导出（演示）\',\'ok\')">导出清单</button><button class="btn primary" onclick="closeModal();toast(\'已生成 6 个 SDS 改版任务并派发\',\'ok\')">一键生成改版任务</button>'});
+      +'<div class="notice info" style="margin:14px 0 0"><div class="ni">i</div><div>正式版需建立「法规条目 ↔ 组分 ↔ 已发布 SDS」关联后，才能计算真实影响范围并派发任务。</div></div>',
+    footer:'<button class="btn" disabled title="本原型未接入自动任务派发">生成改版任务（未接入）</button><button class="btn primary" onclick="closeModal()">关闭</button>'});
 }
 
 /* ==================================================================
@@ -8509,18 +8509,17 @@ function renderLawPage(types,title,desc,noteKey){
   var host=$('pageHost');
   lawTypeFilter=types;lawPage=1;
   var noteTxt=esc(desc)
-    +'<div class="np-n"><b>清单维护与生效</b>本库所有法规清单均为官方渠道下载后人工导入验证，'
-    +'合规人员对数据质量负责；未完成人工确认入库的版本不会被 SDS 生成流程引用。</div>';
+    +'<div class="np-n"><b>清单维护与生效</b>本页目前使用预置演示数据，不读取真实上传文件。正式版须从官方渠道取得清单，由合规人员核对后发布；当前演示版本不能作为真实 SDS 的法规依据。</div>';
   host.innerHTML='<div class="sds-scope">'
     +sdsHead('',esc(title),noteTxt,
-      '<button class="btn" onclick="toast(\'已导出法规台账（演示）\',\'ok\')">导出台账</button>'
+      '<button class="btn" disabled title="未生成法规台账文件">导出台账（未接入）</button>'
       +'<button class="btn primary" onclick="lawUpload(null)">＋ 新增法规清单</button>','',noteKey)
     +'<div id="lawMechMan"></div>'
     +'<div class="kpi-row" id="lawKpi"></div>'
     +'<div class="card"><div class="toolbar">'
       +'<div class="search"><i class="si">⌕</i><input id="lawKw" placeholder="搜索法规名称 / 发布机构…" oninput="lawRender()"></div>'
       +'<select class="ctrl" id="lawStatus" style="width:160px" onchange="lawRender()">'
-      +'<option value="">全部数据状态</option><option>已生效</option><option>待复核</option><option>已归档</option></select>'
+      +'<option value="">全部数据状态</option><option>已生效</option><option>演示版本</option><option>待复核</option><option>已归档</option></select>'
       +'<div class="grow"></div><span class="tag orange dot-tag">人工维护 · 合规人员负责</span></div>'
       +'<div class="tbl-wrap"><table class="tbl" id="lawTable"></table></div>'
       +'<div class="pager" id="lawPager"></div></div></div>';
@@ -8682,8 +8681,7 @@ function sdsActs(r){
   else if(r.status==='审核中')
     a+='<span class="muted" style="font-size:12.5px">审核中</span>';
   else if(r.status==='已发布')
-    a+='<button class="btn btn-link" onclick="sdsExport(\''+r.no+'\',\'PDF\')">导出 PDF</button>'
-     + '<button class="btn btn-link" onclick="sdsExport(\''+r.no+'\',\'Word\')">导出 Word</button>'
+    a+='<button class="btn btn-link" onclick="sdsExport(\''+r.no+'\')">导出摘要 TXT</button>'
      + '<button class="btn btn-link" onclick="sdsRevise(\''+r.no+'\')">申请改版</button>';
   else if(r.status==='待改版')
     a+='<button class="btn btn-link" onclick="sdsStartRevise(\''+r.no+'\')">开始改版</button>';
@@ -8771,8 +8769,8 @@ function sdsView(no){
       +'</tbody></table>',
     footer:'<button class="btn" onclick="closeModal()">关闭</button>'
           +(r.status==='已发布'
-            ?'<button class="btn btn-primary" onclick="closeModal();sdsExport(\''+no+'\',\'PDF\')">导出 PDF</button>'
-            :'<button class="btn disabled" title="仅「已发布」状态可导出">导出 PDF</button>')});
+            ?'<button class="btn btn-primary" onclick="closeModal();sdsExport(\''+no+'\')">导出摘要 TXT</button>'
+            :'<button class="btn disabled" title="仅「已发布」状态可导出">导出摘要 TXT</button>')});
 }
 function sdsEdit(no){ toast('已打开 '+no+' 草案编辑（演示环境为只读原型）','info'); }
 function sdsSubmit(no){
@@ -8790,16 +8788,15 @@ function sdsRevise(no){
   toast('已基于 '+no+' 创建改版任务，可在「SDS 文档列表」跟踪','ok');
   setTimeout(function(){ showPage('sds:list'); },300);
 }
-function sdsExport(no,fmt){
+function sdsExport(no){
   var r=SDS_ROWS.filter(function(x){return x.no===no;})[0];
   /* A8：仅已发布可导出 */
   if(!r||r.status!=='已发布'){ toast('仅「已发布」状态的 SDS 可导出','warn'); return; }
-  fmt=fmt||'PDF';
   downloadFile(no+'_SDS_摘要.txt',
     'SDS 文档摘要\n文档编号：'+no+'\n产品：'+r.product+'\n目标市场：'+r.market+' / '+r.lang
-    +'\n适用规则包：'+r.rulePack+'（'+r.lawName+' '+r.lawVer+'）\n导出格式：'+fmt
+    +'\n适用规则包：'+r.rulePack+'（'+r.lawName+' '+r.lawVer+'）\n导出格式：TXT 摘要'
     +'\n导出时间：'+nowStr()+'\n（演示原型，正式版将输出完整 16 章 PDF / Word）\n');
-  toast('已导出 '+no+' 摘要文件（'+fmt+'）','ok');
+  toast('已导出 '+no+' 摘要 TXT（演示）','ok');
 }
 seedSdsRows();
 
@@ -8876,10 +8873,18 @@ regPage('bd:ghs',{
   }
 })();
 
+/* C&L 为企业自报分类：GHS 分类页签同样展示类别、H 代码、象形图与警示词，
+   但证据灯会给黄灯「需关注」，提示不等同官方统一分类。 */
 var LAW_QUERY_REFERENCE_ROWS=[
-  {id:'Q004',cas:'50-00-0',name:'甲醛',ec:'200-001-8',source:'C&L Inventory',sourceType:'cl',region:'欧盟',dataType:'企业申报分类',result:'存在分类申报',value:'Carc. 1B / Skin Sens. 1',version:'2026-Q1',status:'已生效',lawKey:'cl-inventory'},
-  {id:'Q008',cas:'79-10-7',name:'丙烯酸',ec:'201-177-9',source:'C&L Inventory',sourceType:'cl',region:'欧盟',dataType:'企业申报分类',result:'存在分类申报',value:'Skin Corr. 1A / Acute Tox. 4',version:'2026-Q1',status:'已生效',lawKey:'cl-inventory'},
-  {id:'Q010',cas:'111-76-2',name:'乙二醇单丁醚',ec:'203-905-0',source:'C&L Inventory',sourceType:'cl',region:'欧盟',dataType:'企业申报分类',result:'存在分类申报',value:'Acute Tox. 4 / Eye Irrit. 2',version:'2026-Q1',status:'已生效',lawKey:'cl-inventory'}
+  {id:'Q004',cas:'50-00-0',name:'甲醛',ec:'200-001-8',source:'C&L Inventory',sourceType:'cl',region:'欧盟',dataType:'企业申报分类',result:'存在分类申报',value:'Carc. 1B / Skin Sens. 1',
+    clsList:['Carc. 1B','Skin Sens. 1'],hCodes:['H350','H317'],pictograms:['GHS08'],signalWord:'危险',
+    version:'2026-Q1',status:'已生效',lawKey:'cl-inventory'},
+  {id:'Q008',cas:'79-10-7',name:'丙烯酸',ec:'201-177-9',source:'C&L Inventory',sourceType:'cl',region:'欧盟',dataType:'企业申报分类',result:'存在分类申报',value:'Skin Corr. 1A / Acute Tox. 4',
+    clsList:['Skin Corr. 1A','Acute Tox. 4（oral）'],hCodes:['H314','H302'],pictograms:['GHS05','GHS07'],signalWord:'危险',
+    version:'2026-Q1',status:'已生效',lawKey:'cl-inventory'},
+  {id:'Q010',cas:'111-76-2',name:'乙二醇单丁醚',ec:'203-905-0',source:'C&L Inventory',sourceType:'cl',region:'欧盟',dataType:'企业申报分类',result:'存在分类申报',value:'Acute Tox. 4 / Eye Irrit. 2',
+    clsList:['Acute Tox. 4（oral）','Eye Irrit. 2'],hCodes:['H302','H319'],pictograms:['GHS07'],signalWord:'警告',
+    version:'2026-Q1',status:'已生效',lawKey:'cl-inventory'}
 ];
 /* CLP 与名单行均从已发布数据集投影；参考行仅保留 C&L Inventory；
    OEL 行从各市场「当前有效」数据集投影，取数口径与 SDS 第 8 章一致。 */
@@ -8942,13 +8947,14 @@ var LAW_KIND_OPTS=[
 ];
 function lawKindText(k){var o=LAW_KIND_OPTS.filter(function(x){return x[0]===k;})[0];return o?o[1]:k;}
 
-/* ---------- 页签：按「查询维度」组织，不按法规库来源 ----------
-   ghs  = 危险性分类（CLP 附录 VI 统一分类 + C&L 企业申报分类）
-   list = 名录列入（SVHC / XIV / XVII / RoHS / ZDHC / 国内三个目录）
-   oel  = 职业接触限值（各市场当前有效数据集下的限值记录） */
-var LAW_TABS=[{key:'',label:'全部'},{key:'ghs',label:'GHS 分类'},
-  {key:'list',label:'名录清单'},{key:'oel',label:'OEL 限值'}];
-var _lqTab='';
+/* ---------- 页签 = 查询维度（2026-09-28 第四十二轮） ----------
+   不再保留「全部」：三个维度的结果形态本来就不同，混在一张表里只能取列头并集，
+   每行一半是空格。现在每个页签自带一套列头与行渲染：
+     ghs  = 危险性分类（CLP 附录 VI 统一分类 + C&L 企业申报分类）→ 类别 / H 码 / 象形图 / 警示词
+     list = 名录列入（SVHC / XIV / XVII / RoHS / ZDHC / 国内目录）→ 名录 / 列入情况 / 条目 / 原文
+     oel  = 职业接触限值（各市场当前有效数据集）→ 数据集 / 已列入·未列入 / 长期·短期·上限 */
+var LAW_TABS=[{key:'ghs',label:'GHS 分类'},{key:'list',label:'名录清单'},{key:'oel',label:'OEL 限值'}];
+var _lqTab='ghs';
 /* 外部页带入的具体法规类别（lawKey），作为页签之内的附加过滤 */
 var _lqPresetLawKey='';
 function lawTabOf(r){
@@ -8990,20 +8996,78 @@ function oelLawQueryProjection(asOfDate){
   });
   return out;
 }
+/* 关键词命中：CAS / 名称 / EC / 来源 / 结论 / 分类 / 别名 */
+function lawQueryKwHit(r,kw){
+  if(!kw)return true;
+  var aliases=lawCompAliases(r.cas);
+  return (r.cas+' '+r.name+' '+r.ec+' '+r.source+' '+r.result+' '+r.value+' '+aliases).toLowerCase().indexOf(kw)>=0;
+}
 function lawQueryRows(){
   var kwEl=$('lqKw'),kw=(kwEl?kwEl.value:'').trim().toLowerCase();
   var typeEl=$('lqType'),regionEl=$('lqRegion'),statusEl=$('lqStatus');
   var type=typeEl?typeEl.value:'',region=regionEl?regionEl.value:'',status=statusEl?statusEl.value:'';
+  /* OEL 页签行单位是「物质 × 数据集」，不是单条记录：
+     只接关键词与地区（地区用于挑数据集），数据类型 / 数据状态不属于本维度，不参与过滤。 */
+  if(_lqTab==='oel')return oelLawQueryMatrixRows(lawQueryAllRows().filter(function(r){return lawQueryKwHit(r,kw);}));
   return lawQueryAllRows().filter(function(r){
     if(_lqTab&&lawTabOf(r)!==_lqTab)return false;
     if(_lqPresetLawKey&&r.lawKey!==_lqPresetLawKey)return false;
     if(type&&r.dataType!==type)return false;
     if(region&&r.region!==region)return false;
     if(status&&r.status!==status)return false;
-    if(!kw)return true;
-    var aliases=lawCompAliases(r.cas);
-    return (r.cas+' '+r.name+' '+r.ec+' '+r.source+' '+r.result+' '+r.value+' '+aliases).toLowerCase().indexOf(kw)>=0;
+    return lawQueryKwHit(r,kw);
   });
+}
+/* OEL 数据集地区标签：数据里存「欧盟（EU）」，对外统一为筛选框用的「欧盟」 */
+function oelRegionLabel(rg){return rg==='欧盟（EU）'?'欧盟':rg;}
+/* 各市场「当前有效」数据集：已发布 + 已生效 + 未过期。口径与 SDS 第 8 章一致。 */
+function oelLawQueryCurrentSets(){
+  var asOf=clpSystemToday(),seen={},out=[];
+  OEL_SETS.forEach(function(s){if(s.rg&&!seen[s.rg])seen[s.rg]=1;});
+  Object.keys(seen).forEach(function(rg){
+    var set=OEL_SETS.filter(function(s){
+      return s.rg===rg&&s.st==='已发布'&&typeof oelSdsValidDate==='function'&&
+        oelSdsValidDate(s.eff)&&s.eff<=asOf&&
+        (!s.exp||s.exp==='—'||(oelSdsValidDate(s.exp)&&s.exp>=asOf));
+    }).sort(function(a,b){return b.eff.localeCompare(a.eff)||b.id.localeCompare(a.id);})[0];
+    if(set)out.push(set);
+  });
+  return out;
+}
+/* 物质 × 数据集 展开：
+   已列入 = 该物质在当前有效数据集下有已发布限值记录（展示长期/短期/上限语义槽位）；
+   未列入 = 数据集内查不到该物质的记录。未列入是「本数据集无记录」，不是产品级结论。 */
+function oelLawQueryMatrixRows(baseRows){
+  if(typeof OEL_SETS==='undefined'||typeof OEL_LIMITS==='undefined')return [];
+  var rgEl=$('lqRegion'),rg=(rgEl?rgEl.value:'');
+  var sets=oelLawQueryCurrentSets();
+  if(rg)sets=sets.filter(function(s){return oelRegionLabel(s.rg)===rg;});
+  var seenCas={},order=[];
+  baseRows.forEach(function(r){
+    if(!r.cas||r.cas==='—'||seenCas[r.cas])return;
+    seenCas[r.cas]=1;order.push({cas:r.cas,name:r.name,ec:r.ec});
+  });
+  var out=[];
+  order.forEach(function(s){
+    sets.forEach(function(set){
+      var lims=OEL_LIMITS.filter(function(l){return l.set===set.id&&l.cas===s.cas&&l.st==='已发布';});
+      var slots=[],unit='';
+      lims.forEach(function(l){
+        if(l.twa&&l.twa!=='—')slots.push('长期 '+l.twa);
+        if(l.stel&&l.stel!=='—')slots.push('短期 '+l.stel);
+        if(l.ceil&&l.ceil!=='—')slots.push('上限 '+l.ceil);
+        if(!unit&&l.unit&&l.unit!=='—')unit=l.unit;
+      });
+      out.push({id:'OELM-'+set.id+'-'+s.cas,cas:s.cas,name:s.name,ec:s.ec,
+        source:oelRegionLabel(set.rg)+' · '+set.ver,sourceType:'oel',region:oelRegionLabel(set.rg),
+        dataType:'职业接触限值',result:lims.length?'已列入':'未列入',
+        value:slots.length?slots.join(' / ')+' '+unit:'—',
+        version:set.ver,latestVersion:set.ver,status:'已生效',reviewDue:set.due||'—',
+        datasetName:set.name,datasetCount:set.cnt,effectiveFrom:set.eff,
+        lawKey:'oel',tabKey:'oel',maintenanceRoute:'law:oel',isOelMatrix:true,oelListed:!!lims.length});
+    });
+  });
+  return out;
 }
 /* ---------- 物质基础信息：优先读组分基础信息（bd:comp），查不到时降级 ---------- */
 function lawCompByCas(cas){
@@ -9055,6 +9119,53 @@ function lawQuerySubstanceCard(rows){
       (c&&c.iupac&&c.iupac!=='—'?'<dt>IUPAC 名称</dt><dd style="grid-column:span 3">'+esc(c.iupac)+'</dd>':'')+'</dl>':'')+
     '</div></div>';
 }
+/* ---------- 每个页签一套列头与行渲染 ----------
+   列头不再取并集：GHS 页签不出现「列入情况」，名录页签不出现「H 代码」。 */
+var LAW_QUERY_COLS={
+  ghs:{cols:10,head:'<th style="width:170px">物质名称</th><th style="width:105px">CAS 号</th><th style="width:100px">EC 号</th><th style="width:140px">法规来源</th><th>危险类别和项别</th><th style="width:135px">H 代码</th><th style="width:120px">象形图</th><th style="width:80px">警示词</th><th style="width:95px">证据灯</th><th style="width:120px">操作</th>'},
+  list:{cols:10,head:'<th style="width:170px">物质名称</th><th style="width:105px">CAS 号</th><th style="width:200px">名录名称</th><th style="width:90px">地区</th><th style="width:150px">列入情况</th><th style="width:110px">条目号</th><th>阈值 / 用途原文</th><th style="width:120px">版本</th><th style="width:95px">证据灯</th><th style="width:120px">操作</th>'},
+  oel:{cols:9,head:'<th style="width:170px">物质名称</th><th style="width:105px">CAS 号</th><th style="width:230px">数据集（名录）</th><th style="width:110px">列入情况</th><th>长期 · 短期 · 上限</th><th style="width:90px">数据量</th><th style="width:110px">生效日期</th><th style="width:95px">证据灯</th><th style="width:120px">操作</th>'}
+};
+var LAW_QUERY_EMPTY={ghs:'没有匹配的法规记录',list:'没有匹配的名单条目',oel:'没有可判定的物质（先按 CAS / 名称检索）'};
+function lawQueryOps(r){
+  return '<button class="btn-link" onclick="lawQueryView(\''+r.id+'\')">查看</button>'+
+    '<button class="btn-link" onclick="showPage(\''+(r.maintenanceRoute||lawMaintenanceRoute(r.sourceType))+'\')">来源库</button>';
+}
+function lawQueryRowCls(ev){return ' class="'+(ev.lv==='red'?'row-red':(ev.lv==='due'?'row-due':''))+'"';}
+function lawQueryRowGhs(r){
+  var ev=lawEvidence(r,true);
+  var cls=(r.clsList&&r.clsList.length)
+    ? '<ul style="margin:0;padding-left:15px;font-size:12.5px;line-height:1.65">'+r.clsList.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'
+    : esc(r.value||'—');
+  var hs=(r.hCodes&&r.hCodes.length)?r.hCodes.map(function(x){return '<span class="mono">'+esc(x)+'</span>';}).join(' '):'<span class="muted">—</span>';
+  var sig=r.signalWord?('<span class="tag '+(r.signalWord==='危险'?'red':(r.signalWord==='警告'?'orange':'grey'))+'">'+esc(r.signalWord)+'</span>'):'<span class="muted">—</span>';
+  var scls={clp:'purple',cl:'grey'}[r.sourceType]||'grey';
+  return '<tr'+lawQueryRowCls(ev)+'><td><b>'+esc(r.name)+'</b></td><td class="mono">'+esc(r.cas)+'</td><td class="mono">'+esc(r.ec)+'</td>'+
+    '<td><span class="tag '+scls+'">'+esc(r.source)+'</span></td><td>'+cls+'</td><td>'+hs+'</td>'+
+    '<td>'+ghsPictoHtml(r.pictograms)+'</td><td>'+sig+'</td><td>'+lawEvidenceLamp(r,true)+'</td><td>'+lawQueryOps(r)+'</td></tr>';
+}
+function lawQueryRowList(r){
+  var ev=lawEvidence(r,true);
+  var scls={reach:'blue',rohs:'orange',zdhc:'green',cn:'orange'}[r.sourceType]||'grey';
+  var parts=[];
+  if(r.thresholdText&&r.thresholdText!=='—')parts.push('阈值：'+r.thresholdText);
+  if(r.useText&&r.useText!=='—')parts.push('用途：'+r.useText);
+  var brief=parts.join('；')||'—';
+  return '<tr'+lawQueryRowCls(ev)+'><td><b>'+esc(r.name)+'</b></td><td class="mono">'+esc(r.cas)+'</td>'+
+    '<td><span class="tag '+scls+'">'+esc(r.source)+'</span></td><td>'+esc(r.region)+'</td>'+
+    '<td><span class="tag green dot-tag">'+esc(r.result||'已列入')+'</span></td>'+
+    '<td class="mono">'+esc(r.entryCode||'—')+'</td>'+
+    '<td style="max-width:360px"><span title="'+esc(r.value||'')+'">'+esc(brief.length>72?brief.slice(0,72)+'…':brief)+'</span></td>'+
+    '<td class="mono">'+esc(r.version)+'</td><td>'+lawEvidenceLamp(r,true)+'</td><td>'+lawQueryOps(r)+'</td></tr>';
+}
+function lawQueryRowOel(r){
+  var ev=lawEvidence(r,true);
+  var listed=r.oelListed?'<span class="tag green dot-tag">已列入</span>':'<span class="tag grey dot-tag">未列入</span>';
+  return '<tr'+lawQueryRowCls(ev)+'><td><b>'+esc(r.name)+'</b></td><td class="mono">'+esc(r.cas)+'</td>'+
+    '<td>'+esc(r.datasetName||r.source)+'<span class="sub">'+esc(r.region+' · '+r.version)+'</span></td>'+
+    '<td>'+listed+'</td><td>'+esc(r.value)+'</td><td class="mono">'+esc(r.datasetCount==null?'—':r.datasetCount)+'</td>'+
+    '<td class="mono">'+esc(r.effectiveFrom||'—')+'</td><td>'+lawEvidenceLamp(r,true)+'</td><td>'+lawQueryOps(r)+'</td></tr>';
+}
 var LAW_QUERY_PAGE_SIZE=20;   /* 统一查询一页最多展示 20 条命中记录 */
 var _lqPage=1;
 /* resetPage=true 表示搜索词 / 筛选 / 页签发生变化，回到第 1 页；翻页不传 */
@@ -9067,43 +9178,66 @@ function lawQueryRender(resetPage){
   var size=LAW_QUERY_PAGE_SIZE,tp=Math.max(1,Math.ceil(rows.length/size));
   if(_lqPage>tp)_lqPage=tp; if(_lqPage<1)_lqPage=1;
   var page=rows.slice((_lqPage-1)*size,_lqPage*size);
-  $('lqTable').innerHTML='<thead><tr><th style="width:110px">CAS 号</th><th style="width:130px">物质名称</th><th style="width:105px">EC 号</th><th style="width:150px">法规来源</th><th style="width:95px">证据灯</th><th style="width:110px">复审到期</th><th style="width:90px">地区</th><th style="width:110px">数据类型</th><th style="width:130px">查询结果</th><th>分类 / 限值 / 条件</th><th style="width:105px">版本</th><th style="width:130px">操作</th></tr></thead><tbody>'+
-    (page.length?page.map(function(r){var cls={clp:'purple',reach:'blue',rohs:'orange',cl:'grey',cn:'orange',zdhc:'green'}[r.sourceType]||'grey';var ev=lawEvidence(r,true);return '<tr class="'+(ev.lv==='red'?'row-red':(ev.lv==='due'?'row-due':''))+'"><td class="mono">'+esc(r.cas)+'</td><td><b>'+esc(r.name)+'</b></td><td class="mono">'+esc(r.ec)+'</td><td><span class="tag '+cls+'">'+esc(r.source)+'</span></td><td>'+lawEvidenceLamp(r,true)+'</td><td>'+esc(r.reviewDue)+'</td><td>'+esc(r.region)+'</td><td>'+esc(r.dataType)+'</td><td>'+esc(r.result)+'</td><td>'+esc(r.value)+'</td><td class="mono">'+esc(r.version)+'</td><td><button class="btn-link" onclick="lawQueryView(\''+r.id+'\')">查看</button><button class="btn-link" onclick="showPage(\''+(r.maintenanceRoute||lawMaintenanceRoute(r.sourceType))+'\')">来源库</button></td></tr>';}).join(''):'<tr><td colspan="12" class="tbl-empty"><span class="big">⌕</span>没有匹配的法规记录</td></tr>')+'</tbody>';
+  /* 列头与行渲染由当前页签决定，不再取并集 */
+  var colCfg=LAW_QUERY_COLS[_lqTab]||LAW_QUERY_COLS.ghs;
+  var rowFn=_lqTab==='list'?lawQueryRowList:(_lqTab==='oel'?lawQueryRowOel:lawQueryRowGhs);
+  $('lqTable').innerHTML='<thead><tr>'+colCfg.head+'</tr></thead><tbody>'+
+    (page.length?page.map(rowFn).join(''):'<tr><td colspan="'+colCfg.cols+'" class="tbl-empty"><span class="big">⌕</span>'+LAW_QUERY_EMPTY[_lqTab]+'</td></tr>')+'</tbody>';
   var pd=$('lqPager');if(pd)pd.innerHTML=tp>1?pagerHtml(rows.length,_lqPage,tp,'lawQueryPageGo'):'';
 }
 function lawQueryPageGo(p){_lqPage=p;lawQueryRender();}
 function lawQueryRenderTabs(){
   var host=$('lqTabs');if(!host)return;
   host.innerHTML='';
-  host.appendChild(tabs(LAW_TABS,_lqTab,function(k){_lqTab=k;_lqPresetLawKey='';lawQueryRender(true);}));
+  var el=tabs(LAW_TABS,_lqTab,function(k){_lqTab=k;_lqPresetLawKey='';lawQueryRender(true);});
+  /* 页签字号比全局 tabs 大一号，突出「查询维度」这一层 */
+  Array.prototype.forEach.call(el.querySelectorAll('button'),function(b){b.style.fontSize='15px';});
+  host.appendChild(el);
 }
 function lawQueryClear(){
   ['lqKw','lqType','lqRegion','lqStatus'].forEach(function(id){var el=$(id);if(el)el.value='';});
-  _lqTab='';_lqPresetLawKey='';
+  _lqTab='ghs';_lqPresetLawKey='';
   lawQueryRenderTabs();lawQueryRender(true);
 }
 function lawQueryView(id){
-  var r=lawQueryAllRows().find(function(x){return x.id===id;});if(!r)return;
+  /* OEL 页签的行由投影实时生成，不在 lawQueryAllRows 里，先在当前页签结果中找 */
+  var r=lawQueryRows().filter(function(x){return x.id===id;})[0];
+  if(!r)r=lawQueryAllRows().filter(function(x){return x.id===id;})[0];
+  if(!r)return;
   var law=lawRows.find(function(x){return x.key===r.lawKey;});
   var clp=r.sourceType==='clp'?'<div style="font-size:12.5px;font-weight:600;margin:16px 0 8px">CLP 官方 Annex VI 数据</div><dl class="desc-list" style="grid-template-columns:150px 1fr"><dt>来源与版本</dt><dd>'+esc(r.sourceClause)+' · '+esc(r.version)+'</dd><dt>SCL（特定浓度限值）</dt><dd>'+esc(r.scl)+'</dd><dt>M 因子</dt><dd>'+esc(r.mFactor)+'</dd><dt>ATE（急性毒性估计值）</dt><dd>'+esc(r.ate)+'</dd></dl>':'';
+  var ghsDetail=(r.clsList&&r.clsList.length)?'<div style="font-size:12.5px;font-weight:600;margin:16px 0 8px">危险性分类标签要素</div><dl class="desc-list" style="grid-template-columns:150px 1fr">'+
+    '<dt>危险类别和项别</dt><dd>'+r.clsList.map(function(x){return esc(x);}).join(' / ')+'</dd>'+
+    '<dt>H 代码</dt><dd class="mono">'+esc((r.hCodes||[]).join(' / ')||'—')+'</dd>'+
+    '<dt>象形图</dt><dd>'+(r.pictograms&&r.pictograms.length?ghsPictoHtml(r.pictograms)+' <span class="muted">'+esc(ghsPictoText(r.pictograms))+'</span>':'—')+'</dd>'+
+    '<dt>警示词</dt><dd>'+esc(r.signalWord||'—')+'</dd></dl>':'';
   var listDetail=r.isListProjection?'<div style="font-size:12.5px;font-weight:600;margin:16px 0 8px">名单条目原文</div><dl class="desc-list" style="grid-template-columns:150px 1fr">'+
     '<dt>条目编号</dt><dd>'+esc(r.entryCode)+'</dd><dt>名单列入状态</dt><dd>'+esc(r.result)+'</dd>'+
     '<dt>阈值原文</dt><dd>'+esc(r.thresholdText||'—')+'</dd><dt>用途原文</dt><dd>'+esc(r.useText||'—')+'</dd>'+
     '<dt>豁免原文</dt><dd>'+esc(r.exemptionText||'—')+'</dd><dt>摘要</dt><dd>'+esc(r.summaryText||'—')+'</dd>'+
     '<dt>数据版本</dt><dd>'+esc(r.version)+'</dd><dt>来源</dt><dd>'+esc(r.datasetSource)+'</dd></dl>':'';
-  var oelDetail=r.isOelProjection?'<div style="font-size:12.5px;font-weight:600;margin:16px 0 8px">OEL 限值明细</div><dl class="desc-list" style="grid-template-columns:150px 1fr">'+
-    '<dt>限值语义槽位</dt><dd>'+esc(r.value)+'</dd><dt>数据集</dt><dd>'+esc(r.source)+' · '+esc(r.version)+'</dd>'+
-    '<dt>生效日期</dt><dd>'+esc(r.oelEffectiveFrom||'见来源数据集')+'</dd><dt>取数口径</dt><dd>与 SDS 第 8 章一致：取该市场当前有效数据集下的已发布限值，不换算、不比较市场差异</dd></dl>':'';
+  var oelDetail=(r.isOelProjection||r.isOelMatrix)?'<div style="font-size:12.5px;font-weight:600;margin:16px 0 8px">OEL 数据集列入情况</div><dl class="desc-list" style="grid-template-columns:150px 1fr">'+
+    '<dt>数据集名称</dt><dd>'+esc(r.datasetName||r.source)+'</dd>'+
+    '<dt>列入情况</dt><dd>'+esc(r.result)+'</dd>'+
+    '<dt>限值语义槽位</dt><dd>'+esc(r.value)+'</dd>'+
+    '<dt>数据集数据量</dt><dd>'+esc(r.datasetCount==null?'—':r.datasetCount+' 条')+'</dd>'+
+    '<dt>生效日期</dt><dd>'+esc(r.effectiveFrom||r.oelEffectiveFrom||'见来源数据集')+'</dd>'+
+    '<dt>取数口径</dt><dd>与 SDS 第 8 章一致：取该市场当前有效数据集下的已发布限值，不换算、不比较市场差异</dd></dl>'+
+    '<div class="notice grey" style="margin-top:10px"><div class="ni">§</div><div>「未列入」表示该物质在当前有效数据集内没有已发布限值记录，不等同于产品级判断。</div></div>':'';
   openModal({title:'法规命中详情 · '+r.name,width:700,body:'<dl class="desc-list" style="grid-template-columns:120px 1fr 120px 1fr">'+
-    '<dt>物质名称</dt><dd>'+esc(r.name)+'</dd><dt>CAS 号</dt><dd class="mono">'+esc(r.cas)+'</dd><dt>EC 号</dt><dd class="mono">'+esc(r.ec)+'</dd><dt>法规来源</dt><dd>'+esc(r.source)+'</dd><dt>监管地区</dt><dd>'+esc(r.region)+'</dd><dt>数据类型</dt><dd>'+esc(r.dataType)+'</dd><dt>'+(r.isListProjection?'名单列入':'管控结论')+'</dt><dd>'+esc(r.result)+'</dd><dt>当前版本</dt><dd>'+esc(r.version)+'</dd><dt>复审到期</dt><dd>'+esc(r.reviewDue)+'</dd><dt>证据状态</dt><dd>'+lawEvidenceLamp(r,true)+'</dd><dt>分类 / 限值 / 条件</dt><dd style="grid-column:span 3">'+esc(r.value)+'</dd><dt>维护状态</dt><dd><span class="tag '+TAG_CLS(r.status)+' dot-tag">'+esc(r.status)+'</span></dd><dt>最近维护</dt><dd>'+esc(law?law.upd:'—')+'</dd><dt>人工验证人</dt><dd>'+esc(law?law.verifier:'—')+'</dd></dl>'+clp+listDetail+oelDetail+'<div class="notice grey" style="margin-top:14px"><div class="ni">§</div><div>查询页证据灯只读；上传新版本、版本 diff 与确认复审请进入来源法规库维护页。</div></div>'+(r.isListProjection?'<div class="notice grey" style="margin-top:14px"><div class="ni">§</div><div>本页展示的是名单列入事实，不是具体产品的最终限制判断。</div></div>':''),footer:'<button class="btn" onclick="closeModal();showPage(\''+(r.maintenanceRoute||lawMaintenanceRoute(r.sourceType))+'\')">打开来源库</button><button class="btn primary" onclick="closeModal()">关闭</button>'});
+    '<dt>物质名称</dt><dd>'+esc(r.name)+'</dd><dt>CAS 号</dt><dd class="mono">'+esc(r.cas)+'</dd><dt>EC 号</dt><dd class="mono">'+esc(r.ec)+'</dd><dt>法规来源</dt><dd>'+esc(r.source)+'</dd><dt>监管地区</dt><dd>'+esc(r.region)+'</dd><dt>数据类型</dt><dd>'+esc(r.dataType)+'</dd><dt>'+(r.isListProjection?'名单列入':'管控结论')+'</dt><dd>'+esc(r.result)+'</dd><dt>当前版本</dt><dd>'+esc(r.version)+'</dd><dt>复审到期</dt><dd>'+esc(r.reviewDue)+'</dd><dt>证据状态</dt><dd>'+lawEvidenceLamp(r,true)+'</dd><dt>分类 / 限值 / 条件</dt><dd style="grid-column:span 3">'+esc(r.value)+'</dd><dt>维护状态</dt><dd><span class="tag '+TAG_CLS(r.status)+' dot-tag">'+esc(r.status)+'</span></dd><dt>最近维护</dt><dd>'+esc(law?law.upd:'—')+'</dd><dt>人工验证人</dt><dd>'+esc(law?law.verifier:'—')+'</dd></dl>'+clp+ghsDetail+listDetail+oelDetail+'<div class="notice grey" style="margin-top:14px"><div class="ni">§</div><div>查询页证据灯只读；上传新版本、版本 diff 与确认复审请进入来源法规库维护页。</div></div>'+(r.isListProjection?'<div class="notice grey" style="margin-top:14px"><div class="ni">§</div><div>本页展示的是名单列入事实，不是具体产品的最终限制判断。</div></div>':''),footer:'<button class="btn" onclick="closeModal();showPage(\''+(r.maintenanceRoute||lawMaintenanceRoute(r.sourceType))+'\')">打开来源库</button><button class="btn primary" onclick="closeModal()">关闭</button>'});
 }
 function renderLawQuery(params){
   /* params.lawKey：由 REACH 法规库各 Tab 跳转带入，据此定位页签并预置到具体法规类别 */
   var preset=((params||{}).lawKey)||'';
-  _lqTab=preset?lawTabForLawKey(preset):'';
+  _lqTab=preset?lawTabForLawKey(preset):'ghs';
   _lqPresetLawKey=preset;
-  $('pageHost').innerHTML='<div class="sds-scope">'+sdsHead('','法规统一查询','按 CAS、物质名称或 EC 号一次检索全部法规库，无需预先判断数据来自哪个法规来源。','<button class="btn" onclick="toast(\'查询结果已导出（演示）\',\'ok\')">导出结果</button>','','law-query')+
-    '<div class="notice info" style="margin-bottom:14px"><div class="ni">i</div><div><b>统一查询、分库维护：</b>本页证据灯只读；上传新版本、版本 diff 与确认复审仍在各法规库维护页完成。</div></div><div class="notice grey" style="margin-bottom:14px"><div class="ni">§</div><div>名单列入仅表示该物质出现在对应法规或行业清单中，不等同于当前产品已经触发限制。产品级判断还需结合浓度、用途、产品类型、材质和豁免信息。</div></div><div class="card" style="margin-bottom:14px;padding:16px 18px"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div class="search" style="width:460px"><i class="si">⌕</i><input id="lqKw" placeholder="输入 CAS 号 / 中英文名称 / 别名 / EC 号，一次检索全部已接入法规库" oninput="lawQueryRender(true)"></div><button class="btn sm" onclick="lawQueryClear()">清空条件</button><div class="grow"></div><span class="muted" style="font-size:12.5px">检索范围：CLP 附录 VI · REACH · RoHS · 国内法规目录 · ZDHC · C&amp;L Inventory · OEL</span></div><div class="muted" style="font-size:12.5px;margin-top:8px">输入后下方页签同步展示该物质在各查询维度下的命中结果；页签只切换结果视角，不改变检索范围。</div></div><div id="lqTabs" style="margin-bottom:12px"></div><div id="lqSubstance"></div><div class="card"><div class="toolbar" style="flex-wrap:wrap"><select class="ctrl" id="lqType" style="width:150px" onchange="lawQueryRender(true)"><option value="">全部数据类型</option><option>统一分类</option><option>限制</option><option>授权</option><option>高关注物质</option><option>企业申报分类</option><option>危化品分类</option><option>制造限用</option><option>职业接触限值</option></select><select class="ctrl" id="lqRegion" style="width:120px" onchange="lawQueryRender(true)"><option value="">全部地区</option><option>欧盟</option><option>中国</option><option>行业标准</option></select><select class="ctrl" id="lqStatus" style="width:120px" onchange="lawQueryRender(true)"><option value="">全部状态</option><option>已生效</option><option>待复核</option></select><button class="btn sm" onclick="lawQueryClear()">重置</button><div class="grow"></div><span id="lqCount" class="muted"></span></div><div class="tbl-wrap"><table class="tbl" id="lqTable" style="min-width:1700px"></table></div><div class="pager" id="lqPager"></div></div></div>';
+  $('pageHost').innerHTML='<div class="sds-scope">'+sdsHead('','法规统一查询','按 CAS、物质名称或 EC 号查询当前已接入的示例数据；规划中的运输法规库不在检索范围。'+
+    '<br><br><b>页签即查询维度</b>：三个维度的结果形态不同，各用各的列头 —— <b>GHS 分类</b>看危险类别、H 代码、象形图与警示词；<b>名录清单</b>看是否列入及条目原文；<b>OEL 限值</b>看各市场数据集是否列入。'+
+    '<br><br><b>统一查询、分库维护</b>：本页证据灯只读；上传新版本、版本差异比对与确认复审仍在各法规库维护页完成。'+
+    '<br><br><b>名单列入的含义</b>：名单列入仅表示该物质出现在对应法规或行业清单中，不等同于当前产品已经触发限制。产品级判断还需结合浓度、用途、产品类型、材质和豁免信息。'+
+    '<br><br><b>检索范围</b>：CLP 附录 VI · REACH · RoHS · 国内法规目录 · ZDHC · C&amp;L Inventory · OEL','<button class="btn" onclick="toast(\'本原型仅演示导出操作，未生成文件\',\'info\')">导出结果（演示）</button>','','law-query')+
+    '<div class="card" style="margin-bottom:14px;padding:14px 18px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div class="search" style="width:560px"><i class="si">⌕</i><input id="lqKw" style="width:560px" placeholder="输入 CAS 号 / 中英文名称 / 别名 / EC 号，一次检索全部已接入法规库" oninput="lawQueryRender(true)"></div><button class="btn primary" onclick="lawQueryRender(true)">搜索</button><button class="btn" style="border-color:var(--line-2)" onclick="lawQueryClear()">清空条件</button></div></div><div id="lqTabs" style="margin-bottom:12px"></div><div id="lqSubstance"></div><div class="card"><div class="toolbar" style="flex-wrap:wrap"><select class="ctrl" id="lqType" style="width:150px" onchange="lawQueryRender(true)"><option value="">全部数据类型</option><option>统一分类</option><option>限制</option><option>授权</option><option>高关注物质</option><option>企业申报分类</option><option>危化品分类</option><option>制造限用</option><option>职业接触限值</option></select><select class="ctrl" id="lqRegion" style="width:120px" onchange="lawQueryRender(true)"><option value="">全部地区</option><option>欧盟</option><option>中国</option><option>行业标准</option></select><select class="ctrl" id="lqStatus" style="width:120px" onchange="lawQueryRender(true)"><option value="">全部状态</option><option>已生效</option><option>待复核</option></select><button class="btn sm" onclick="lawQueryClear()">重置</button><div class="grow"></div><span id="lqCount" class="muted"></span></div><div class="tbl-wrap"><table class="tbl" id="lqTable" style="min-width:1500px"></table></div><div class="pager" id="lqPager"></div></div></div>';
   lawQueryRenderTabs();lawQueryRender(true);
 }
 
@@ -9149,7 +9283,7 @@ function lawConfirmReview(id){
 }
 function lawVersionDiff(id){
   var r=lawRows.find(function(x){return x._id===id;});if(!r)return;
-  openModal({title:'版本对比 · '+r.name,width:800,body:'<div class="notice warn" style="margin-bottom:14px"><div class="ni">!</div><div>来源库已发布新版本，当前引用尚未同步。请核对差异并执行影响分析。</div></div>'+
+  openModal({title:'版本对比（示例） · '+r.name,width:800,body:'<div class="notice warn" style="margin-bottom:14px"><div class="ni">!</div><div>以下差异条目为预置示例，并非解析真实上传文件所得；受影响 SDS 数量也仅供演示。请由法规专员核对正式来源。</div></div>'+
     '<div class="stat-row"><div class="stat"><b>'+esc(r.ver)+'</b><span>当前引用版本</span></div><div class="stat" style="border-color:var(--red-b);background:var(--red-bg)"><b style="color:var(--red)">'+esc(r.latestVer)+'</b><span>来源库最新版本</span></div><div class="stat"><b>6</b><span>关联已发布 SDS</span></div></div>'+
     '<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px"><table class="tbl"><thead><tr><th style="width:110px">变化类型</th><th>差异内容</th><th style="width:150px">建议动作</th></tr></thead><tbody><tr><td><span class="tag red">新增</span></td><td>新增受管控物质及分类条目 12 项</td><td>重新匹配组分</td></tr><tr><td><span class="tag orange">变更</span></td><td>4 项浓度限值或适用条件发生变化</td><td>重算 SDS 分类</td></tr><tr><td><span class="tag grey">删除</span></td><td>2 项旧版说明被新公告替代</td><td>更新法规引用</td></tr></tbody></table></div>',
     footer:'<button class="btn" onclick="closeModal();lawImpact(\''+r._id+'\')">查看影响分析</button><button class="btn primary" onclick="closeModal();lawUpload(\''+r._id+'\')">上传并同步新版本</button>'});
@@ -9157,7 +9291,7 @@ function lawVersionDiff(id){
 function renderLawPage(types,title,desc,noteKey){
   lawTypeFilter=types;lawPage=1;
   var noteTxt=esc(desc)+'<div class="np-n"><b>清单维护与生效</b>证据灯在本页可处理：黄灯确认复审，红灯查看新版本差异并同步。</div>';
-  $('pageHost').innerHTML='<div class="sds-scope">'+sdsHead('',esc(title),noteTxt,'<button class="btn" onclick="toast(\'已导出法规台账（演示）\',\'ok\')">导出台账</button><button class="btn primary" onclick="lawUpload(null)">＋ 新增法规清单</button>','',noteKey)+
+  $('pageHost').innerHTML='<div class="sds-scope">'+sdsHead('',esc(title),noteTxt,'<button class="btn" onclick="toast(\'本原型仅演示导出操作，未生成文件\',\'info\')">导出台账（演示）</button><button class="btn primary" onclick="lawUpload(null)">＋ 新增法规清单</button>','',noteKey)+
     '<div class="kpi-row" id="lawReviewInfo"></div><div class="kpi-row" id="lawKpi"></div><div class="card"><div class="toolbar"><div class="search"><i class="si">⌕</i><input id="lawKw" placeholder="搜索法规名称 / 发布机构…" oninput="lawRender()"></div><select class="ctrl" id="lawStatus" style="width:160px" onchange="lawRender()"><option value="">全部数据状态</option><option>已生效</option><option>待复核</option><option>已归档</option></select><div class="grow"></div><span class="tag orange dot-tag">人工维护 · 合规人员负责</span></div><div class="tbl-wrap"><table class="tbl" id="lawTable" style="min-width:1420px"></table></div><div class="pager" id="lawPager"></div></div></div>';
   lawRender();
 }
@@ -9203,7 +9337,7 @@ function renderLawDetail(params){
   var r=lawRows.find(function(x){return x._id===(params||{}).id;}),d=r&&(LAW_DETAIL[r.key]||null);
   if(!r||!d){$('pageHost').innerHTML=placeholder('⌕','未找到法规明细','请从法规库维护页面重新进入。');return;}
   lawDetailPage=1;highlightSidebar(lawMaintenanceRoute(r.listType));
-  $('pageHost').innerHTML='<div class="sds-scope">'+sdsHead('',esc(r.name),'当前版本 '+esc(r.ver)+' · '+esc(r.org),'<button class="btn" onclick="lawDetailBack()">返回法规库</button><button class="btn" onclick="toast(\'明细已导出（演示）\',\'ok\')">导出明细</button>')+
+  $('pageHost').innerHTML='<div class="sds-scope">'+sdsHead('',esc(r.name),'示例版本 '+esc(r.ver)+' · '+esc(r.org),'<button class="btn" onclick="lawDetailBack()">返回法规库</button><button class="btn" disabled title="本原型未生成明细文件">导出明细（未接入）</button>')+
     '<div class="card"><div class="toolbar" style="flex-wrap:wrap"><div class="search" style="width:280px"><i class="si">⌕</i><input id="lawDetailKw" placeholder="搜索物质名称 / CAS / EC / 分类…" oninput="lawDetailPage=1;lawDetailRender()"></div><select class="ctrl" id="lawDetailField" style="width:170px" onchange="lawDetailPage=1;lawDetailRender()"><option value="-1">全部字段</option>'+d.cols.map(function(c,i){return '<option value="'+i+'">'+esc(c)+'</option>';}).join('')+'</select><select class="ctrl" id="lawDetailComplete" style="width:145px" onchange="lawDetailPage=1;lawDetailRender()"><option value="">全部完整性</option><option value="complete">信息完整</option><option value="gap">存在缺失项</option></select><button class="btn sm" onclick="lawDetailClear()">重置</button><div class="grow"></div><span class="tag blue">'+esc(r.ver)+'</span><span id="lawDetailCount" class="muted"></span></div><div class="tbl-wrap"><table class="tbl" id="lawDetailTable" style="min-width:'+Math.max(980,d.cols.length*135)+'px"></table></div><div class="pager" id="lawDetailPager"></div></div></div>';
   lawDetailRender();
 }
@@ -9216,6 +9350,81 @@ function regLawMaintenance(route,type,title,desc,note){regPage(route,{title:titl
 regLawMaintenance('law:cl','cl','C&L Inventory','维护 ECHA 分类与标签清单的批量分类申报数据。','law-cl');
 regLawMaintenance('law:cn','cn','国内危化品法规库','维护应急管理部危险化学品目录、分类信息表及相关国家标准。','law-cn');
 regLawMaintenance('law:zdhc','zdhc','ZDHC MRSL','维护 ZDHC MRSL、废水排放限值与输入流清单。','law-zdhc-maint');
+
+</script>
+<script>
+/* ==================================================================
+   [23y1] GHS 象形图（演示用内联矢量图）
+   ------------------------------------------------------------------
+   用途：法规统一查询 · GHS 分类页签的「象形图」列。
+   说明：原型不引入外部图片资产，用内联 SVG 画「红菱形 + 黑色符号」。
+        GHS 代码沿用 CLP 附录 VI 数据里的 pictograms 字段（GHS01–GHS09）。
+        ⚠️ 图形为示意画法，正式标识以联合国 GHS 与各国官方版本为准。
+   尺寸：viewBox 48×48，展示 30×30；菱形顶点贴边，符号限制在内切圆内。
+   ================================================================== */
+/* ⚠️ 单一事实源：象形图「名称」取 CLP 法规库 Annex V 的 CLP_PICTO（官方 Annex V 名称）。
+   该表在 23z6-js-clp.js 定义、加载顺序晚于本分片，故用运行时惰性查找，不在此处拷贝一份；
+   下面的 fallback 只在 CLP 分片缺失时兜底，名称与 CLP_PICTO 保持一致。 */
+var GHS_PICTO_NAME_FALLBACK={
+  GHS01:'爆炸物',GHS02:'火焰',GHS03:'火焰在圆环上',GHS04:'气瓶',GHS05:'腐蚀',
+  GHS06:'骷髅与交叉骨',GHS07:'感叹号',GHS08:'健康危害',GHS09:'环境'
+};
+/* 符号本体：坐标以 (20,20) 为中心设计，外层统一 translate(4,4) 后落在 48×48 中央。
+   注意：本表只负责「图形」，与 CLP 页 Annex V 的素材占位（.pdia，讲的是专员上传维护素材）
+   是两回事，两者并存属设计意图，不要互相顶掉。 */
+var GHS_PICTO_GLYPH={
+  GHS01:'<circle cx="20" cy="24.5" r="5.2" fill="#1b1b1b"/>'+
+    '<path d="M20 8.5 L22.4 15.6 L20 18 L17.6 15.6 Z" fill="#1b1b1b"/>'+
+    '<path d="M31.5 12.5 L25.4 17.6 L23 15.2 L28.1 9.1 Z" fill="#1b1b1b"/>'+
+    '<path d="M8.5 12.5 L14.6 17.6 L17 15.2 L11.9 9.1 Z" fill="#1b1b1b"/>',
+  GHS02:'<path d="M20 8.8 C21.9 13.3 27 15.4 27 20.3 A7 7 0 0 1 13 20.3 C13 16.6 15.7 15.2 17.3 13 C18.3 11.6 18.9 10.8 20 8.8 Z" fill="#1b1b1b"/>'+
+    '<path d="M20 16.6 C20.9 18.8 23 19.6 23 21.8 A3 3 0 0 1 17 21.8 C17 20 19 19.2 20 16.6 Z" fill="#fff"/>',
+  GHS03:'<circle cx="20" cy="27.4" r="4.6" fill="none" stroke="#1b1b1b" stroke-width="2.4"/>'+
+    '<path d="M20 7.6 C21.5 10.8 25.5 12.4 25.5 16 A5.5 5.5 0 0 1 14.5 16 C14.5 13.2 17 12 18.3 10.4 C19.1 9.5 19.5 9.1 20 7.6 Z" fill="#1b1b1b"/>',
+  GHS04:'<rect x="15.5" y="12.6" width="9" height="19" rx="2.6" fill="#1b1b1b"/>'+
+    '<rect x="18.3" y="8.4" width="3.4" height="4.6" rx="1" fill="#1b1b1b"/>'+
+    '<rect x="15.5" y="19.2" width="9" height="4" fill="#fff"/>',
+  GHS05:'<path d="M20 8.8 C21.7 11.8 23.4 13.5 23.4 15.5 A3.4 3.4 0 0 1 16.6 15.5 C16.6 13.5 18.3 11.8 20 8.8 Z" fill="#1b1b1b"/>'+
+    '<path d="M10.5 23.6 H17.2 L20 28.6 L22.8 23.6 H29.5" fill="none" stroke="#1b1b1b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
+  GHS06:'<path d="M20 7.2 C15.9 7.2 12.8 9.9 12.8 13.6 C12.8 15.7 13.7 17.1 14.7 17.9 V20.1 C14.7 20.9 15.3 21.4 16.1 21.4 H23.9 C24.7 21.4 25.3 20.9 25.3 20.1 V17.9 C26.3 17.1 27.2 15.7 27.2 13.6 C27.2 9.9 24.1 7.2 20 7.2 Z" fill="#1b1b1b"/>'+
+    '<circle cx="17" cy="13.4" r="2.1" fill="#fff"/><circle cx="23" cy="13.4" r="2.1" fill="#fff"/>'+
+    '<path d="M19.1 17 H20.9 V19.6 H19.1 Z" fill="#fff"/>'+
+    '<g stroke="#1b1b1b" stroke-width="2.4" stroke-linecap="round"><path d="M11.5 31 L28.5 25.4"/><path d="M11.5 25.4 L28.5 31"/></g>',
+  GHS07:'<rect x="18.2" y="8.8" width="3.6" height="12.6" rx="1.8" fill="#1b1b1b"/>'+
+    '<circle cx="20" cy="26.2" r="2.2" fill="#1b1b1b"/>',
+  GHS08:'<circle cx="20" cy="10" r="2.7" fill="#1b1b1b"/>'+
+    '<path d="M20 13.8 C16.7 13.8 14.5 15.4 13.5 17.8 C12.4 20.4 11.9 24.4 11.6 30.4 H28.4 C28.1 24.4 27.6 20.4 26.5 17.8 C25.5 15.4 23.3 13.8 20 13.8 Z" fill="#1b1b1b"/>'+
+    '<path d="M20 18 L21.2 20.6 L24 20.9 L21.9 22.8 L22.5 25.6 L20 24.2 L17.5 25.6 L18.1 22.8 L16 20.9 L18.8 20.6 Z" fill="#fff"/>',
+  GHS09:'<ellipse cx="19" cy="24" rx="7.5" ry="4.6" fill="#1b1b1b"/>'+
+    '<path d="M26 24 L31.4 20 V28 Z" fill="#1b1b1b"/>'+
+    '<circle cx="15" cy="22.6" r="1" fill="#fff"/>'
+};
+function ghsPictoName(code){
+  if(typeof CLP_PICTO!=='undefined'&&CLP_PICTO){
+    for(var i=0;i<CLP_PICTO.length;i++){if(CLP_PICTO[i].code===code)return CLP_PICTO[i].name;}
+  }
+  return GHS_PICTO_NAME_FALLBACK[code]||code;
+}
+function ghsPictoSvg(code){
+  var g=GHS_PICTO_GLYPH[code];if(!g)return '';
+  var nm=ghsPictoName(code);
+  return '<svg viewBox="0 0 48 48" width="30" height="30" role="img" aria-label="'+esc(code+' '+nm)+'" '+
+    'style="display:block;flex:0 0 auto"><title>'+esc(code+' '+nm)+'</title>'+
+    '<polygon points="24,1.8 46.2,24 24,46.2 1.8,24" fill="#fff" stroke="#D0202A" stroke-width="3.6" stroke-linejoin="round"/>'+
+    '<g transform="translate(4,4)">'+g+'</g></svg>';
+}
+/* 代码数组 → 并排象形图；无可用代码时回落为破折号 */
+function ghsPictoHtml(codes){
+  var list=(codes||[]).filter(function(c){return !!GHS_PICTO_GLYPH[c];});
+  if(!list.length)return '<span class="muted">—</span>';
+  return '<span style="display:inline-flex;gap:3px;align-items:center;flex-wrap:wrap">'+
+    list.map(ghsPictoSvg).join('')+'</span>';
+}
+/* 代码数组 → 文字（详情弹窗等紧凑场景用） */
+function ghsPictoText(codes){
+  var list=(codes||[]).filter(function(c){return !!GHS_PICTO_GLYPH[c];});
+  return list.length?list.map(function(c){return c+' '+ghsPictoName(c);}).join(' / '):'—';
+}
 
 </script>
 <script>
@@ -13309,11 +13518,21 @@ function clpCompProjection(asOfDate){
     if(s&&s.ateState==='na')out[k].ate='—（经评估不适用急性毒性估算）';
   });return out;
 }
+/* 统一查询 · GHS 分类页签需要「危险类别和项别 / H 代码 / 象形图 / 警示词」，
+   这四项都取 Annex VI 原始条目，不做二次加工。 */
 function clpLawQueryProjection(asOfDate){
   var d=clpViDatasetResolve(asOfDate);if(!d)return [];
-  return clpViRowsProjection(asOfDate).map(function(r){return {id:d.id+':'+r.idx,cas:r.cas,name:r.name,ec:r.ec,source:'CLP 附录 VI',sourceType:'clp',region:'欧盟',
-    dataType:'统一分类',result:'已统一分类',value:r.cls,version:d.version,latestVersion:d.version,status:'已生效',reviewDue:CLP_MODULES.vi.due,lawKey:'clp6',
-    scl:r.scl,mFactor:r.m,ate:r.ate,sourceClause:r.src};});
+  var byIdx={};clpViRecords(asOfDate).forEach(function(r){byIdx[r.indexNo]=r;});
+  return clpViRowsProjection(asOfDate).map(function(r){
+    var rec=byIdx[r.idx]||{classifications:[],pictograms:[],signalWord:''};
+    var classes=rec.classifications||[];
+    return {id:d.id+':'+r.idx,cas:r.cas,name:r.name,ec:r.ec,source:'CLP 附录 VI',sourceType:'clp',region:'欧盟',
+      dataType:'统一分类',result:'已统一分类',value:r.cls,
+      clsList:classes.map(function(c){return c.hazardClass+' '+c.category+(c.route?'（'+c.route+'）':'');}),
+      hCodes:clpDataCodes(classes),pictograms:(rec.pictograms||[]).slice(),signalWord:rec.signalWord||'',
+      version:d.version,latestVersion:d.version,status:'已生效',reviewDue:CLP_MODULES.vi.due,lawKey:'clp6',
+      scl:r.scl,mFactor:r.m,ate:r.ate,sourceClause:r.src};
+  });
 }
 function clpLawDetailProjection(asOfDate){return {cols:['Index No.','物质名称','EC No.','CAS 号','危害类别与分类','H 代码','标签要素','SCL','M 因子','ATE','Notes'],
   rows:clpViRowsProjection(asOfDate).map(function(r){return [r.idx,r.name,r.ec,r.cas,r.cls,r.h,r.picto+' · '+r.signal,r.scl,r.m,r.ate,r.notes];})};}
@@ -13442,10 +13661,10 @@ var REACH_SDS_CH=[
    det:{sub:'13.1 废物处理方法（含包装容器处置）· 13.2 相关法规',
      fields:'废物类别、处置方式、包装处置；引用当地及欧盟废弃法规',
      sys:'内置库 ＋ 国内危化品法规库（law:cn）关联',tpl:'SDS-TPL-2026.1'}},
-  {no:'14',name:'运输信息',req:'条件必填',src:'运输法规库（UN TDG / IMDG / IATA）',mode:'规则计算',ref:'Annex II · 第 14 节（运输属独立法规体系）',status:'已配置',
+  {no:'14',name:'运输信息',req:'条件必填',src:'法规 / EHS 人员人工确认；运输法规库规划中',mode:'人工填写',ref:'Annex II · 第 14 节（运输属独立法规体系）',status:'人工维护',
    det:{sub:'14.1 UN 编号 · 14.2 UN 正式运输名称 · 14.3 运输危险类别 · 14.4 包装组 · 14.5 环境危害 · 14.6 用户特别注意事项 · 14.7 散装运输',
      fields:'按运输方式（公路 / 铁路 / 海运 / 空运）分别给出 UN 编号、类别、包装组；条件：不属危险货物时须注明「不受运输法规管制」',
-     sys:'合规管理 · 运输法规库（law:trans，本期占位）',tpl:'SDS-TPL-2026.1'}},
+     sys:'合规管理 · 运输法规库（law:trans，规划中）；当前由法规 / EHS 人员人工确认并维护第 14 章结论',tpl:'SDS-TPL-2026.1'}},
   {no:'15',name:'法规信息',req:'必填',src:'各法规库命中结果',mode:'自动带出',ref:'Annex II · 第 15 节',status:'已配置',
    det:{sub:'15.1 针对物质或混合物的安全、健康和环境法规 · 15.2 化学品安全评估',
      fields:'自动汇总各组分的法规命中结论（CLP / REACH SVHC / Annex XIV / Annex XVII / RoHS / 国内危化品 / ZDHC MRSL）',
@@ -14367,7 +14586,7 @@ function rohsRender(){
   $('pageHost').innerHTML='<div class="sds-scope law-page">'+
     sdsHead('rohsTitle','RoHS 限用物质','Directive 2011/65/EU Annex II（经 (EU) 2015/863 修订）· 欧盟电子电气设备有害物质限制',
       '<button class="btn" onclick="rohsExempt()">查看豁免清单</button>'+
-      '<button class="btn" onclick="toast(\'RoHS 限用物质清单已导出（演示）\',\'ok\')">导出清单</button>')+
+      '<button class="btn" disabled title="本原型未生成清单文件">导出清单（未接入）</button>')+
     lawStripHTML([
       ['数据版本','2015/863（2019-07-22 生效）',true],
       ['数据来源','Directive 2011/65/EU Annex II',false],
@@ -16866,7 +17085,7 @@ function tabSummary(e){
     return '<div class="empty"><span class="ei">📄</span>实验尚未完成，无总结报告<br><br><span class="muted">完成数据录入与分析后将自动生成总结报告</span></div>';
   }
   var h='<div class="card"><div class="card-hd"><h3>实验总结报告 · '+esc(e.id)+'</h3>'+
-       '<div class="acts"><button class="btn" onclick="toast(\'已导出为 PDF（演示）\')">📄 导出</button></div></div>';
+       '<div class="acts"><button class="btn" onclick="toast(\'本原型仅展示导出操作，未生成 PDF 文件\',\'info\')">📄 导出（演示）</button></div></div>';
   h+='<div class="card-b"><h4 style="margin-bottom:10px">一、实验目的</h4>'+
      '<p>针对 '+esc((e.projectIds.length?findProj(e.projectIds[0]).name:'当前项目'))+' ，通过 '+esc(e.type)+' 方法，研究 '+e.factors.map(function(f){return esc(f.name);}).join('、')+
      ' 对 '+e.responses.map(esc).join('、')+' 的影响规律，识别关键因子并推荐最佳工艺参数。</p>'+
@@ -17481,7 +17700,7 @@ function renderAnalysis(e,respName){
 
   /* 底部按钮 */
   h+='<div class="flex mt-lg"><div class="spacer"></div>'+
-     '<button class="btn" onclick="toast(\'已基于最优方案生成验证实验计划（演示）\')">🧪 生成验证实验计划</button>'+
+     '<button class="btn" disabled title="本原型尚未生成验证实验计划">🧪 生成验证实验计划（未接入）</button>'+
      '<button class="btn btn-primary" onclick="showPage(\'exp:best\',{id:\''+e.id+'\'})">🏆 查看最佳方案推荐</button></div>';
 
   $('pageHost').innerHTML=h;
@@ -17627,13 +17846,13 @@ regPage('exp:best',{
     });
     h+='</tbody></table></div></div></div>';
     /* 约束 */
-    h+='<div class="fold" id="consFold"><div class="fold-hd"><div class="ft">约束条件（重新计算）</div><i class="arw">›</i></div>'+
-       '<div class="fold-bd"><div class="field-row">'+
+    h+='<div class="fold" id="consFold"><div class="fold-hd"><div class="ft">约束条件（规划中）</div><i class="arw">›</i></div>'+
+       '<div class="fold-bd"><div class="notice info">以下字段供业务核对设计，当前不会根据输入重新计算推荐方案。</div><div class="field-row">'+
          '<div class="field"><label>产率最低要求</label><input class="input" type="number" id="consYield" value="'+(best.yield-3).toFixed(1)+'"></div>'+
          '<div class="field"><label>温度范围 (°C)</label><input class="input" id="consT" value="80~120"></div>'+
          '<div class="field"><label>催化剂</label><div><label><input type="checkbox" checked> A</label> <label><input type="checkbox" checked> B</label> <label><input type="checkbox" checked> C</label></div></div>'+
          '<div class="field"><label>压力范围 (MPa)</label><input class="input" id="consP" value="1~5"></div>'+
-       '</div><div class="mt"><button class="btn" onclick="toast(\'已按约束重新筛选（演示）\')">🔁 重新计算</button></div></div></div>';
+       '</div><div class="mt"><button class="btn" disabled title="本原型尚未接入约束重算">🔁 重新计算（未接入）</button></div></div></div>';
     /* 建议 */
     h+='<div class="card"><div class="card-hd"><h3>📋 操作建议</h3></h3></div><div class="card-b">'+
        '<ul style="line-height:2;font-size:13.5px;list-style:disc;padding-left:20px">'+
@@ -21714,7 +21933,7 @@ regPage('subst:list',{
       ],
       pageSize:10,
       headActs:'<button class="btn" onclick="showPage(\'law:query\')">统一查询法规</button>'+
-               '<button class="btn btn-primary" onclick="toast(\'受限物质清单已导出（演示）\',\'ok\')">导出清单</button>',
+               '<button class="btn" disabled title="本原型未生成清单文件">导出清单（未接入）</button>',
       acts:function(r){
         return '<button class="btn btn-link" onclick="substCheck(\''+esc(r.cn)+'\')">配方命中检查</button>';
       },
@@ -21740,7 +21959,7 @@ function substCheck(cn){
         used.map(function(u){return '<tr><td class="mono">'+esc(u[0])+'</td><td>'+esc(u[1])+'</td><td class="num">'+esc(u[2])+'</td></tr>';}).join('')+
         '</tbody></table>':''),
     footer:'<button class="btn" onclick="closeModal()">关闭</button>'+
-           (used.length?'<button class="btn btn-primary" onclick="closeModal();toast(\'已生成替代方案评估任务\',\'ok\')">发起替代评估</button>':'')});
+           (used.length?'<button class="btn" disabled title="本原型尚未接入任务派发">发起替代评估（未接入）</button>':'')});
 }
 
 /* ==================================================================
@@ -21851,7 +22070,7 @@ function renderProjectMatrix(){
   var cats=PROJECTS.map(function(p){return p.category;}).filter(function(v,i,a){return v&&a.indexOf(v)===i;});
   var depts=(typeof DEPTS!=='undefined'?DEPTS:[]);
   var h='<div class="page-hd"><div class="t"><h1>研发项目管理</h1><div class="page-sub">覆盖评审、预研、小试、中试、推广与验收节点的研发项目台账</div></div>'+
-    '<div class="page-acts"><button class="btn" onclick="toast(\'已导出当前项目台账\',\'ok\')">⇩ 导出</button><button class="btn btn-primary" onclick="showPage(\'proj:new\')">＋ 添加</button></div></div>'+
+    '<div class="page-acts"><button class="btn" disabled title="本原型尚未生成项目台账文件">⇩ 导出（未接入）</button><button class="btn btn-primary" onclick="showPage(\'proj:new\')">＋ 添加</button></div></div>'+
     '<div class="card proj-filter-card"><div class="card-b"><div class="proj-filter-grid">'+
       '<label><span>立项年份</span><select class="ctrl" id="projYear"><option value="">全部年份</option>'+projListOptions(years,projListState.year)+'</select></label>'+
       '<label class="proj-search"><span>搜索</span><input class="input" id="projKw" value="'+esc(projListState.kw)+'" placeholder="项目名称 / 项目负责人 / 产品名称 / 项目来源 / 备注" onkeydown="if(event.key===\'Enter\')projListApply()"></label>'+
@@ -22233,9 +22452,9 @@ function renderProjDetail(p){
      (p.oa?' · <span class="tag tag-orange">OA 立项</span>':'')+'</div></div>'+
      '<div class="page-acts">'+
        '<button class="btn" onclick="showPage(\'proj:list\')">返回</button>'+
-       '<button class="btn" onclick="toast(\'请调整项目负责人\',\'info\')">更换负责人</button>'+
-       '<button class="btn" onclick="toast(\'请修改项目名称\',\'info\')">修改项目名称</button>'+
-       '<button class="btn" onclick="toast(\'请调整归属部门\',\'info\')">调整部门</button>'+
+       '<button class="btn" disabled title="本原型尚未接入负责人变更">更换负责人</button>'+
+       '<button class="btn" disabled title="本原型尚未接入项目名称修改">修改项目名称</button>'+
+       '<button class="btn" disabled title="本原型尚未接入部门调整">调整部门</button>'+
      '</div></div>';
 
   /* ---- 项目信息：主信息，位于 Tab 容器之外 ---- */
@@ -22408,7 +22627,7 @@ function stageFormHTML(st,p){
     st.files.forEach(function(f){
       h+='<tr><td>📎 '+esc(f.n)+'</td><td>'+esc(f.t)+'</td><td class="num">'+esc(f.s)+'</td>'+
          '<td class="op"><button class="btn btn-link" onclick="toast(\'预览 '+esc(f.n)+'（演示）\',\'info\')">预览</button>'+
-         '<button class="btn btn-link" onclick="toast(\'已下载 '+esc(f.n)+'\',\'ok\')">下载</button></td></tr>';
+         '<button class="btn btn-link" disabled title="演示附件未提供实际文件">下载（未接入）</button></td></tr>';
     });
     h+='</tbody></table>';
   }
@@ -22840,15 +23059,15 @@ function lp(cfg){
 function listCfg(o){
   var cfg={
     title:o.title,
-    sub:o.sub,
+    sub:o.sub+' 本页为只读演示，当前仅支持查询与查看详情。',
     cols:o.cols,
     rows:o.rows,
     kwKeys:o.kwKeys,
     filters:o.filters||[],
     pageSize:o.pageSize||10,
     headActs:o.headActs||(''+
-      '<button class="btn" onclick="toast(\'筛选条件已重置\',\'info\')">重置筛选</button>'+
-      '<button class="btn btn-primary" onclick="toast(\''+o.title+' 新建表单（演示环境为只读原型）\',\'info\')">＋ 新建</button>'),
+      '<button class="btn" data-lp-reset>重置筛选</button>'+
+      '<button class="btn" disabled title="本期仅展示台账，尚未实现新建">＋ 新建（未开放）</button>'),
     acts:o.acts||function(r){ return '<button class="btn btn-link" onclick="detailSoon(\''+esc(o.unit)+'\')">查看</button>'; },
     onRowClick:o.onRowClick||function(r){ detailSoon(o.unit); }
   };
@@ -23155,7 +23374,7 @@ function prodListCfg(){
     filters:[
       {k:'status',t:'状态',all:'全部',opts:[['在产','在产'],['试产','试产'],['研发中','研发中'],['停产','停产']]}
     ],
-    headActs:'<button class="btn" onclick="toast(\'已导出当前目录视图\',\'ok\')">⇩ 导出</button>',
+    headActs:'<button class="btn" disabled title="本原型未生成目录文件">⇩ 导出（未接入）</button>',
     acts:function(r){
       return '<button class="btn-link" onclick="prodOpen(\''+esc(r.code)+'\')">查看</button>';
     },
@@ -24827,7 +25046,17 @@ function physImportTemplate(code){
    · 详情页只读：不做编辑、不写 localStorage、不进 wzReset 链。
    ================================================================== */
 
-var MD_TODAY='2026-09-11';
+/* 「今天」＝演示锚点：与 mock 数据同源平移（数据基准日 + 本周偏移），
+   让校准 / 维保的临期、逾期判断恒定成立。
+   ⚠️ 不要改用 new Date()：设备与维保日期是写死的相对值，
+      真实日期一推进会整体甩飞（临期提示消失、全部变已逾期）。 */
+var MD_TODAY=dateAdd(DATA_EPOCH,demoShiftDays());
+
+/* 设备校准日、维保计划日随演示锚点整体平移（保持彼此相对关系，幂等） */
+(function mdAnchorEqDates(){
+  EQUIPMENTS.forEach(function(e){ if(e.cal)e.cal=demoDate(e.cal); });
+  EQMAINTS.forEach(function(m){ ['last','next'].forEach(function(k){ if(m[k])m[k]=demoDate(m[k]); }); });
+})();
 
 /* ---------- 通用：日期加减（用于版本历史 / 年费节点的推算） ---------- */
 function mdDateShift(dateStr,days,months){
@@ -24970,7 +25199,7 @@ mdReg({
   },
   acts:function(s){
     return '<button class="btn" onclick="showPage(\'bd:sup-data\')">供应商原料数据</button>'+
-           '<button class="btn" onclick="toast(\'已生成供应商评审单（演示）\',\'ok\')">发起评审</button>';
+           '<button class="btn" disabled title="本原型未接入评审单创建">发起评审（未接入）</button>';
   },
   warns:function(s){
     var w=[];
@@ -25096,8 +25325,8 @@ mdReg({
     return {h1:s.sample,sub:'送检单号 '+esc(s.id)+' · '+esc(s.org)+' · 送检人 '+esc(s.by)+' · '+esc(s.date)};
   },
   acts:function(s){
-    return '<button class="btn" onclick="toast(\'已催办检测机构（演示）\',\'ok\')">催办检测</button>'+
-           '<button class="btn" onclick="toast(\'已导出送检委托单（演示）\',\'ok\')">导出委托单</button>';
+    return '<button class="btn" disabled title="本原型未接入催办通知">催办检测（未接入）</button>'+
+           '<button class="btn" disabled title="本原型未生成委托单文件">导出委托单（未接入）</button>';
   },
   warns:function(s){
     var w=[];
@@ -25151,7 +25380,7 @@ mdReg({
     return {h1:r.sample,sub:'报告编号 '+esc(r.id)+' · '+esc(r.org)+' · 出具日期 '+esc(r.date)};
   },
   acts:function(r){
-    return '<button class="btn" onclick="toast(\'已下载报告 PDF（演示）\',\'ok\')">下载报告</button>'+
+    return '<button class="btn" disabled title="本原型未提供报告文件">下载报告（未接入）</button>'+
            '<button class="btn" onclick="showPage(\'sds:list\')">查看关联 SDS</button>';
   },
   warns:function(r){
@@ -25225,7 +25454,7 @@ mdReg({
   },
   acts:function(e){
     return '<button class="btn" onclick="showPage(\'eq:maint\')">维保计划</button>'+
-           '<button class="btn" onclick="toast(\'已生成校准申请单（演示）\',\'ok\')">申请校准</button>';
+           '<button class="btn" disabled title="本原型未接入校准申请">申请校准（未接入）</button>';
   },
   warns:function(e){
     var w=[];
@@ -25344,8 +25573,8 @@ mdReg({
     return {h1:m.type+' · '+m.eq,sub:'工单号 '+esc(m.id)+' · 周期 '+esc(m.cycle)+' · 负责人 '+esc(m.owner)};
   },
   acts:function(m){
-    return '<button class="btn" onclick="toast(\'已打印工单（演示）\',\'ok\')">打印工单</button>'+
-           '<button class="btn" onclick="toast(\'已通知责任人（演示）\',\'ok\')">通知责任人</button>';
+    return '<button class="btn" disabled title="本原型未生成可打印工单">打印工单（未接入）</button>'+
+           '<button class="btn" disabled title="本原型未接入通知">通知责任人（未接入）</button>';
   },
   warns:function(m){
     var code=String(m.eq).slice(0,11),e=mdEqByCode(code),w=[];
@@ -25404,8 +25633,8 @@ mdReg({
     return {h1:s.name,sub:mono(s.code)+' · 适用设备 '+esc(s['for'])+(e?('（'+esc(e.name)+'）'):'')};
   },
   acts:function(s){
-    return '<button class="btn" onclick="toast(\'已生成采购申请（演示）\',\'ok\')">申请采购</button>'+
-           '<button class="btn" onclick="toast(\'已生成领用单（演示）\',\'ok\')">领用登记</button>';
+    return '<button class="btn" disabled title="本原型未接入采购申请">申请采购（未接入）</button>'+
+           '<button class="btn" disabled title="本原型未接入领用登记">领用登记（未接入）</button>';
   },
   warns:function(s){
     var w=[];
@@ -25487,7 +25716,7 @@ mdReg({
   },
   acts:function(o){
     var r=o.r;
-    return '<button class="btn" onclick="toast(\'已开始下载文档（演示）\',\'ok\')">下载</button>'+
+    return '<button class="btn" disabled title="本原型未提供文档文件">下载（未接入）</button>'+
       (o.kind==='sds'
         ? '<button class="btn" onclick="showPage(\'sds:list\')">进入 SDS 模块</button>'
         : '<button class="btn" onclick="showPage(\'doc:mine\')">我的文档</button>');
@@ -25587,8 +25816,8 @@ mdReg({
     return {h1:r.title,sub:mono(r.id)+' · '+esc(r.cat)+' · 作者 '+esc(r.author)+' · '+esc(r.create)};
   },
   acts:function(r){
-    return '<button class="btn" onclick="toast(\'已收藏到我的知识（演示）\',\'ok\')">收藏</button>'+
-           '<button class="btn" onclick="toast(\'已生成周报引用（演示）\',\'ok\')">引用到周报</button>';
+    return '<button class="btn" disabled title="本原型未接入收藏">收藏（未接入）</button>'+
+           '<button class="btn" disabled title="本原型未接入周报引用">引用到周报（未接入）</button>';
   },
   warns:function(r){
     var w=[];
@@ -25640,8 +25869,8 @@ mdReg({
     return {h1:r.name,sub:mono(r.id)+' · '+esc(r.type)+' · 申请日 '+esc(r.apply)};
   },
   acts:function(r){
-    return '<button class="btn" onclick="toast(\'已导出申请文件（演示）\',\'ok\')">导出申请文件</button>'+
-           '<button class="btn" onclick="toast(\'已设置年费提醒（演示）\',\'ok\')">设置年费提醒</button>';
+    return '<button class="btn" disabled title="本原型未提供申请文件">导出申请文件（未接入）</button>'+
+           '<button class="btn" disabled title="本原型未接入年费提醒">设置年费提醒（未接入）</button>';
   },
   warns:function(r){
     var w=[],d=mdDaysTo(r.grant);

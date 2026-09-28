@@ -27,7 +27,17 @@
    · 详情页只读：不做编辑、不写 localStorage、不进 wzReset 链。
    ================================================================== */
 
-var MD_TODAY='2026-09-11';
+/* 「今天」＝演示锚点：与 mock 数据同源平移（数据基准日 + 本周偏移），
+   让校准 / 维保的临期、逾期判断恒定成立。
+   ⚠️ 不要改用 new Date()：设备与维保日期是写死的相对值，
+      真实日期一推进会整体甩飞（临期提示消失、全部变已逾期）。 */
+var MD_TODAY=dateAdd(DATA_EPOCH,demoShiftDays());
+
+/* 设备校准日、维保计划日随演示锚点整体平移（保持彼此相对关系，幂等） */
+(function mdAnchorEqDates(){
+  EQUIPMENTS.forEach(function(e){ if(e.cal)e.cal=demoDate(e.cal); });
+  EQMAINTS.forEach(function(m){ ['last','next'].forEach(function(k){ if(m[k])m[k]=demoDate(m[k]); }); });
+})();
 
 /* ---------- 通用：日期加减（用于版本历史 / 年费节点的推算） ---------- */
 function mdDateShift(dateStr,days,months){
@@ -170,7 +180,7 @@ mdReg({
   },
   acts:function(s){
     return '<button class="btn" onclick="showPage(\'bd:sup-data\')">供应商原料数据</button>'+
-           '<button class="btn" onclick="toast(\'已生成供应商评审单（演示）\',\'ok\')">发起评审</button>';
+           '<button class="btn" disabled title="本原型未接入评审单创建">发起评审（未接入）</button>';
   },
   warns:function(s){
     var w=[];
@@ -296,8 +306,8 @@ mdReg({
     return {h1:s.sample,sub:'送检单号 '+esc(s.id)+' · '+esc(s.org)+' · 送检人 '+esc(s.by)+' · '+esc(s.date)};
   },
   acts:function(s){
-    return '<button class="btn" onclick="toast(\'已催办检测机构（演示）\',\'ok\')">催办检测</button>'+
-           '<button class="btn" onclick="toast(\'已导出送检委托单（演示）\',\'ok\')">导出委托单</button>';
+    return '<button class="btn" disabled title="本原型未接入催办通知">催办检测（未接入）</button>'+
+           '<button class="btn" disabled title="本原型未生成委托单文件">导出委托单（未接入）</button>';
   },
   warns:function(s){
     var w=[];
@@ -351,7 +361,7 @@ mdReg({
     return {h1:r.sample,sub:'报告编号 '+esc(r.id)+' · '+esc(r.org)+' · 出具日期 '+esc(r.date)};
   },
   acts:function(r){
-    return '<button class="btn" onclick="toast(\'已下载报告 PDF（演示）\',\'ok\')">下载报告</button>'+
+    return '<button class="btn" disabled title="本原型未提供报告文件">下载报告（未接入）</button>'+
            '<button class="btn" onclick="showPage(\'sds:list\')">查看关联 SDS</button>';
   },
   warns:function(r){
@@ -425,7 +435,7 @@ mdReg({
   },
   acts:function(e){
     return '<button class="btn" onclick="showPage(\'eq:maint\')">维保计划</button>'+
-           '<button class="btn" onclick="toast(\'已生成校准申请单（演示）\',\'ok\')">申请校准</button>';
+           '<button class="btn" disabled title="本原型未接入校准申请">申请校准（未接入）</button>';
   },
   warns:function(e){
     var w=[];
@@ -544,8 +554,8 @@ mdReg({
     return {h1:m.type+' · '+m.eq,sub:'工单号 '+esc(m.id)+' · 周期 '+esc(m.cycle)+' · 负责人 '+esc(m.owner)};
   },
   acts:function(m){
-    return '<button class="btn" onclick="toast(\'已打印工单（演示）\',\'ok\')">打印工单</button>'+
-           '<button class="btn" onclick="toast(\'已通知责任人（演示）\',\'ok\')">通知责任人</button>';
+    return '<button class="btn" disabled title="本原型未生成可打印工单">打印工单（未接入）</button>'+
+           '<button class="btn" disabled title="本原型未接入通知">通知责任人（未接入）</button>';
   },
   warns:function(m){
     var code=String(m.eq).slice(0,11),e=mdEqByCode(code),w=[];
@@ -604,8 +614,8 @@ mdReg({
     return {h1:s.name,sub:mono(s.code)+' · 适用设备 '+esc(s['for'])+(e?('（'+esc(e.name)+'）'):'')};
   },
   acts:function(s){
-    return '<button class="btn" onclick="toast(\'已生成采购申请（演示）\',\'ok\')">申请采购</button>'+
-           '<button class="btn" onclick="toast(\'已生成领用单（演示）\',\'ok\')">领用登记</button>';
+    return '<button class="btn" disabled title="本原型未接入采购申请">申请采购（未接入）</button>'+
+           '<button class="btn" disabled title="本原型未接入领用登记">领用登记（未接入）</button>';
   },
   warns:function(s){
     var w=[];
@@ -687,7 +697,7 @@ mdReg({
   },
   acts:function(o){
     var r=o.r;
-    return '<button class="btn" onclick="toast(\'已开始下载文档（演示）\',\'ok\')">下载</button>'+
+    return '<button class="btn" disabled title="本原型未提供文档文件">下载（未接入）</button>'+
       (o.kind==='sds'
         ? '<button class="btn" onclick="showPage(\'sds:list\')">进入 SDS 模块</button>'
         : '<button class="btn" onclick="showPage(\'doc:mine\')">我的文档</button>');
@@ -787,8 +797,8 @@ mdReg({
     return {h1:r.title,sub:mono(r.id)+' · '+esc(r.cat)+' · 作者 '+esc(r.author)+' · '+esc(r.create)};
   },
   acts:function(r){
-    return '<button class="btn" onclick="toast(\'已收藏到我的知识（演示）\',\'ok\')">收藏</button>'+
-           '<button class="btn" onclick="toast(\'已生成周报引用（演示）\',\'ok\')">引用到周报</button>';
+    return '<button class="btn" disabled title="本原型未接入收藏">收藏（未接入）</button>'+
+           '<button class="btn" disabled title="本原型未接入周报引用">引用到周报（未接入）</button>';
   },
   warns:function(r){
     var w=[];
@@ -840,8 +850,8 @@ mdReg({
     return {h1:r.name,sub:mono(r.id)+' · '+esc(r.type)+' · 申请日 '+esc(r.apply)};
   },
   acts:function(r){
-    return '<button class="btn" onclick="toast(\'已导出申请文件（演示）\',\'ok\')">导出申请文件</button>'+
-           '<button class="btn" onclick="toast(\'已设置年费提醒（演示）\',\'ok\')">设置年费提醒</button>';
+    return '<button class="btn" disabled title="本原型未提供申请文件">导出申请文件（未接入）</button>'+
+           '<button class="btn" disabled title="本原型未接入年费提醒">设置年费提醒（未接入）</button>';
   },
   warns:function(r){
     var w=[],d=mdDaysTo(r.grant);

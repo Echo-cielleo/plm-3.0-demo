@@ -696,7 +696,7 @@ function tabSummary(e){
     return '<div class="empty"><span class="ei">📄</span>实验尚未完成，无总结报告<br><br><span class="muted">完成数据录入与分析后将自动生成总结报告</span></div>';
   }
   var h='<div class="card"><div class="card-hd"><h3>实验总结报告 · '+esc(e.id)+'</h3>'+
-       '<div class="acts"><button class="btn" onclick="toast(\'已导出为 PDF（演示）\')">📄 导出</button></div></div>';
+       '<div class="acts"><button class="btn" onclick="toast(\'本原型仅展示导出操作，未生成 PDF 文件\',\'info\')">📄 导出（演示）</button></div></div>';
   h+='<div class="card-b"><h4 style="margin-bottom:10px">一、实验目的</h4>'+
      '<p>针对 '+esc((e.projectIds.length?findProj(e.projectIds[0]).name:'当前项目'))+' ，通过 '+esc(e.type)+' 方法，研究 '+e.factors.map(function(f){return esc(f.name);}).join('、')+
      ' 对 '+e.responses.map(esc).join('、')+' 的影响规律，识别关键因子并推荐最佳工艺参数。</p>'+
@@ -1311,7 +1311,7 @@ function renderAnalysis(e,respName){
 
   /* 底部按钮 */
   h+='<div class="flex mt-lg"><div class="spacer"></div>'+
-     '<button class="btn" onclick="toast(\'已基于最优方案生成验证实验计划（演示）\')">🧪 生成验证实验计划</button>'+
+     '<button class="btn" disabled title="本原型尚未生成验证实验计划">🧪 生成验证实验计划（未接入）</button>'+
      '<button class="btn btn-primary" onclick="showPage(\'exp:best\',{id:\''+e.id+'\'})">🏆 查看最佳方案推荐</button></div>';
 
   $('pageHost').innerHTML=h;
@@ -1457,13 +1457,13 @@ regPage('exp:best',{
     });
     h+='</tbody></table></div></div></div>';
     /* 约束 */
-    h+='<div class="fold" id="consFold"><div class="fold-hd"><div class="ft">约束条件（重新计算）</div><i class="arw">›</i></div>'+
-       '<div class="fold-bd"><div class="field-row">'+
+    h+='<div class="fold" id="consFold"><div class="fold-hd"><div class="ft">约束条件（规划中）</div><i class="arw">›</i></div>'+
+       '<div class="fold-bd"><div class="notice info">以下字段供业务核对设计，当前不会根据输入重新计算推荐方案。</div><div class="field-row">'+
          '<div class="field"><label>产率最低要求</label><input class="input" type="number" id="consYield" value="'+(best.yield-3).toFixed(1)+'"></div>'+
          '<div class="field"><label>温度范围 (°C)</label><input class="input" id="consT" value="80~120"></div>'+
          '<div class="field"><label>催化剂</label><div><label><input type="checkbox" checked> A</label> <label><input type="checkbox" checked> B</label> <label><input type="checkbox" checked> C</label></div></div>'+
          '<div class="field"><label>压力范围 (MPa)</label><input class="input" id="consP" value="1~5"></div>'+
-       '</div><div class="mt"><button class="btn" onclick="toast(\'已按约束重新筛选（演示）\')">🔁 重新计算</button></div></div></div>';
+       '</div><div class="mt"><button class="btn" disabled title="本原型尚未接入约束重算">🔁 重新计算（未接入）</button></div></div></div>';
     /* 建议 */
     h+='<div class="card"><div class="card-hd"><h3>📋 操作建议</h3></h3></div><div class="card-b">'+
        '<ul style="line-height:2;font-size:13.5px;list-style:disc;padding-left:20px">'+

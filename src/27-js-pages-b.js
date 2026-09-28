@@ -22,15 +22,15 @@ function lp(cfg){
 function listCfg(o){
   var cfg={
     title:o.title,
-    sub:o.sub,
+    sub:o.sub+' 本页为只读演示，当前仅支持查询与查看详情。',
     cols:o.cols,
     rows:o.rows,
     kwKeys:o.kwKeys,
     filters:o.filters||[],
     pageSize:o.pageSize||10,
     headActs:o.headActs||(''+
-      '<button class="btn" onclick="toast(\'筛选条件已重置\',\'info\')">重置筛选</button>'+
-      '<button class="btn btn-primary" onclick="toast(\''+o.title+' 新建表单（演示环境为只读原型）\',\'info\')">＋ 新建</button>'),
+      '<button class="btn" data-lp-reset>重置筛选</button>'+
+      '<button class="btn" disabled title="本期仅展示台账，尚未实现新建">＋ 新建（未开放）</button>'),
     acts:o.acts||function(r){ return '<button class="btn btn-link" onclick="detailSoon(\''+esc(o.unit)+'\')">查看</button>'; },
     onRowClick:o.onRowClick||function(r){ detailSoon(o.unit); }
   };
@@ -337,7 +337,7 @@ function prodListCfg(){
     filters:[
       {k:'status',t:'状态',all:'全部',opts:[['在产','在产'],['试产','试产'],['研发中','研发中'],['停产','停产']]}
     ],
-    headActs:'<button class="btn" onclick="toast(\'已导出当前目录视图\',\'ok\')">⇩ 导出</button>',
+    headActs:'<button class="btn" disabled title="本原型未生成目录文件">⇩ 导出（未接入）</button>',
     acts:function(r){
       return '<button class="btn-link" onclick="prodOpen(\''+esc(r.code)+'\')">查看</button>';
     },

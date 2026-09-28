@@ -69,11 +69,11 @@ regPage('proj:guide',{
 
 function regulationCards(){
   var rows=[
-    ['CLP 附录 VI','ECHA 官网；有反爬，只能由专员人工下载 ATP 包。',['主数据 + History','上传导入','版本链 diff']],
-    ['REACH 限制 / 授权清单','ECHA 官网；更新频率较低，建议半年至年度检查。',['人工下载 Excel','上传导入']],
-    ['C&L Inventory','ECHA 官网提供欧盟批量分类数据。',['人工下载','批量导入']],
-    ['国内危化品分类信息表','应急管理部官网 mem.gov.cn；目录随公告增补。',['人工下载 PDF','系统解析导入']],
-    ['ZDHC MRSL','ZDHC 官网发布的制造限用物质清单。',['人工下载','上传导入']]
+    ['CLP 附录 VI','ECHA 官网；有反爬，只能由专员人工下载 ATP 包。',['主数据 + History','导入向导演示','版本差异示例']],
+    ['REACH 限制 / 授权清单','ECHA 官网；更新频率较低，建议半年至年度检查。',['人工下载 Excel','导入向导演示']],
+    ['C&L Inventory','ECHA 官网提供欧盟批量分类数据。',['人工下载','导入向导演示']],
+    ['国内危化品分类信息表','应急管理部官网 mem.gov.cn；目录随公告增补。',['人工下载 PDF','结构化示例导入']],
+    ['ZDHC MRSL','ZDHC 官网发布的制造限用物质清单。',['人工下载','导入向导演示']]
   ];
   return '<div class="flow-maint-title">各法规库维护口径</div><div class="flow-maint-grid">'+rows.map(function(r){return '<article class="flow-reg-card"><h4>'+esc(r[0])+'</h4><div class="flow-reg-source">'+esc(r[1])+'</div><div class="flow-node-tags">'+r[2].map(function(t){return '<span class="flow-node-tag">'+esc(t)+'</span>';}).join('')+'</div></article>';}).join('')+'</div>';
 }
@@ -88,9 +88,9 @@ regPage('comp:guide',{
     ],'<button class="btn btn-primary" onclick="showPage(\'sds:wizard\')">新建 SDS</button>');
     var law='<section class="card flow-guide-card"><div class="card-hd"><h3>法规库维护 <span class="sub">明确数据来源、维护责任与版本变化处理</span></h3></div><div class="flow-guide-body">'+guideLine([
       guideNode('01','官网人工下载','法规专员按复审周期从各法规官网取得正式文件。',null,['线下操作','官网来源']),
-      guideNode('02','上传导入','进入对应法规库维护页使用批量导入。',"showPage('law:reach')",['分库维护']),
-      guideNode('03','系统解析与版本比对','系统解析文件并对新旧版本执行差异比对。',null,['系统自动','版本 diff']),
-      guideNode('04','影响分析','查看新版法规影响的在用物质与已发布 SDS。',"showPage('law:query')",['跨库影响分析'])
+      guideNode('02','导入向导演示','进入对应法规库维护页查看导入步骤；原型不解析真实上传文件。',"showPage('law:reach')",['分库维护']),
+      guideNode('03','核对版本差异示例','当前差异内容为演示数据，正式使用须由法规专员核对。',null,['人工核对','示例 diff']),
+      guideNode('04','查询已接入记录','按物质查看当前已接入的示例数据；受影响配方与 SDS 数量仅作展示。',"showPage('law:query')",['统一查询'])
     ])+regulationCards()+'<div class="notice warn flow-guide-alert"><div class="ni">!</div><div><b>维护模式：</b>法规库采用“专员定期下载维护”，系统不支持自动联网更新；法规超过复审期时，SDS 编写页面会以黄色或红色状态灯提醒。</div></div><div class="flow-guide-actions"><button class="btn" onclick="showPage(\'law:query\')">统一查询</button><button class="btn btn-primary" onclick="showPage(\'law:reach\')">维护法规库</button></div></div></section>';
     guidePage('流程引导','合规管理以受控组分数据和法规库为基础，完成 SDS 编写发布，并由法规专员持续维护法规版本。',sds+law);
   }

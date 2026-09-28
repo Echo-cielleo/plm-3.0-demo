@@ -1,4 +1,9 @@
 .DS_Store
 *.tmp
 .workbuddy/
+node_modules/
+dist/
+.env
+.env.*
+integrations/github-mcp-server/.runtime/
 # autocommit test

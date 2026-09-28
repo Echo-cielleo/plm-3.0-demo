@@ -61,7 +61,7 @@ function rohsRender(){
   $('pageHost').innerHTML='<div class="sds-scope law-page">'+
     sdsHead('rohsTitle','RoHS 限用物质','Directive 2011/65/EU Annex II（经 (EU) 2015/863 修订）· 欧盟电子电气设备有害物质限制',
       '<button class="btn" onclick="rohsExempt()">查看豁免清单</button>'+
-      '<button class="btn" onclick="toast(\'RoHS 限用物质清单已导出（演示）\',\'ok\')">导出清单</button>')+
+      '<button class="btn" disabled title="本原型未生成清单文件">导出清单（未接入）</button>')+
     lawStripHTML([
       ['数据版本','2015/863（2019-07-22 生效）',true],
       ['数据来源','Directive 2011/65/EU Annex II',false],

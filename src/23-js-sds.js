@@ -2338,9 +2338,9 @@ function renderStep6(){
         +'<button class="btn lg '+(wz.submitted?'disabled':'primary')+'" '+(wz.submitted?'disabled':'')+' onclick="wzSubmit()">提交审核</button>'
         +'<button class="btn lg '+(wz.published?'disabled':(wz.submitted?'ok':'disabled'))+'" '+((!wz.submitted||wz.published)?'disabled':'')+' onclick="wzPublish()">模拟批准发布</button>'
         +'<span style="width:1px;height:26px;background:var(--line)"></span>'
-        +'<button class="btn lg '+(wz.published?'':'disabled')+'" '+(wz.published?'':'disabled')+' onclick="wzExport(\'PDF\')">⤓ 导出 PDF</button>'
+        +'<button class="btn lg disabled" disabled title="PDF 导出尚未接入">⤓ 导出 PDF（未接入）</button>'
         +'<button class="btn lg '+(wz.published?'':'disabled')+'" '+(wz.published?'':'disabled')+' onclick="wzExport(\'Word\')">⤓ 导出 Word</button>'
-        +'<span style="font-size:12.3px;color:var(--muted)">'+(wz.published?'导出功能已解锁':'导出功能在批准发布后解锁')+'</span>'
+        +'<span style="font-size:12.3px;color:var(--muted)">'+(wz.published?'Word 导出已解锁':'Word 导出在批准发布后解锁')+'</span>'
       +'</div>'
       +'<div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
         +'<span class="tag '+(wz.submitted?'green':'grey')+' dot-tag">① 提交审核</span><span style="color:var(--muted)">→</span>'
@@ -2367,7 +2367,7 @@ function wzSubmit(){
   },'提交审核');
 }
 function wzPublish(){
-  sdsConfirm('模拟批准发布','确认以 <b>EHS 负责人</b> 身份批准发布？<br><span style="color:var(--muted)">发布后状态变更为「已正式发布」，并解锁 PDF / Word 导出。</span>',function(){
+  sdsConfirm('模拟批准发布','确认以 <b>EHS 负责人</b> 身份批准发布？<br><span style="color:var(--muted)">发布后状态变更为「已正式发布」，并解锁 Word 导出；PDF 导出尚未接入。</span>',function(){
     try{
       var release=sdsReleaseCreate({name:'EHS 负责人'});
       renderStep6();
@@ -2377,14 +2377,7 @@ function wzPublish(){
 }
 function wzExport(type){
   if(type==='Word'){exportSdsWord();return;}
-  openModal({title:'导出 '+type+' 文件',width:460,
-    body:'<div style="text-align:center;padding:8px 0 4px"><div style="font-size:13px;margin-bottom:12px">正在生成 <b>'+esc(wz.project.product||'SDS')+'_'+(wz.project.market==='EU'?'EU':'CN')+'_V1.0.'+(type==='PDF'?'pdf':'docx')+'</b></div>'
-      +'<div class="bar" id="expBar"><i></i></div><div style="margin-top:8px;color:var(--muted);font-size:12.5px" id="expTxt">0%</div></div>',
-    footer:''});
-  progress('expBar','expTxt',function(){
-    closeModal();
-    toast(type+' 文件已生成并下载（演示）','ok');
-  },20);
+  toast('PDF 导出尚未接入；本原型可导出 Word','info');
 }
 
 /* ==================================================================
@@ -2953,29 +2946,29 @@ function dbImport(){
   var c=dbCur();
   openModal({title:'批量导入 · '+c.title,width:560,cls:'sds-scope',
     body:'<div class="mini-steps"><div class="mini-step on"><span class="n">1</span>选择文件</div><div class="mini-line"></div>'
-      +'<div class="mini-step"><span class="n">2</span>上传解析</div><div class="mini-line"></div>'
+      +'<div class="mini-step"><span class="n">2</span>加载示例</div><div class="mini-line"></div>'
       +'<div class="mini-step"><span class="n">3</span>导入结果</div></div>'
       +'<div id="impBody">'
-      +'<div class="drop" onclick="document.getElementById(\'impFile\').click()"><div class="ic">⇪</div><p>点击选择文件，或将文件拖拽到此处</p><small>支持 .xlsx / .csv 格式，单次最多 500 条</small></div>'
+      +'<div class="drop"><div class="ic">⇪</div><p>真实文件导入尚未接入</p><small>请使用下方预置示例体验导入流程</small></div>'
       +'<input type="file" id="impFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="impPick(this)">'
       +'<div id="impFileRow" style="margin-top:12px"></div>'
-      +'<div style="margin-top:12px;font-size:12.5px;color:var(--muted)">没有文件？<a onclick="impPickDemo()" style="cursor:pointer">使用系统示例文件</a> · <a onclick="toast(\'模板已下载（演示）\',\'ok\')" style="cursor:pointer">下载导入模板</a></div>'
+      +'<div style="margin-top:12px;font-size:12.5px;color:var(--muted)"><a onclick="impPickDemo()" style="cursor:pointer">使用预置示例数据</a> · 导入模板尚未接入</div>'
       +'</div>',
     footer:'<button class="btn" onclick="closeModal()">取消</button><button class="btn primary disabled" id="impBtn" disabled onclick="impRun()">开始导入</button>'});
 }
 function impPick(el){
   if(!el.files.length)return;
-  _impFile=el.files[0].name;impShowFile();
+  toast('真实文件解析尚未接入，请使用预置示例数据','info');el.value='';
 }
 function impPickDemo(){_impFile=dbCur().title+'_导入模板_示例.xlsx';impShowFile();}
 function impShowFile(){
-  $('impFileRow').innerHTML='<div class="file-row"><span style="font-size:16px">▤</span><div><b>'+esc(_impFile)+'</b><div style="color:var(--muted);font-size:11.5px">待导入 '+dbCur().sample.length+' 条记录 · 128 KB</div></div><button class="btn sm" style="margin-left:auto" onclick="_impFile=\'\';document.getElementById(\'impFileRow\').innerHTML=\'\';document.getElementById(\'impBtn\').classList.add(\'disabled\');document.getElementById(\'impBtn\').disabled=true">移除</button></div>';
+  $('impFileRow').innerHTML='<div class="file-row"><span style="font-size:16px">▤</span><div><b>'+esc(_impFile)+'</b><div style="color:var(--muted);font-size:11.5px">预置示例 '+dbCur().sample.length+' 条 · 无实际文件</div></div><button class="btn sm" style="margin-left:auto" onclick="_impFile=\'\';document.getElementById(\'impFileRow\').innerHTML=\'\';document.getElementById(\'impBtn\').classList.add(\'disabled\');document.getElementById(\'impBtn\').disabled=true">移除</button></div>';
   $('impBtn').classList.remove('disabled');$('impBtn').disabled=false;
 }
 function impRun(){
   var steps=document.querySelectorAll('.mini-step'),lines=document.querySelectorAll('.mini-line');
   steps[0].classList.add('fin');steps[0].classList.remove('on');lines[0].classList.add('fin');steps[1].classList.add('on');
-  $('impBody').innerHTML='<div style="padding:16px 0"><div style="font-size:13px;margin-bottom:10px">正在上传并解析 <b>'+esc(_impFile)+'</b>…</div>'
+  $('impBody').innerHTML='<div style="padding:16px 0"><div style="font-size:13px;margin-bottom:10px">正在加载预置示例 <b>'+esc(_impFile)+'</b>…</div>'
     +'<div class="bar" id="impBar"><i></i></div><div style="margin-top:8px;color:var(--muted);font-size:12.5px" id="impTxt">0%</div></div>';
   $('impBtn').classList.add('disabled');$('impBtn').disabled=true;
   progress('impBar','impTxt',impDone,14);
@@ -2985,20 +2978,20 @@ function impDone(){
   var steps=document.querySelectorAll('.mini-step'),lines=document.querySelectorAll('.mini-line');
   steps[1].classList.add('fin');steps[1].classList.remove('on');lines[1].classList.add('fin');steps[2].classList.add('on');
   $('impBody').innerHTML='<div class="stat-row">'
-    +'<div class="stat"><b>'+(ok+fail)+'</b><span>解析总数</span></div>'
+    +'<div class="stat"><b>'+(ok+fail)+'</b><span>示例总数</span></div>'
     +'<div class="stat" style="border-color:var(--green-b);background:var(--green-bg)"><b style="color:var(--green)">'+ok+'</b><span>导入成功</span></div>'
     +'<div class="stat" style="border-color:var(--red-b);background:var(--red-bg)"><b style="color:var(--red)">'+fail+'</b><span>导入失败</span></div></div>'
     +'<div style="font-size:12.5px;font-weight:600;margin:12px 0 7px">失败明细</div>'
     +'<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px"><table class="tbl"><thead><tr><th style="width:70px">行号</th><th>失败原因</th><th style="width:110px">处理建议</th></tr></thead>'
     +'<tbody><tr><td>第 5 行</td><td style="color:var(--red)">主键重复：该编号在系统中已存在</td><td>改为更新或修改编号</td></tr></tbody></table></div>'
-    +'<div style="margin-top:12px;font-size:12.5px;color:var(--muted)">成功数据已写入列表，可在列表首部查看。</div>';
-  $('mFoot').innerHTML='<button class="btn" onclick="toast(\'失败明细已导出（演示）\',\'ok\')">导出失败明细</button><button class="btn primary" onclick="closeModal()">完成</button>';
+    +'<div style="margin-top:12px;font-size:12.5px;color:var(--muted)">预置示例数据已写入演示列表，可在列表首部查看。</div>';
+  $('mFoot').innerHTML='<button class="btn" disabled title="未生成失败明细文件">导出失败明细（未接入）</button><button class="btn primary" onclick="closeModal()">完成</button>';
   c.sample.forEach(function(s){
     var o={};Object.keys(s).forEach(function(k){o[k]=s[k];});
     o._id=sdsUid();o.created=nowStr();c.rows.unshift(o);
   });
   dbPage=1;dbRender();
-  toast('批量导入完成：成功 '+ok+' 条，失败 '+fail+' 条','ok');
+  toast('预置示例导入完成：演示成功 '+ok+' 条，失败 '+fail+' 条','ok');
 }
 
 /* ==================================================================
@@ -3210,10 +3203,10 @@ function lawRender(){
     return (r.name+r.org+r.ver).toLowerCase().indexOf(kw)>=0;
   });
   $('lawKpi').innerHTML=
-    '<div class="kpi"><span>法规清单总数</span><b>'+lawRows.length+'</b><small>人工导入并验证</small></div>'
-    +'<div class="kpi"><span>已生效</span><b style="color:var(--green)">'+lawRows.filter(function(r){return r.status==='已生效';}).length+'</b><small>可被 SDS 引用</small></div>'
+    '<div class="kpi"><span>法规清单总数</span><b>'+lawRows.length+'</b><small>演示台账记录</small></div>'
+    +'<div class="kpi"><span>已生效（示例）</span><b style="color:var(--green)">'+lawRows.filter(function(r){return r.status==='已生效';}).length+'</b><small>不作真实合规依据</small></div>'
     +'<div class="kpi"><span>待复核</span><b style="color:var(--orange)">'+lawRows.filter(function(r){return r.status==='待复核';}).length+'</b><small>未确认入库不可引用</small></div>'
-    +'<div class="kpi"><span>受影响已发布 SDS</span><b style="color:var(--red)">6</b><small>需执行影响分析</small></div>';
+    +'<div class="kpi"><span>受影响 SDS（示例）</span><b style="color:var(--red)">6</b><small>非自动计算结果</small></div>';
   var tp=Math.max(1,Math.ceil(f.length/PAGE_SIZE));
   if(lawPage>tp)lawPage=tp;
   var rows=f.slice((lawPage-1)*PAGE_SIZE,lawPage*PAGE_SIZE);
@@ -3245,8 +3238,8 @@ function lawView(id){
       +d.cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'
       +d.rows.map(function(row){return '<tr>'+row.map(function(c){return '<td>'+esc(c)+'</td>';}).join('')+'</tr>';}).join('')
       +'</tbody></table></div>'
-      +'<div class="notice grey" style="margin:14px 0 0"><div class="ni">§</div><div>本清单由合规人员从官方渠道下载后导入并逐条验证，合规人员对数据质量负责。</div></div>',
-    footer:'<button class="btn" onclick="toast(\'清单已导出 Excel（演示）\',\'ok\')">导出清单</button><button class="btn primary" onclick="closeModal()">关闭</button>'});
+      +'<div class="notice grey" style="margin:14px 0 0"><div class="ni">§</div><div>当前展示预置演示数据；正式使用前须从官方渠道获取清单并由合规人员逐条验证。</div></div>',
+    footer:'<button class="btn" disabled title="未生成清单文件">导出清单（未接入）</button><button class="btn primary" onclick="closeModal()">关闭</button>'});
 }
 /* 上传新版本：3 步 —— 上传文件 → 系统解析预览 → 人工确认入库 */
 var _lawCur=null,_lawFile='';
@@ -3266,7 +3259,7 @@ function lawBack1(){
   if(_lawFile)lawShowFile();
 }
 function lawMini(n){
-  var t=['上传文件','系统解析预览','人工确认入库'];
+  var t=['选择示例','查看预置结果','确认演示版本'];
   return '<div class="mini-steps">'+t.map(function(x,i){
     var cls=i+1<n?'fin':(i+1===n?'on':'');
     return '<div class="mini-step '+cls+'"><span class="n">'+(i+1<n?'✓':(i+1))+'</span>'+x+'</div>'+(i<2?'<div class="mini-line '+(i+1<n?'fin':'')+'"></div>':'');
@@ -3281,22 +3274,22 @@ function lawStep1Html(){
     +'<div class="field"><label class="req">新版本号</label><input class="ctrl" id="lwVer" value="'+esc(t.ver||'')+'" placeholder="例如：V2026.3 / ATP 22"></div>'
     +'<div class="field"><label class="req">生效日期</label><input class="ctrl" type="date" id="lwEff" value="'+esc(t.eff||'2026-09-01')+'"></div>'
     +'</div>'
-    +'<div style="margin-top:14px"><div class="drop" onclick="document.getElementById(\'lwFile\').click()"><div class="ic">⇪</div><p>上传官方渠道下载的法规清单文件</p><small>支持 .xlsx / .csv / .pdf，务必来自官方发布页面</small></div>'
+    +'<div style="margin-top:14px"><div class="drop"><div class="ic">⇪</div><p>真实法规文件解析尚未接入</p><small>请使用下方预置示例体验维护流程</small></div>'
     +'<input type="file" id="lwFile" accept=".xlsx,.csv,.pdf" style="display:none" onchange="lawPick(this)">'
     +'<div id="lwFileRow" style="margin-top:12px"></div>'
-    +'<div style="margin-top:10px;font-size:12.5px;color:var(--muted)">没有文件？<a onclick="lawPickDemo()" style="cursor:pointer">使用官方示例清单</a></div></div>';
+    +'<div style="margin-top:10px;font-size:12.5px;color:var(--muted)"><a onclick="lawPickDemo()" style="cursor:pointer">使用预置示例清单</a></div></div>';
 }
-function lawPick(el){if(!el.files.length)return;_lawFile=el.files[0].name;lawShowFile();}
-function lawPickDemo(){_lawFile='ECHA_official_list_2026_v3.xlsx';lawShowFile();}
+function lawPick(el){if(!el.files.length)return;toast('真实法规文件解析尚未接入，请使用预置示例清单','info');el.value='';}
+function lawPickDemo(){_lawFile='法规清单_预置示例.xlsx';lawShowFile();}
 function lawShowFile(){
-  $('lwFileRow').innerHTML='<div class="file-row"><span style="font-size:16px">▤</span><div><b>'+esc(_lawFile)+'</b><div style="color:var(--muted);font-size:11.5px">官方渠道文件 · 待解析</div></div><span class="tag orange" style="margin-left:auto">待人工验证</span></div>';
+  $('lwFileRow').innerHTML='<div class="file-row"><span style="font-size:16px">▤</span><div><b>'+esc(_lawFile)+'</b><div style="color:var(--muted);font-size:11.5px">预置示例 · 不读取真实文件</div></div><span class="tag orange" style="margin-left:auto">演示流程</span></div>';
   $('lawNext').classList.remove('disabled');$('lawNext').disabled=false;
 }
 function lawStep2(){
   var name=$('lwName').value.trim(),org=$('lwOrg').value.trim(),ver=$('lwVer').value.trim(),eff=$('lwEff').value;
   if(!name||!org||!ver||!eff){toast('请填写法规名称、发布机构、版本号与生效日期','warn');return;}
   window._lawTmp={name:name,org:org,ver:ver,eff:eff};
-  $('mBody').innerHTML=lawMini(2)+'<div style="padding:10px 0"><div style="font-size:13px;margin-bottom:10px">正在解析 <b>'+esc(_lawFile)+'</b>…</div><div class="bar" id="lwBar"><i></i></div><div style="margin-top:8px;color:var(--muted);font-size:12.5px" id="lwTxt">0%</div></div>';
+  $('mBody').innerHTML=lawMini(2)+'<div style="padding:10px 0"><div style="font-size:13px;margin-bottom:10px">正在加载预置示例 <b>'+esc(_lawFile)+'</b>…</div><div class="bar" id="lwBar"><i></i></div><div style="margin-top:8px;color:var(--muted);font-size:12.5px" id="lwTxt">0%</div></div>';
   $('mFoot').innerHTML='<div class="left">第 2 步 / 共 3 步</div><button class="btn disabled" disabled>解析中…</button>';
   progress('lwBar','lwTxt',lawStep2Done,15);
 }
@@ -3306,26 +3299,26 @@ function lawStep2Done(){
     +'<div class="stat-row"><div class="stat"><b>128</b><span>解析条目总数</span></div>'
     +'<div class="stat" style="border-color:var(--green-b);background:var(--green-bg)"><b style="color:var(--green)">12</b><span>新增条目</span></div>'
     +'<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">5</b><span>变更条目</span></div></div>'
-    +'<div style="font-size:12.5px;font-weight:600;margin:6px 0 7px">解析结果预览（节选）</div>'
+    +'<div style="font-size:12.5px;font-weight:600;margin:6px 0 7px">预置解析示例（节选，未读取上传文件内容）</div>'
     +'<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px;max-height:220px;overflow:auto"><table class="tbl"><thead><tr><th style="width:70px">变更</th>'
     +d.cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'
     +d.rows.map(function(row,i){
       var t=i===0?'<span class="tag orange">变更</span>':(i===1?'<span class="tag green">新增</span>':'<span class="tag grey">无变化</span>');
       return '<tr><td>'+t+'</td>'+row.map(function(c){return '<td>'+esc(c)+'</td>';}).join('')+'</tr>';
     }).join('')+'</tbody></table></div>'
-    +'<div class="notice warn" style="margin:14px 0 0"><div class="ni">!</div><div>解析结果尚未入库。<b>必须经人工逐条核对确认后</b>方可生效并被 SDS 生成流程引用。</div></div>';
+    +'<div class="notice warn" style="margin:14px 0 0"><div class="ni">!</div><div>以上为预置示例，并非上传文件的解析结果；本次确认只更新演示台账。</div></div>';
   $('mFoot').innerHTML='<div class="left">第 2 步 / 共 3 步</div><button class="btn" onclick="lawBack1()">上一步</button><button class="btn primary" onclick="lawStep3()">下一步：人工确认</button>';
 }
 function lawStep3(){
   $('mBody').innerHTML=lawMini(3)
-    +'<div class="notice grey" style="margin-bottom:14px"><div class="ni">§</div><div>合规人员需确认已核对全部解析条目，确认后清单版本将正式入库并对 SDS 生效。</div></div>'
+    +'<div class="notice grey" style="margin-bottom:14px"><div class="ni">§</div><div>本步只演示人工核对与版本入库交互；数据来自预置示例，不能用于真实 SDS 合规判断。</div></div>'
     +'<dl class="desc-list" style="margin-bottom:14px"><dt>法规名称</dt><dd>'+esc(_lawTmp.name)+'</dd>'
     +'<dt>发布机构</dt><dd>'+esc(_lawTmp.org)+'</dd><dt>新版本号</dt><dd>'+esc(_lawTmp.ver)+'</dd>'
     +'<dt>生效日期</dt><dd>'+esc(_lawTmp.eff)+'</dd><dt>来源文件</dt><dd>'+esc(_lawFile)+'</dd></dl>'
     +'<div class="form-grid one">'
     +'<div class="field"><label class="req">人工验证人</label><input class="ctrl" id="lwVerifier" value="法规专员 · 陈工"></div>'
     +'<div class="field"><label>核对说明</label><textarea class="ctrl" id="lwNote" placeholder="记录核对范围、差异处理方式等">已逐条比对官方发布版本，差异条目 5 项已确认。</textarea></div>'
-    +'<div class="field"><label class="inline-chk"><input type="checkbox" class="chk" id="lwOk"> 我确认已完成人工核对，并对本次入库数据质量负责</label></div>'
+    +'<div class="field"><label class="inline-chk"><input type="checkbox" class="chk" id="lwOk"> 我确认仅在演示台账中保存此示例版本</label></div>'
     +'</div>';
   $('mFoot').innerHTML='<div class="left">第 3 步 / 共 3 步</div><button class="btn" onclick="lawStep2Done()">上一步</button><button class="btn primary" onclick="lawFinish()">确认入库</button>';
 }
@@ -3334,12 +3327,12 @@ function lawFinish(){
   var v=$('lwVerifier').value.trim();
   if(!v){toast('请填写人工验证人','warn');return;}
   if(_lawCur){
-    _lawCur.ver=_lawTmp.ver;_lawCur.eff=_lawTmp.eff;_lawCur.upd=nowStr();_lawCur.status='已生效';_lawCur.verifier=v;_lawCur.items+=12;
+    _lawCur.ver=_lawTmp.ver;_lawCur.eff=_lawTmp.eff;_lawCur.upd=nowStr();_lawCur.status='演示版本';_lawCur.verifier=v;_lawCur.items+=12;
   }else{
-    lawRows.unshift({_id:sdsUid(),key:'xvii',name:_lawTmp.name,org:_lawTmp.org,eff:_lawTmp.eff,ver:_lawTmp.ver,upd:nowStr(),status:'已生效',items:128,verifier:v});
+    lawRows.unshift({_id:sdsUid(),key:'xvii',name:_lawTmp.name,org:_lawTmp.org,eff:_lawTmp.eff,ver:_lawTmp.ver,upd:nowStr(),status:'演示版本',items:128,verifier:v});
   }
   closeModal();lawPage=1;lawRender();
-  toast('新版本已人工确认入库并生效','ok');
+  toast('示例版本已写入本次演示数据','ok');
 }
 /* 影响分析 */
 var IMPACT=[
@@ -3352,17 +3345,18 @@ var IMPACT=[
 ];
 function lawImpact(id){
   var r=lawRows.filter(function(x){return x._id===id;})[0];
-  openModal({title:'法规更新影响分析 · '+r.name,width:820,
-    body:'<div class="stat-row"><div class="stat"><b>'+IMPACT.length+'</b><span>受影响已发布 SDS</span></div>'
-      +'<div class="stat" style="border-color:var(--red-b);background:var(--red-bg)"><b style="color:var(--red)">2</b><span>需重新分类改版</span></div>'
-      +'<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">4</b><span>需更新法规章节</span></div></div>'
+  openModal({title:'法规更新影响分析（示例） · '+r.name,width:820,
+    body:'<div class="notice warn" style="margin-bottom:14px"><div class="ni">!</div><div>以下 6 条 SDS 为预置演示数据，不是根据当前法规条目自动计算的影响结果；本原型尚不能自动派发改版任务。</div></div>'+
+      '<div class="stat-row"><div class="stat"><b>'+IMPACT.length+'</b><span>示例受影响 SDS</span></div>'
+      +'<div class="stat" style="border-color:var(--red-b);background:var(--red-bg)"><b style="color:var(--red)">2</b><span>示例：需重新分类</span></div>'
+      +'<div class="stat" style="border-color:var(--orange-b);background:var(--orange-bg)"><b style="color:var(--orange)">4</b><span>示例：需更新章节</span></div></div>'
       +'<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:7px"><table class="tbl"><thead><tr><th style="width:140px">SDS 编号</th><th>产品名称</th><th style="width:110px">目标市场</th><th style="width:110px">发布日期</th><th>影响项</th><th style="width:150px">建议动作</th></tr></thead><tbody>'
       +IMPACT.map(function(x){
         return '<tr><td class="mono">'+x[0]+'</td><td>'+x[1]+'</td><td>'+x[2]+'</td><td>'+x[3]+'</td><td style="color:var(--ink2)">'+x[4]+'</td>'
           +'<td><span class="tag '+(x[5].indexOf('改版')>=0?'red':'orange')+'">'+x[5]+'</span></td></tr>';
       }).join('')+'</tbody></table></div>'
-      +'<div class="notice info" style="margin:14px 0 0"><div class="ni">i</div><div>影响分析基于「法规清单条目 ↔ 组分 ↔ 已发布 SDS」的关联关系计算，可一键生成改版任务派发给编制人。</div></div>',
-    footer:'<button class="btn" onclick="toast(\'影响清单已导出（演示）\',\'ok\')">导出清单</button><button class="btn primary" onclick="closeModal();toast(\'已生成 6 个 SDS 改版任务并派发\',\'ok\')">一键生成改版任务</button>'});
+      +'<div class="notice info" style="margin:14px 0 0"><div class="ni">i</div><div>正式版需建立「法规条目 ↔ 组分 ↔ 已发布 SDS」关联后，才能计算真实影响范围并派发任务。</div></div>',
+    footer:'<button class="btn" disabled title="本原型未接入自动任务派发">生成改版任务（未接入）</button><button class="btn primary" onclick="closeModal()">关闭</button>'});
 }
 
 /* ==================================================================
@@ -3492,18 +3486,17 @@ function renderLawPage(types,title,desc,noteKey){
   var host=$('pageHost');
   lawTypeFilter=types;lawPage=1;
   var noteTxt=esc(desc)
-    +'<div class="np-n"><b>清单维护与生效</b>本库所有法规清单均为官方渠道下载后人工导入验证，'
-    +'合规人员对数据质量负责；未完成人工确认入库的版本不会被 SDS 生成流程引用。</div>';
+    +'<div class="np-n"><b>清单维护与生效</b>本页目前使用预置演示数据，不读取真实上传文件。正式版须从官方渠道取得清单，由合规人员核对后发布；当前演示版本不能作为真实 SDS 的法规依据。</div>';
   host.innerHTML='<div class="sds-scope">'
     +sdsHead('',esc(title),noteTxt,
-      '<button class="btn" onclick="toast(\'已导出法规台账（演示）\',\'ok\')">导出台账</button>'
+      '<button class="btn" disabled title="未生成法规台账文件">导出台账（未接入）</button>'
       +'<button class="btn primary" onclick="lawUpload(null)">＋ 新增法规清单</button>','',noteKey)
     +'<div id="lawMechMan"></div>'
     +'<div class="kpi-row" id="lawKpi"></div>'
     +'<div class="card"><div class="toolbar">'
       +'<div class="search"><i class="si">⌕</i><input id="lawKw" placeholder="搜索法规名称 / 发布机构…" oninput="lawRender()"></div>'
       +'<select class="ctrl" id="lawStatus" style="width:160px" onchange="lawRender()">'
-      +'<option value="">全部数据状态</option><option>已生效</option><option>待复核</option><option>已归档</option></select>'
+      +'<option value="">全部数据状态</option><option>已生效</option><option>演示版本</option><option>待复核</option><option>已归档</option></select>'
       +'<div class="grow"></div><span class="tag orange dot-tag">人工维护 · 合规人员负责</span></div>'
       +'<div class="tbl-wrap"><table class="tbl" id="lawTable"></table></div>'
       +'<div class="pager" id="lawPager"></div></div></div>';
@@ -3665,8 +3658,7 @@ function sdsActs(r){
   else if(r.status==='审核中')
     a+='<span class="muted" style="font-size:12.5px">审核中</span>';
   else if(r.status==='已发布')
-    a+='<button class="btn btn-link" onclick="sdsExport(\''+r.no+'\',\'PDF\')">导出 PDF</button>'
-     + '<button class="btn btn-link" onclick="sdsExport(\''+r.no+'\',\'Word\')">导出 Word</button>'
+    a+='<button class="btn btn-link" onclick="sdsExport(\''+r.no+'\')">导出摘要 TXT</button>'
      + '<button class="btn btn-link" onclick="sdsRevise(\''+r.no+'\')">申请改版</button>';
   else if(r.status==='待改版')
     a+='<button class="btn btn-link" onclick="sdsStartRevise(\''+r.no+'\')">开始改版</button>';
@@ -3754,8 +3746,8 @@ function sdsView(no){
       +'</tbody></table>',
     footer:'<button class="btn" onclick="closeModal()">关闭</button>'
           +(r.status==='已发布'
-            ?'<button class="btn btn-primary" onclick="closeModal();sdsExport(\''+no+'\',\'PDF\')">导出 PDF</button>'
-            :'<button class="btn disabled" title="仅「已发布」状态可导出">导出 PDF</button>')});
+            ?'<button class="btn btn-primary" onclick="closeModal();sdsExport(\''+no+'\')">导出摘要 TXT</button>'
+            :'<button class="btn disabled" title="仅「已发布」状态可导出">导出摘要 TXT</button>')});
 }
 function sdsEdit(no){ toast('已打开 '+no+' 草案编辑（演示环境为只读原型）','info'); }
 function sdsSubmit(no){
@@ -3773,16 +3765,15 @@ function sdsRevise(no){
   toast('已基于 '+no+' 创建改版任务，可在「SDS 文档列表」跟踪','ok');
   setTimeout(function(){ showPage('sds:list'); },300);
 }
-function sdsExport(no,fmt){
+function sdsExport(no){
   var r=SDS_ROWS.filter(function(x){return x.no===no;})[0];
   /* A8：仅已发布可导出 */
   if(!r||r.status!=='已发布'){ toast('仅「已发布」状态的 SDS 可导出','warn'); return; }
-  fmt=fmt||'PDF';
   downloadFile(no+'_SDS_摘要.txt',
     'SDS 文档摘要\n文档编号：'+no+'\n产品：'+r.product+'\n目标市场：'+r.market+' / '+r.lang
-    +'\n适用规则包：'+r.rulePack+'（'+r.lawName+' '+r.lawVer+'）\n导出格式：'+fmt
+    +'\n适用规则包：'+r.rulePack+'（'+r.lawName+' '+r.lawVer+'）\n导出格式：TXT 摘要'
     +'\n导出时间：'+nowStr()+'\n（演示原型，正式版将输出完整 16 章 PDF / Word）\n');
-  toast('已导出 '+no+' 摘要文件（'+fmt+'）','ok');
+  toast('已导出 '+no+' 摘要 TXT（演示）','ok');
 }
 seedSdsRows();
 
