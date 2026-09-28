@@ -67,12 +67,40 @@ with sync_playwright() as pw:
     print('\n=== 合规管理 ===')
     page.evaluate("closeModal();showPage('comp:guide')"); page.wait_for_timeout(180)
     text = page.locator('#pageHost').inner_text()
-    ok(all(x in text for x in ['SDS 编写','法规库维护','专员定期下载维护','不支持自动联网更新']), '两条流程及维护边界完整')
-    for source in ['ECHA 官网','mem.gov.cn','ZDHC 官网']:
+    ok(page.locator('.flow-guide-card').count() == 3, '合规管理共 3 张流程卡：SDS 编写 / 法规统一查询 / 法规库维护')
+    ok(all(x in text for x in ['SDS 编写','法规统一查询','法规库维护','专员定期下载维护','不支持自动联网更新']), '三条主线及维护边界完整')
+    ok(all(x in text for x in ['加和法','人工补充未匹配内容']), 'SDS 链路写清：系统自动匹配法规库并按加和法计算，缺数据由人工补齐')
+    sds_card = page.locator('.flow-guide-card').first
+    sds_text = sds_card.inner_text()
+    ok(sds_card.locator('.flow-node').count() == 5, 'SDS 编写共 5 步')
+    ok(sds_card.locator('button.flow-node').count() == 2, 'SDS 卡片仅录入配方与审核发布可点击，中间 3 步为系统自动执行')
+    ok('统一查询' not in sds_text, 'SDS 编写卡片不再出现统一查询入口，避免读成人工去查法规')
+    ok('选择组分并录入浓度' in sds_text, '组分选择、浓度录入与冻结合并为同一步（同属生成向导第 2 步）')
+    ok('由组分基础数据自动带入' in sds_text, 'CAS 号与物质名称写明由组分基础数据自动带入')
+    ok('维护组分与 CAS' not in sds_text, '不再单列“维护组分与 CAS”节点，避免误导需先去基础数据手填 CAS')
+    for source in ['ECHA 官网','mem.gov.cn','ZDHC 官网','RoHS','GBZ 2.1']:
         ok(source in text, '法规来源包含 %s' % source)
-    ok(page.locator('.flow-reg-card').count() == 5, '展示 5 类法规库维护方式')
-    for title, route in [('查询法规','law:query'),('生成 SDS 草稿','sds:wizard'),('审核发布','sds:list'),('导入向导演示','law:reach'),('查询已接入记录','law:query')]:
+    ok(page.locator('.flow-reg-card').count() == 7, '展示 7 类法规库维护方式')
+
+    lq_card = page.locator('.flow-guide-card').nth(1)
+    lq_text = lq_card.inner_text()
+    ok('法规统一查询' in lq_text, '第 2 张卡为法规统一查询')
+    ok('不参与 SDS 生成' not in lq_text, '查询卡不带撇清 SDS 的描述性文字')
+    ok(lq_card.locator('.flow-node').count() == 0, '查询卡不画编号步骤条（单页一次性操作，无线性流程）')
+    ok('一次检索全部已接入法规库' in lq_text, '检索入口写明一次跨库检索')
+    ok(lq_card.locator('.flow-dim-card').count() == 3, '展示 3 个查询维度')
+    for dim in ['GHS 分类','名录清单','职业接触限值 OEL']:
+        ok(dim in lq_text, '查询维度包含 %s' % dim)
+    maint_card = page.locator('.flow-guide-card').nth(2)
+    ok(maint_card.locator('.flow-node').count() == 3, '法规库维护卡去掉重复的查询入口后为 3 步')
+    ok('查询已接入记录' not in text, '维护卡不再重复提供统一查询入口')
+
+    for title, route in [('选择组分并录入浓度','sds:wizard'),('审核发布','sds:list'),('导入向导演示','law:reach')]:
         click_node('comp:guide', title, route)
+    page.evaluate("showPage('comp:guide')"); page.wait_for_timeout(160)
+    page.locator('.flow-guide-card').nth(1).locator('button.btn-primary').click()
+    page.wait_for_timeout(200)
+    ok(page.evaluate('curPage') == 'law:query', '查询卡主按钮“打开统一查询”跳转到 law:query')
     page.evaluate("showPage('comp:guide')"); page.screenshot(path='/private/tmp/flow-guide-compliance.png', full_page=True)
 
     print('\n=== 运行时 ===')

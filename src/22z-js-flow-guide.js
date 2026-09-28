@@ -69,29 +69,49 @@ regPage('proj:guide',{
 
 function regulationCards(){
   var rows=[
-    ['CLP 附录 VI','ECHA 官网；有反爬，只能由专员人工下载 ATP 包。',['主数据 + History','导入向导演示','版本差异示例']],
-    ['REACH 限制 / 授权清单','ECHA 官网；更新频率较低，建议半年至年度检查。',['人工下载 Excel','导入向导演示']],
-    ['C&L Inventory','ECHA 官网提供欧盟批量分类数据。',['人工下载','导入向导演示']],
-    ['国内危化品分类信息表','应急管理部官网 mem.gov.cn；目录随公告增补。',['人工下载 PDF','结构化示例导入']],
-    ['ZDHC MRSL','ZDHC 官网发布的制造限用物质清单。',['人工下载','导入向导演示']]
+    ['CLP 附录 VI · 统一分类','ECHA 官网；有反爬，只能由专员人工下载 ATP 包。',['主数据 + History','导入向导演示','版本差异示例']],
+    ['REACH 限制 / 授权 / SVHC','ECHA 官网；SVHC 候选清单约每半年增补一批，三份清单更新并不同步。',['Annex XVII 限制','Annex XIV 授权','SVHC 候选']],
+    ['RoHS 限用物质','欧盟 Directive 2011/65/EU Annex II，经 (EU) 2015/863 修订后共 10 类。',['人工下载','清单导入']],
+    ['国内危化品法规（目录 + 进出口限制）','应急管理部 mem.gov.cn 与商务部禁限公告；含危化品目录、禁止进出口货物目录、严格限制进出口有毒化学品目录，各自随公告增补。',['危化品目录','禁止进出口','严格限制进出口']],
+    ['ZDHC MRSL','ZDHC 官网发布的制造限用物质清单。',['人工下载','导入向导演示']],
+    ['职业接触限值 OEL','欧盟 IOELV 与 GBZ 2.1-2019 官方限值表；按长期（8h TWA）/ 短期 / 上限三个槽位收录。',['多数据源','限值查询']],
+    ['C&L Inventory','ECHA 官网提供的欧盟批量分类数据；由企业自行申报汇总，不等同于官方分类结论，使用前需人工核对。',['人工下载','申报汇总 · 需核对']]
   ];
   return '<div class="flow-maint-title">各法规库维护口径</div><div class="flow-maint-grid">'+rows.map(function(r){return '<article class="flow-reg-card"><h4>'+esc(r[0])+'</h4><div class="flow-reg-source">'+esc(r[1])+'</div><div class="flow-node-tags">'+r[2].map(function(t){return '<span class="flow-node-tag">'+esc(t)+'</span>';}).join('')+'</div></article>';}).join('')+'</div>';
+}
+/* 法规统一查询：单页一次性操作（检索、切维度、看结果、开详情全在 law:query 一页内），
+   因此不画成编号步骤，改为「检索入口 + 查询维度」形态。 */
+function lawQueryFlowCard(){
+  var dims=[
+    ['GHS 分类',['危险类别 · H 代码','象形图 · 警示词']],
+    ['名录清单',['是否列入 · 条目编号','阈值 · 用途 · 豁免']],
+    ['职业接触限值 OEL',['欧盟 / 中国 各一套数据集','长期 / 短期 / 上限槽位']]
+  ];
+  return '<section class="card flow-guide-card"><div class="card-hd"><h3>法规统一查询 <span class="sub">按 CAS、物质名称或 EC 号查看某一物质在各法规中的列入情况</span></h3></div>'
+    +'<div class="flow-guide-body">'
+      +'<div class="flow-lq-entry">输入 CAS 号 / 中英文名称 / EC 号，一次检索全部已接入法规库。</div>'
+      +'<div class="flow-dim-title">查询维度 · 切换页签选择，三者互不替代</div>'
+      +'<div class="flow-dim-grid">'+dims.map(function(d){
+        return '<article class="flow-dim-card"><h4>'+esc(d[0])+'</h4>'+d[1].map(function(l){return '<div class="flow-dim-line">'+esc(l)+'</div>';}).join('')+'</article>';
+      }).join('')+'</div>'
+      +'<div class="flow-guide-actions"><button class="btn btn-primary" onclick="showPage(\'law:query\')">打开统一查询</button></div>'
+    +'</div></section>';
 }
 regPage('comp:guide',{
   title:'合规管理流程引导',crumb:['合规管理','流程引导'],
   render:function(){
-    var sds=guideCard('SDS 编写','从可信组分数据与适用法规生成、审核并发布 SDS',[
-      guideNode('01','维护组分与 CAS','先在基础数据中保证组分身份、CAS 与分类参数准确。',null,['跨模块提示','组分基础信息']),
-      guideNode('02','查询法规','按物质或 CAS 一次查询 ZDHC、CLP、REACH 与国内法规命中。',"showPage('law:query')",['统一查询']),
-      guideNode('03','生成 SDS 草稿','通过 SDS 生成向导汇集数据、判定分类并生成 16 章草案。',"showPage('sds:wizard')",['生成向导']),
-      guideNode('04','审核发布','在 SDS 文档列表跟踪审核、版本和发布状态。',"showPage('sds:list')",['文档列表'])
+    var sds=guideCard('SDS 编写','系统按配方的组分与浓度自动匹配法规、计算分类并填充文档',[
+      guideNode('01','选择组分并录入浓度','从组分库勾选或从实验配方引入，CAS 号与物质名称由组分基础数据自动带入；编写人只需录入各组分浓度，核对后冻结配方。',"showPage('sds:wizard')",['生成向导','自动带入 CAS']),
+      guideNode('02','自动匹配法规库','系统按组分 CAS 自动比对 CLP、REACH、ZDHC、RoHS 等法规库是否命中，再按加和法算出混合物分类与 H/P 码。',null,['系统自动','名单匹配','加和法']),
+      guideNode('03','生成 16 章草案','把受限结论、分类结果与标签要素填入模板，自动产出 16 章草案。',null,['自动填充']),
+      guideNode('04','人工补充未匹配内容','系统没有匹配到、或法规库缺数据的章节与条目，由编写人逐项补齐并核对来源。',null,['人工补齐']),
+      guideNode('05','审核发布','在 SDS 文档列表跟踪审核、版本和发布状态。',"showPage('sds:list')",['文档列表'])
     ],'<button class="btn btn-primary" onclick="showPage(\'sds:wizard\')">新建 SDS</button>');
     var law='<section class="card flow-guide-card"><div class="card-hd"><h3>法规库维护 <span class="sub">明确数据来源、维护责任与版本变化处理</span></h3></div><div class="flow-guide-body">'+guideLine([
       guideNode('01','官网人工下载','法规专员按复审周期从各法规官网取得正式文件。',null,['线下操作','官网来源']),
       guideNode('02','导入向导演示','进入对应法规库维护页查看导入步骤；原型不解析真实上传文件。',"showPage('law:reach')",['分库维护']),
-      guideNode('03','核对版本差异示例','当前差异内容为演示数据，正式使用须由法规专员核对。',null,['人工核对','示例 diff']),
-      guideNode('04','查询已接入记录','按物质查看当前已接入的示例数据；受影响配方与 SDS 数量仅作展示。',"showPage('law:query')",['统一查询'])
-    ])+regulationCards()+'<div class="notice warn flow-guide-alert"><div class="ni">!</div><div><b>维护模式：</b>法规库采用“专员定期下载维护”，系统不支持自动联网更新；法规超过复审期时，SDS 编写页面会以黄色或红色状态灯提醒。</div></div><div class="flow-guide-actions"><button class="btn" onclick="showPage(\'law:query\')">统一查询</button><button class="btn btn-primary" onclick="showPage(\'law:reach\')">维护法规库</button></div></div></section>';
-    guidePage('流程引导','合规管理以受控组分数据和法规库为基础，完成 SDS 编写发布，并由法规专员持续维护法规版本。',sds+law);
+      guideNode('03','核对版本差异示例','当前差异内容为演示数据，正式使用须由法规专员核对。',null,['人工核对','示例 diff'])
+    ])+regulationCards()+'<div class="notice warn flow-guide-alert"><div class="ni">!</div><div><b>维护模式：</b>法规库采用“专员定期下载维护”，系统不支持自动联网更新；法规超过复审期时，在统一查询页与 SDS 文档列表标为“待复审”；引用的不是最新版本时标为“需改版”。状态只描述语义、不用颜色区分。</div></div><div class="flow-guide-actions"><button class="btn" onclick="showPage(\'law:query\')">统一查询</button><button class="btn btn-primary" onclick="showPage(\'law:reach\')">维护法规库</button></div></div></section>';
+    guidePage('流程引导','合规管理有两条并列主线：SDS 编写由系统按配方的组分与浓度自动匹配法规、计算分类并填充文档；法规统一查询供人工随时查阅某一物质在各法规中的列入情况，两者互不为上下游。法规库版本由法规专员定期下载维护。',sds+lawQueryFlowCard()+law);
   }
 });
