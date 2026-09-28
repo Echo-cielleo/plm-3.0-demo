@@ -60,8 +60,8 @@ with sync_playwright() as pw:
     pg.evaluate("secEdit(2)"); pg.wait_for_timeout(500)
     ok(pg.evaluate("()=>document.querySelectorAll('#acc2 table').length===1"),
        "临时编辑第 3 章时表格仍在（编辑的是文本块，不是表格）")
-    ok(pg.evaluate("()=>!!document.querySelector('#acc2 textarea')"), "文本块已切为 textarea")
-    pg.evaluate("secReset(2)"); pg.wait_for_timeout(500)
+    ok(pg.evaluate("()=>!!document.querySelector('#sdsChapterText')"), "临时编辑为弹窗内 textarea（#sdsChapterText）")
+    pg.evaluate("closeModal();secReset(2)"); pg.wait_for_timeout(500)
     pg.evaluate("setWzView('deliver')"); pg.wait_for_timeout(700)
     ok(pg.evaluate("()=>{var d=document.querySelector('.doc-page');return !!d && d.querySelectorAll('table').length>=1;}"),
        "交付视图同样有组分表（文档流内）")

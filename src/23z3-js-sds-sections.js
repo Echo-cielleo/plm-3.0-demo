@@ -59,13 +59,11 @@ function physTableHtml(){
       + '<td style="font-size:11.5px"><b>'+esc(p.cn)+'</b><br>'
         + '<small style="color:var(--muted)">'+esc(p.en)+'</small></td>'
       + '<td style="font-size:11.5px">'+physVal(p)+'</td>'
-      + '<td style="font-size:11px;color:var(--muted)">'
-        + (((p.v && !p.na) && p.v!==null) ? esc(p.src||'—') : '—') + '</td>'
     + '</tr>';
   }).join('');
   return '<div class="tbl-wrap" style="margin:0 0 10px">'
     + '<table class="tbl mini"><thead><tr>'
-      + '<th>理化特性（9.1）</th><th>结果</th><th style="width:180px">数据来源</th>'
+      + '<th>理化特性（9.1）</th><th>结果</th>'
     + '</tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 

@@ -206,7 +206,7 @@ regPage('prod:detail',{
     var h='';
     /* --- hero --- */
     h+='<div class="page-hd"><div class="t"><h1>'+esc(pr.name)+'</h1>'+
-       '<div class="page-sub"><span class="mono">'+esc(pr.code)+'</span> · '+esc(pr.cat)+' · '+esc(pr.series||'—')+
+       '<div class="page-sub"><span class="mono">'+esc(pr.code)+'</span> · '+esc(pr.cat)+
        ' · 负责人 '+esc(pr.owner||'—')+'</div></div>'+
        '<div class="page-acts">'+
        '<button class="btn" onclick="showPage(\'prod:list\')">← 返回列表</button>'+
@@ -223,11 +223,10 @@ regPage('prod:detail',{
           '<span class="muted" style="margin-left:8px">决定理化性质默认指标集</span></dd>'+
        '<dt>所属目录</dt><dd>'+(pr.catPath?esc(pr.catPath)
           :('<span class="muted">'+esc(pr.cat||'')+' · 待归类（等目录归属确认）</span>'))+'</dd>'+
-       '<dt>产品系列</dt><dd>'+esc(pr.series||'—')+'</dd>'+
        '<dt>关联项目</dt><dd>'+(pr.prj?'<span class="mono">'+esc(pr.prj)+'</span>':'<span class="muted">—</span>')+'</dd>'+
        '<dt>负责人</dt><dd>'+esc(pr.owner||'—')+'</dd>'+
        '<dt>状态</dt><dd>'+gtag(pr.status)+'</dd>'+
-       '<dt>更新时间</dt><dd>'+esc(pr.upd||'—')+'</dd>'+
+       '<dt>最近同步时间</dt><dd>'+esc(pr.upd||'—')+'</dd>'+
        '<dt>理化性质</dt><dd>已维护 <b>'+ids.length+'</b> 项指标，其中 <b>'+filled+'</b> 项已填值'+
           (ids.length-filled?('、<b>'+(ids.length-filled)+'</b> 项待填'):'')+'</dd>'+
        '</dl></div></div>';
@@ -241,7 +240,8 @@ regPage('prod:detail',{
     h+='<div class="card"><div class="card-hd">'+
        '<h3>理化性质</h3>'+
        '<span class="sub">'+esc(pr.cat)+' 类别模板默认 '+tplTotal+' 项 · 本产品生效 '+ids.length+' 项 · 覆盖 '+grouped.length+' 个分组</span>'+
-       '</div><div class="card-b">';
+       '</div><div class="card-b">'+
+       '<div class="notice grey">手动编辑仅作补录；NCC 同步有值时以 NCC 为准（外部同步会覆盖手工值）。</div>';
     if(!ids.length){
       h+='<div class="empty"><span class="ei">🧪</span>本产品所属类别「'+esc(p.cat)+'」尚未配置指标模板'+
          '<br><span class="muted">可到「基础数据 → 理化性质配置 → 类别模板」勾选指标，或点右上角「＋ 添加指标」</span></div>';

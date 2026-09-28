@@ -97,34 +97,34 @@ var MAT_SUP={
    ------------------------------------------------------------------ */
 var MAT_BATCH=[
  /* 投料表在用的批次 */
- {no:'WPU-D-2608B',mat:'MAT-00127',sup:'SUP-2026-001',arrive:'2026-08-05',expiry:'2027-08-04',qty:'2000',status:'合格',report:'QC-2026-0805',testDate:'2026-08-07',items:'固含量 / pH / 粘度',note:''},
- {no:'WPU-I-2608A',mat:'MAT-00127',sup:'SUP-2026-001',arrive:'2026-08-02',expiry:'2027-08-01',qty:'800',status:'合格',report:'QC-2026-0802',testDate:'2026-08-04',items:'固含量 / pH / 粘度',note:''},
- {no:'W-260901',mat:'MAT-00901',sup:'',arrive:'2026-09-01',expiry:'2027-03-01',qty:'5000',status:'合格',report:'QC-2026-0901',testDate:'2026-09-03',items:'电导率 / pH',note:''},
- {no:'BCS-2607',mat:'MAT-00412',sup:'SUP-2026-004',arrive:'2026-07-11',expiry:'2027-07-10',qty:'1200',status:'合格',report:'QC-2026-0711',testDate:'2026-07-13',items:'纯度 / 水分',note:''},
- {no:'HF5-2605',mat:'MAT-00631',sup:'SUP-2026-010',arrive:'2026-05-20',expiry:'2027-05-19',qty:'300',status:'合格',report:'QC-2026-0520',testDate:'2026-05-22',items:'固含量 / pH / 粘度',note:''},
- {no:'F30-2607',mat:'MAT-00212',sup:'SUP-2026-003',arrive:'2026-07-06',expiry:'2027-07-05',qty:'1500',status:'合格',report:'QC-2026-0706',testDate:'2026-07-08',items:'固含量 / pH',note:''},
- {no:'E12-2606',mat:'MAT-00307',sup:'SUP-2026-006',arrive:'2026-06-18',expiry:'2027-06-17',qty:'400',status:'合格',report:'QC-2026-0618',testDate:'2026-06-20',items:'有效成分 / pH',note:''},
- {no:'FA-2603',mat:'MAT-00414',sup:'SUP-2026-009',arrive:'2026-03-09',expiry:'2027-03-08',qty:'600',status:'合格',report:'QC-2026-0309-R',testDate:'2026-03-11',items:'纯度 / 色度',note:''},
- {no:'GA-2605',mat:'MAT-00415',sup:'SUP-2026-009',arrive:'2026-05-14',expiry:'2027-05-13',qty:'500',status:'合格',report:'QC-2026-0514-R',testDate:'2026-05-16',items:'纯度 / 色度',note:''},
- {no:'BIT-2602',mat:'MAT-00522',sup:'SUP-2026-002',arrive:'2026-02-24',expiry:'2028-02-23',qty:'100',status:'合格',report:'QC-2026-0224',testDate:'2026-02-26',items:'有效浓度 / pH',note:''},
- {no:'AC-2605',mat:'MAT-00632',sup:'SUP-2026-002',arrive:'2026-05-09',expiry:'2027-05-08',qty:'2000',status:'合格',report:'QC-2026-0509',testDate:'2026-05-11',items:'固含量 / 粘度',note:''},
- {no:'AC-2609',mat:'MAT-00632',sup:'SUP-2026-002',arrive:'2026-09-03',expiry:'2027-09-02',qty:'2000',status:'合格',report:'QC-2026-0903',testDate:'2026-09-05',items:'固含量 / 粘度',note:''},
- {no:'WX-2604',mat:'MAT-00633',sup:'SUP-2026-003',arrive:'2026-04-16',expiry:'2027-04-15',qty:'800',status:'合格',report:'QC-2026-0416',testDate:'2026-04-18',items:'固含量 / pH / 粘度',note:''},
- {no:'WX-2608',mat:'MAT-00633',sup:'SUP-2026-003',arrive:'2026-08-21',expiry:'2027-08-20',qty:'800',status:'合格',report:'QC-2026-0821',testDate:'2026-08-23',items:'固含量 / pH / 粘度',note:''},
- {no:'DF-2603',mat:'MAT-00634',sup:'SUP-2026-010',arrive:'2026-03-19',expiry:'2027-03-18',qty:'200',status:'合格',report:'QC-2026-0319',testDate:'2026-03-21',items:'有效成分 / 粘度',note:''},
- {no:'DF-2607',mat:'MAT-00634',sup:'SUP-2026-010',arrive:'2026-07-23',expiry:'2027-07-22',qty:'200',status:'合格',report:'QC-2026-0723',testDate:'2026-07-25',items:'有效成分 / 粘度',note:''},
- {no:'AM-2602',mat:'MAT-00635',sup:'SUP-2026-009',arrive:'2026-02-27',expiry:'2027-02-26',qty:'1000',status:'合格',report:'QC-2026-0227-R',testDate:'2026-03-01',items:'浓度 / 色度',note:''},
- {no:'AM-2606',mat:'MAT-00635',sup:'SUP-2026-009',arrive:'2026-06-12',expiry:'2027-06-11',qty:'1000',status:'待检',report:'—',testDate:'',items:'待检',note:''},
- {no:'PDMS-2605',mat:'MAT-00636',sup:'SUP-2026-010',arrive:'2026-05-28',expiry:'2027-05-27',qty:'500',status:'合格',report:'QC-2026-0528',testDate:'2026-05-30',items:'有效成分 / 粘度',note:''},
- {no:'PDMS-2606',mat:'MAT-00636',sup:'SUP-2026-010',arrive:'2026-06-25',expiry:'2027-06-24',qty:'500',status:'合格',report:'QC-2026-0625',testDate:'2026-06-27',items:'有效成分 / 粘度',note:''},
- {no:'PDMS-2607',mat:'MAT-00636',sup:'SUP-2026-010',arrive:'2026-07-30',expiry:'2027-07-29',qty:'500',status:'待检',report:'—',testDate:'',items:'待检',note:''},
- {no:'SP-2604',mat:'MAT-00637',sup:'SUP-2026-006',arrive:'2026-04-23',expiry:'2027-04-22',qty:'150',status:'合格',report:'QC-2026-0423',testDate:'2026-04-25',items:'有效成分 / pH',note:''},
- {no:'PA-2601',mat:'MAT-00638',sup:'SUP-2026-006',arrive:'2026-01-28',expiry:'2026-07-28',qty:'50',status:'待检',report:'—',testDate:'',items:'待检',note:''},
- {no:'XL3-2606',mat:'MAT-00811',sup:'SUP-2026-001',arrive:'2026-06-09',expiry:'2027-06-08',qty:'300',status:'合格',report:'QC-2026-0609',testDate:'2026-06-11',items:'NCO 含量 / 粘度',note:''},
+ {no:'WPU-D-2608B',mat:'MAT-00127',sup:'SUP-2026-001',arrive:'2026-08-05',expiry:'2027-08-04',spec:'200 kg/桶',qty:'10 桶',status:'合格',report:'QC-2026-0805.pdf',testDate:'2026-08-07',items:'固含量 / pH / 粘度',note:''},
+ {no:'WPU-I-2608A',mat:'MAT-00127',sup:'SUP-2026-001',arrive:'2026-08-02',expiry:'2027-08-01',spec:'200 kg/桶',qty:'4 桶',status:'合格',report:'QC-2026-0802.pdf',testDate:'2026-08-04',items:'固含量 / pH / 粘度',note:''},
+ {no:'W-260901',mat:'MAT-00901',sup:'',arrive:'2026-09-01',expiry:'2027-03-01',spec:'1000 kg/罐',qty:'5 罐',status:'合格',report:'QC-2026-0901.pdf',testDate:'2026-09-03',items:'电导率 / pH',note:''},
+ {no:'BCS-2607',mat:'MAT-00412',sup:'SUP-2026-004',arrive:'2026-07-11',expiry:'2027-07-10',spec:'200 kg/桶',qty:'6 桶',status:'合格',report:'QC-2026-0711.pdf',testDate:'2026-07-13',items:'纯度 / 水分',note:''},
+ {no:'HF5-2605',mat:'MAT-00631',sup:'SUP-2026-010',arrive:'2026-05-20',expiry:'2027-05-19',spec:'25 kg/桶',qty:'12 桶',status:'合格',report:'QC-2026-0520.pdf',testDate:'2026-05-22',items:'固含量 / pH / 粘度',note:''},
+ {no:'F30-2607',mat:'MAT-00212',sup:'SUP-2026-003',arrive:'2026-07-06',expiry:'2027-07-05',spec:'50 kg/桶',qty:'30 桶',status:'合格',report:'QC-2026-0706.pdf',testDate:'2026-07-08',items:'固含量 / pH',note:''},
+ {no:'E12-2606',mat:'MAT-00307',sup:'SUP-2026-006',arrive:'2026-06-18',expiry:'2027-06-17',spec:'25 kg/桶',qty:'16 桶',status:'合格',report:'QC-2026-0618.pdf',testDate:'2026-06-20',items:'有效成分 / pH',note:''},
+ {no:'FA-2603',mat:'MAT-00414',sup:'SUP-2026-009',arrive:'2026-03-09',expiry:'2027-03-08',spec:'25 kg/桶',qty:'24 桶',status:'合格',report:'QC-2026-0309-R.pdf',testDate:'2026-03-11',items:'纯度 / 色度',note:''},
+ {no:'GA-2605',mat:'MAT-00415',sup:'SUP-2026-009',arrive:'2026-05-14',expiry:'2027-05-13',spec:'25 kg/桶',qty:'20 桶',status:'合格',report:'QC-2026-0514-R.pdf',testDate:'2026-05-16',items:'纯度 / 色度',note:''},
+ {no:'BIT-2602',mat:'MAT-00522',sup:'SUP-2026-002',arrive:'2026-02-24',expiry:'2028-02-23',spec:'25 kg/袋',qty:'4 袋',status:'合格',report:'QC-2026-0224.pdf',testDate:'2026-02-26',items:'有效浓度 / pH',note:''},
+ {no:'AC-2605',mat:'MAT-00632',sup:'SUP-2026-002',arrive:'2026-05-09',expiry:'2027-05-08',spec:'200 kg/桶',qty:'10 桶',status:'合格',report:'QC-2026-0509.pdf',testDate:'2026-05-11',items:'固含量 / 粘度',note:''},
+ {no:'AC-2609',mat:'MAT-00632',sup:'SUP-2026-002',arrive:'2026-09-03',expiry:'2027-09-02',spec:'200 kg/桶',qty:'10 桶',status:'合格',report:'QC-2026-0903.pdf',testDate:'2026-09-05',items:'固含量 / 粘度',note:''},
+ {no:'WX-2604',mat:'MAT-00633',sup:'SUP-2026-003',arrive:'2026-04-16',expiry:'2027-04-15',spec:'200 kg/桶',qty:'4 桶',status:'合格',report:'QC-2026-0416.pdf',testDate:'2026-04-18',items:'固含量 / pH / 粘度',note:''},
+ {no:'WX-2608',mat:'MAT-00633',sup:'SUP-2026-003',arrive:'2026-08-21',expiry:'2027-08-20',spec:'200 kg/桶',qty:'4 桶',status:'合格',report:'QC-2026-0821.pdf',testDate:'2026-08-23',items:'固含量 / pH / 粘度',note:''},
+ {no:'DF-2603',mat:'MAT-00634',sup:'SUP-2026-010',arrive:'2026-03-19',expiry:'2027-03-18',spec:'25 kg/桶',qty:'8 桶',status:'合格',report:'QC-2026-0319.pdf',testDate:'2026-03-21',items:'有效成分 / 粘度',note:''},
+ {no:'DF-2607',mat:'MAT-00634',sup:'SUP-2026-010',arrive:'2026-07-23',expiry:'2027-07-22',spec:'25 kg/桶',qty:'8 桶',status:'合格',report:'QC-2026-0723.pdf',testDate:'2026-07-25',items:'有效成分 / 粘度',note:''},
+ {no:'AM-2602',mat:'MAT-00635',sup:'SUP-2026-009',arrive:'2026-02-27',expiry:'2027-02-26',spec:'25 kg/桶',qty:'40 桶',status:'合格',report:'QC-2026-0227-R.pdf',testDate:'2026-03-01',items:'浓度 / 色度',note:''},
+ {no:'AM-2606',mat:'MAT-00635',sup:'SUP-2026-009',arrive:'2026-06-12',expiry:'2027-06-11',spec:'25 kg/桶',qty:'40 桶',status:'待检',report:'—',testDate:'',items:'待检',note:''},
+ {no:'PDMS-2605',mat:'MAT-00636',sup:'SUP-2026-010',arrive:'2026-05-28',expiry:'2027-05-27',spec:'25 kg/桶',qty:'20 桶',status:'合格',report:'QC-2026-0528.pdf',testDate:'2026-05-30',items:'有效成分 / 粘度',note:''},
+ {no:'PDMS-2606',mat:'MAT-00636',sup:'SUP-2026-010',arrive:'2026-06-25',expiry:'2027-06-24',spec:'25 kg/桶',qty:'20 桶',status:'合格',report:'QC-2026-0625.pdf',testDate:'2026-06-27',items:'有效成分 / 粘度',note:''},
+ {no:'PDMS-2607',mat:'MAT-00636',sup:'SUP-2026-010',arrive:'2026-07-30',expiry:'2027-07-29',spec:'25 kg/桶',qty:'20 桶',status:'待检',report:'—',testDate:'',items:'待检',note:''},
+ {no:'SP-2604',mat:'MAT-00637',sup:'SUP-2026-006',arrive:'2026-04-23',expiry:'2027-04-22',spec:'25 kg/桶',qty:'6 桶',status:'合格',report:'QC-2026-0423.pdf',testDate:'2026-04-25',items:'有效成分 / pH',note:''},
+ {no:'PA-2601',mat:'MAT-00638',sup:'SUP-2026-006',arrive:'2026-01-28',expiry:'2026-07-28',spec:'25 kg/桶',qty:'2 桶',status:'待检',report:'—',testDate:'',items:'待检',note:''},
+ {no:'XL3-2606',mat:'MAT-00811',sup:'SUP-2026-001',arrive:'2026-06-09',expiry:'2027-06-08',spec:'25 kg/桶',qty:'12 桶',status:'合格',report:'QC-2026-0609.pdf',testDate:'2026-06-11',items:'NCO 含量 / 粘度',note:''},
  /* 异常批次（不在投料表中，用于演示预警） */
- {no:'WPU-D-2609C',mat:'MAT-00127',sup:'SUP-2026-001',arrive:'2026-09-04',expiry:'2027-09-03',qty:'2000',status:'待检',report:'—',testDate:'',items:'待检',note:''},
- {no:'F30-2611',mat:'MAT-00212',sup:'SUP-2026-003',arrive:'2026-08-30',expiry:'2027-08-29',qty:'1500',status:'不合格',report:'QC-2026-0830-R',testDate:'2026-09-01',items:'固含量 / pH',note:'固含量 44%，低于标准（≥50%），整批退货并要求供应商换货'},
- {no:'AM-2609',mat:'MAT-00635',sup:'SUP-2026-009',arrive:'2026-09-02',expiry:'2027-09-01',qty:'1000',status:'不合格',report:'QC-2026-0902-R',testDate:'2026-09-04',items:'浓度 / 色度',note:'浓度 22%，低于标准（25±1%），降级用于中和工序，主用途改用 AM-2606 批次'}
+ {no:'WPU-D-2609C',mat:'MAT-00127',sup:'SUP-2026-001',arrive:'2026-09-04',expiry:'2027-09-03',spec:'200 kg/桶',qty:'10 桶',status:'待检',report:'—',testDate:'',items:'待检',note:''},
+ {no:'F30-2611',mat:'MAT-00212',sup:'SUP-2026-003',arrive:'2026-08-30',expiry:'2027-08-29',spec:'50 kg/桶',qty:'30 桶',status:'不合格',report:'QC-2026-0830-R.pdf',testDate:'2026-09-01',items:'固含量 / pH',note:'固含量 44%，低于标准（≥50%），整批退货并要求供应商换货'},
+ {no:'AM-2609',mat:'MAT-00635',sup:'SUP-2026-009',arrive:'2026-09-02',expiry:'2027-09-01',spec:'25 kg/桶',qty:'40 桶',status:'不合格',report:'QC-2026-0902-R.pdf',testDate:'2026-09-04',items:'浓度 / 色度',note:'浓度 22%，低于标准（25±1%），降级用于中和工序，主用途改用 AM-2606 批次'}
 ];
 
 /* ------------------------------------------------------------------
@@ -171,6 +171,55 @@ function matMainSup(code){
   var a=matSupRows(code);
   for(var i=0;i<a.length;i++)if(a[i].main)return a[i];
   return a[0]||null;
+}
+/* 生产厂商字典仅演示联想；经销商供货时允许录入字典外的厂商。 */
+var MAT_MANUFACTURERS=['苏州华源塑料包装有限公司','无锡恒泰金属包装有限公司'];
+function matSupplierSelect(r){
+  return '<select class="ctrl" id="fx__supCode" onchange="matSupplierChange(true)">'
+    +'<option value="">厂内自制</option>'
+    +SUPPLIERS.map(function(s){return '<option value="'+esc(s.code)+'"'+(r._supCode===s.code?' selected':'')+'>'
+      +esc(s.name)+'（'+esc(s.type)+'）</option>';}).join('')+'</select>';
+}
+function matSupplierFormInit(){
+  var names=SUPPLIERS.filter(function(s){return s.type==='生产商';}).map(function(s){return s.name;}).concat(MAT_MANUFACTURERS);
+  $('fx_manufacturer').setAttribute('list','matManufacturerDict');
+  $('fx_manufacturer').insertAdjacentHTML('afterend','<datalist id="matManufacturerDict">'
+    +names.map(function(n){return '<option value="'+esc(n)+'"></option>';}).join('')
+    +'</datalist><div class="muted" id="matManufacturerHint" style="font-size:12px;margin-top:6px"></div>');
+  matSupplierChange(false);
+}
+function matSupplierChange(changed){
+  var s=supByCode($('fx__supCode').value),maker=$('fx_manufacturer'),no=$('fx__supNo');
+  var dealer=s&&s.type==='经销商';
+  maker.readOnly=!dealer;
+  maker.required=!!dealer;
+  maker.previousElementSibling.classList.toggle('req',!!dealer);
+  no.disabled=!s;
+  no.required=!!s;
+  no.previousElementSibling.classList.toggle('req',!!s);
+  if(changed)no.value='';
+  if(!dealer)maker.value=s?s.name:'厂内自制';
+  else if(changed)maker.value='';
+  $('matManufacturerHint').textContent=dealer?'经销商供货：请输入生产厂商，可选择字典联想结果。':(s?'生产商供货：自动使用供应商名称。':'厂内自制，无需填写外部生产厂商。');
+}
+function matCollectSupplier(data){
+  var s=supByCode(data._supCode);
+  if(s&&s.type==='经销商'&&!data.manufacturer){toast('经销商供货时请填写生产厂商','warn');return false;}
+  if(s&&!data._supNo){toast('请填写供应商货号','warn');return false;}
+  data.manufacturer=s?(s.type==='生产商'?s.name:data.manufacturer):'厂内自制';
+  data._sup=s?s.name:'厂内自制';
+  data._grade=s?s.grade:'—';
+  if(!s)data._supNo='';
+  return true;
+}
+function matSaveSupplier(data,oldCode){
+  var old=matMainSup(oldCode||data.code);
+  if(oldCode&&oldCode!==data.code)delete MAT_SUP[oldCode];
+  if(data._supCode){
+    var link=old&&old.sup===data._supCode?old:{};
+    link.sup=data._supCode;link.no=data._supNo;link.main=true;
+    MAT_SUP[data.code]=[link];
+  }else delete MAT_SUP[data.code];
 }
 function matBatches(code){ return MAT_BATCH.filter(function(b){return b.mat===code;}); }
 function matBatch(no){ return MAT_BATCH.filter(function(b){return b.no===no;})[0]||null; }
@@ -275,6 +324,8 @@ function matLinkAll(){
     r._sup=sp?sp.name:'厂内自制';
     r._supCode=ms?ms.sup:'';
     r._grade=sp?sp.grade:'—';
+    r._supNo=ms?ms.no:'';
+    r.manufacturer=sp?(sp.type==='生产商'?sp.name:MAT_MANUFACTURERS[r.code==='MAT-00703'?1:0]):'厂内自制';
   });
   MAT_LINKED=true;
 }
@@ -374,6 +425,7 @@ regPage('bd:rawmat-detail',{
        '<dt>替代料</dt><dd>'+matSubstToLink(m)+'</dd>'+
        '<dt>停用时间</dt><dd>'+(m.stopDate?esc(m.stopDate):'<span class="muted">—</span>')+'</dd>'+
        '<dt>主供应商</dt><dd>'+(sp?('<a class="mat-link" href="javascript:void(0)" onclick="showPage(\'bd:supplier\')">'+esc(sp.name)+'</a> <span class="muted">'+esc(sp.code)+'</span>'):'<span class="muted">厂内自制</span>')+'</dd>'+
+       '<dt>生产厂商</dt><dd>'+esc(m.manufacturer)+'</dd>'+
        '<dt>来源</dt><dd>'+tagOf(matOrigin(m),matOrigin(m)==='自制'?'green':'purple')+'</dd>'+
        '<dt>创建时间</dt><dd>'+esc(m.created||'—')+'</dd>'+
        '<dt>备注</dt><dd>'+esc(m.remark||'—')+'</dd>'+
@@ -409,7 +461,7 @@ regPage('bd:rawmat-detail',{
     }else{
       h+='<div class="tbl-wrap"><table class="tbl"><thead><tr>'+
          '<th style="width:120px">供应商编码</th><th>供应商名称</th><th style="width:130px">供应商货号</th>'+
-         '<th style="width:70px">类型</th><th style="width:130px">供货周期</th><th style="width:110px">参考价</th>'+
+         '<th style="width:70px">类型</th>'+
          '<th style="width:60px">评级</th><th style="width:70px">状态</th></tr></thead><tbody>'+
          sups.map(function(x){
            var s=supByCode(x.sup)||{};
@@ -417,7 +469,7 @@ regPage('bd:rawmat-detail',{
                   '<td><a class="mat-link" href="javascript:void(0)" onclick="showPage(\'bd:supplier\')">'+esc(s.name||'—')+'</a>'+
                   (x.main?' <span class="tag blue">主供</span>':'')+'</td>'+
                   '<td class="mono">'+esc(x.no||'—')+'</td>'+
-                  '<td>'+esc(s.type||'—')+'</td><td>'+esc(x.lead||'—')+'</td><td>'+esc(x.price||'—')+'</td>'+
+                  '<td>'+esc(s.type||'—')+'</td>'+
                   '<td>'+tagOf(s.grade||'—',(s.grade==='A')?'green':((s.grade==='B')?'blue':'orange'))+'</td>'+
                   '<td>'+tagOf(s.status||'—',(s.status==='合格')?'green':((s.status==='观察')?'orange':'grey'))+'</td></tr>';
          }).join('')+'</tbody></table>'+
@@ -435,20 +487,20 @@ regPage('bd:rawmat-detail',{
     }else{
       h+='<div class="tbl-wrap"><table class="tbl"><thead><tr>'+
          '<th style="width:130px">批次号</th><th>供应商</th><th style="width:92px">到货日期</th>'+
-         '<th style="width:92px">有效期至</th><th style="width:76px;text-align:right">到货量 kg</th>'+
+         '<th style="width:92px">有效期至</th><th style="width:110px">规格</th><th style="width:76px;text-align:right">数量</th>'+
          '<th style="width:92px">测试日期</th><th>测试项目</th><th style="width:76px">测试结果</th>'+
-         '<th>备注</th><th style="width:118px">检测报告</th></tr></thead><tbody>'+
+         '<th>备注</th><th style="width:190px">检测报告附件</th></tr></thead><tbody>'+
          bs.map(function(b){
            var s=b.sup?supByCode(b.sup):null;
            return '<tr><td class="mono"><b>'+esc(b.no)+'</b></td>'+
                   '<td>'+(s?esc(s.name):'<span class="muted">厂内自制</span>')+'</td>'+
                   '<td>'+esc(b.arrive)+'</td><td>'+esc(b.expiry)+'</td>'+
-                  '<td class="num">'+esc(b.qty)+'</td>'+
+                  '<td>'+esc(b.spec)+'</td><td class="num">'+esc(b.qty)+'</td>'+
                   '<td>'+(b.testDate?esc(b.testDate):'<span class="muted">—</span>')+'</td>'+
                   '<td>'+esc(b.items||'—')+'</td>'+
                   '<td>'+batchTag(b.status)+'</td>'+
                   '<td>'+(b.note?('<span style="color:#b42318;font-size:12.5px">'+esc(b.note)+'</span>'):'<span class="muted">—</span>')+'</td>'+
-                  '<td class="mono">'+esc(b.report)+'</td></tr>';
+                  '<td>'+matBatchReportHtml(b)+'</td></tr>';
          }).join('')+'</tbody></table></div>';
     }
     h+='</div></div>';

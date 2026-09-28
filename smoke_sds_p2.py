@@ -75,7 +75,8 @@ with sync_playwright() as pw:
     ok(pg.evaluate("()=>{var e=document.getElementById('f_pcn');return e&&e.value.indexOf('PCN')>=0;}"),
        "欧盟市场带出 PCN 毒理中心应急电话")
     ok("REACH 第 8 条" in body, "OR 字段附法规依据说明")
-    ok("英国 OR" in body and "土耳其进口商" in body, "说明英国 OR / 土耳其进口商同属该机制")
+    body_all = pg.evaluate("()=>document.body.innerText")
+    ok("英国 OR" in body_all and "土耳其进口商" in body_all, "说明英国 OR / 土耳其进口商同属该机制（引导说明统一至步骤导航下方 #wzGuide）")
 
     # 市场切换联动
     pg.evaluate("pickMarket('CN')"); pg.wait_for_timeout(700)

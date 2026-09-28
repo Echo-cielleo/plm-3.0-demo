@@ -172,6 +172,12 @@ with sync_playwright() as pw:
     gtxt, btxt = pg.inner_text("#wzGuide"), pg.inner_text("#wzBody")
     ok("第 4 步 · 分类建议与证据追溯" in gtxt, "第 4 步说明已渲染到导航下方")
     ok("第 4 步 · 分类建议与证据追溯" not in btxt, "说明已从内容区移除")
+    ok("系统无法自动判定" not in gtxt, "步骤说明块只保留标题")
+    ok(pg.get_by_role('button', name='页面说明').count()==1, "向导页右上角提供页面说明按钮")
+    ok(not pg.locator('#np-sds-wizard').is_visible(), "页面说明默认收起")
+    pg.locator('#nb-sds-wizard').click()
+    ok("系统无法自动判定" in pg.locator('#np-sds-wizard').inner_text(), "展开后可读本步说明")
+    pg.locator('#nb-sds-wizard').click()
     ok(pg.evaluate("()=>document.querySelectorAll('#wzBody > .notice.warn').length===0"),
        "内容区不再有整屏宽橙色横幅")
 
@@ -287,7 +293,7 @@ with sync_playwright() as pw:
     pg.evaluate("wzGo(6)"); pg.wait_for_timeout(700)
     ok("第 6 步 · 人工审核与批准发布" in pg.inner_text("#wzGuide"), "第 6 步说明移至导航下")
     pg.evaluate("wzGo(1)"); pg.wait_for_timeout(700)
-    ok(pg.inner_text("#wzGuide").strip() == "", "回到第 1 步时说明区清空（无残留）")
+    ok("第 1 步 · 创建 SDS 项目" in pg.inner_text("#wzGuide"), "第 1 步标题说明与其他步骤保持一致")
 
     # ============ 回归 ============
     print("\n=== 回归 ===")
@@ -295,6 +301,17 @@ with sync_playwright() as pw:
     ok(pg.evaluate("()=>document.querySelectorAll('#wzBody .acc-item').length===16"), "16 章折叠面板齐全")
     ok(pg.evaluate("()=>{wz.project.market='CN';return legalBasis('CN').indexOf('GB/T 16483')>=0;}"), "切中国市场法规依据联动")
     pg.evaluate("()=>{wz.project.market='EU';}")
+    pg.evaluate("wzGo(4)"); pg.wait_for_timeout(350)
+    ok(pg.get_by_role('button', name='一键填充演示数据').count()==1, "第四步证据标题提供演示填充入口")
+    pg.get_by_role('button', name='一键填充演示数据').click()
+    state=pg.evaluate("""()=>({pending:wz.classItems.filter(c=>c.status==='pending').length,
+      demo:wz.classItems.filter(c=>c.demo).length,
+      unsafe:wz.classItems.some(c=>c.demo&&c.need!=='confirm'&&c.result.indexOf('不分类')>=0),
+      next:wzCheck(4).ok})""")
+    ok(state['pending']==0 and state['demo']>0 and state['next'], "一键填充后所有待处理项完成并可进入下一步")
+    ok(not state['unsafe'], "无依据的待判断项不会被填成不分类")
+    pg.evaluate("wzGo(5)"); pg.wait_for_timeout(350)
+    ok("未经法规人员核验" in pg.evaluate("sdsDraftBodyHtml()"), "演示填充会在导出正文标明非正式结论")
     pg.evaluate("showPage('sds:list')"); pg.wait_for_timeout(700)
     ok(pg.inner_text("h1").strip() == "SDS 文档列表", "列表页仍正常")
 

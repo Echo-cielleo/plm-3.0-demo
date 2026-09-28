@@ -29,6 +29,8 @@ function sdsDraftBodyHtml(documentStatus){
         + (p.emerg ? '<div>应急电话：' + esc(p.emerg) + '</div>' : '')
       + '</div>'
       + '<div class="cover-basis"><b>编制依据：</b><br>' + esc(legalBasis(p.market)).replace(/\n/g, '<br>') + '</div>'
+      + ((wz.classItems||[]).some(function(c){return c.demo;})
+          ? '<div class="cover-warn">演示数据：部分分类结论由一键填充生成，未经法规人员核验，不得作为正式 SDS 使用。</div>' : '')
       + '<div class="cover-badge">' + deliverBadge(dirty) + '</div>'
     + '</div>';
   var secs = SDS_16.map(function (s, i) {

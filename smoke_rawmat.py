@@ -143,6 +143,8 @@ with sync_playwright() as pw:
        "点击按钮弹出录入 modal")
     # 不合格 + 备注为空 → 拒绝保存
     pg.evaluate("()=>{document.querySelector('#mt_no').value='WPU-D-2609D';"
+                "document.querySelector('#mt_spec').value='200 kg/桶';"
+                "document.querySelector('#mt_qty').value='10 桶';"
                 "document.querySelector('#mt_testDate').value='2026-09-10';"
                 "document.querySelector('#mt_result').value='不合格';"
                 "document.querySelector('#mt_note').value='';}")

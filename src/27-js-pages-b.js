@@ -326,14 +326,13 @@ function prodListCfg(){
       {k:'catPath',t:'所属目录',w:'200px',fmt:function(r){
         if(!r.catPath)return '<span class="muted">'+esc((r.cat||'')+' · 待归类')+'</span>';
         return esc(r.catPath);}},
-      {k:'series',t:'系列',w:'100px'},
       {k:'prj',t:'关联项目',w:'130px',fmt:function(r){
         return r.prj?'<span class="mono">'+esc(r.prj)+'</span>':'<span class="muted">—</span>';}},
       {k:'owner',t:'负责人',w:'100px'},
-      {k:'upd',t:'更新时间',w:'110px'},
+      {k:'upd',t:'最近同步时间',w:'120px'},
       {k:'status',t:'状态',w:'90px',fmt:function(r){return gtag(r.status);}}
     ],
-    rows:prodCatRows(),kwKeys:['code','name','cat','catPath','series','prj'],
+    rows:prodCatRows(),kwKeys:['code','name','cat','catPath','prj'],
     filters:[
       {k:'status',t:'状态',all:'全部',opts:[['在产','在产'],['试产','试产'],['研发中','研发中'],['停产','停产']]}
     ],
@@ -459,34 +458,7 @@ regPage('eq:cap',{
   }
 });
 
-/* ---------- 保养维护 ---------- */
-regPage('eq:maint',{
-  title:'保养维护',crumb:['设备资源','保养维护'],
-  render:function(){
-    lp(listCfg({
-      title:'保养维护',unit:'维保工单',
-      sub:'设备校准、保养与维修工单台账，按周期自动生成下次执行日期；超期未执行会阻塞相关实验排程。',
-      cols:[
-        {k:'id',t:'工单号',w:'120px',fmt:function(r){return mono(r.id);}},
-        {k:'eq',t:'设备',w:'210px'},
-        {k:'type',t:'保养类型',w:'110px'},
-        {k:'cycle',t:'周期',w:'100px'},
-        {k:'last',t:'上次执行',w:'110px'},
-        {k:'next',t:'下次计划',w:'110px'},
-        {k:'owner',t:'负责人',w:'100px'},
-        {k:'status',t:'状态',w:'90px',fmt:function(r){return gtag(r.status);}}
-      ],
-      rows:EQMAINTS,kwKeys:['id','eq','type'],
-      acts:function(r){ return '<button class="btn btn-link" onclick="mdOpenMaint(\''+esc(r.id)+'\')">查看</button>'; },
-      onRowClick:function(r){ mdOpenMaint(r.id); },
-      filters:[
-        {k:'type',t:'保养类型',all:'全部',opts:[['年度校准','年度校准'],['半年保养','半年保养'],
-          ['季度保养','季度保养'],['故障维修','故障维修'],['灯管更换','灯管更换']]},
-        {k:'status',t:'状态',all:'全部',opts:[['待执行','待执行'],['执行中','执行中'],['已完成','已完成']]}
-      ]
-    }));
-  }
-});
+/* 保养维护由 27z8-js-eq-maint.js 唯一注册。 */
 
 /* ---------- 零备件管理（低库存预警） ---------- */
 regPage('eq:spare',{
@@ -573,16 +545,7 @@ function renderMyDocuments(){
     onRowClick:function(r){if(r.kind==='weekly')openWeeklyFromMine(r.ref);else mdOpenDoc(r.ref);}
   }));
 }
-regPage('doc:public',{
-  title:'公共文档',crumb:['文档管理','公共文档'],render:renderPublicDocuments
-});
-regPage('doc:mine',{
-  title:'我的文档',crumb:['文档管理','我的文档'],render:renderMyDocuments
-});
-/* 兼容旧的 #doc 直达地址，默认进入公共文档。 */
-regPage('doc',{
-  title:'公共文档',crumb:['文档管理','公共文档'],render:renderPublicDocuments
-});
+/* 文档页面由 27z-js-doc-folder.js 唯一注册，包含旧 #doc 入口。 */
 
 /* ---------- 知识管理 ---------- */
 regPage('ip:km',{

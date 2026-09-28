@@ -317,7 +317,6 @@ function renderStep1(){
   var stOpts=['德国 Germany','法国 France','意大利 Italy','西班牙 Spain','荷兰 Netherlands','波兰 Poland'];
   var ofOpts=Object.keys(LANG_EU);
   $('wzBody').innerHTML='<div class="fade-in">'
-    +'<div class="notice info"><div class="ni">i</div><div><b>第 1 步 · 创建 SDS 项目</b>目标市场决定后续适用的法规规则包、章节结构与语言要求，创建后不可随意变更。</div></div>'
     +'<div class="card"><div class="card-hd"><h3>项目基本信息</h3><span class="sub">带 * 为必填项</span></div>'
     +'<div class="card-bd"><div class="form-grid">'
       +'<div class="field"><label class="req">产品名称</label>'
@@ -375,7 +374,7 @@ function renderStep1(){
       +'<span class="sub">写入 SDS 第 1.3 节 · 随目标市场自动带出对应责任主体</span>'
       +'<div class="right" id="admBadgeBox">'+admBadge()+'</div></div>'
       +'<div class="card-bd">'
-      +'<div class="notice info" style="margin-bottom:12px"><div class="ni">i</div><div>'
+      +'<div class="notice info" data-wz-explain style="margin-bottom:12px"><div class="ni">i</div><div>'
         +'公司中英文名 / 地址 / 邮编 / 电话 / 传真 / 邮箱 <b style="display:inline">来自公司档案，全公司所有 SDS 共用一套</b>；'
         +'应急咨询电话与境外责任主体 <b style="display:inline">由系统按目标市场自动带出</b>，可按需覆盖。'
         +'<br><span style="color:var(--muted);font-size:11.8px">'
@@ -418,7 +417,8 @@ function renderStep1(){
             +'<input class="ctrl" value="'+esc(COMPANY.emergencyCn)+'" readonly>'
             +'<span class="help">中国市场无需委托境外代表，仅列明境内应急电话即可</span></div>':''))
       +'</div></div></div>';
-  wzGuide('');          /* 第 1 步无独立步骤说明，清空其他步残留 */
+  wzGuide('<div class="notice info"><div class="ni">i</div><div><b>第 1 步 · 创建 SDS 项目</b>目标市场决定后续适用的法规规则包、章节结构与语言要求，创建后不可随意变更。</div></div>');
+  wzCollectPageNotes();
   wzUpdateFoot();
 }
 function wzMatInfo(){
@@ -899,7 +899,7 @@ function renderStep3(){
         return row([esc(casName(p.cas)),kTerm(p.k),esc(p.v),
           '<span class="tag grey">PubChem 辅助</span>',
           '<span class="muted">'+esc(wzEvidence(p.cas,'pub'))+'</span>',
-          '<button class="btn sm" onclick="fillData(\''+p.cas+'\','+idx+')">核对</button>']);
+          '<button class="btn sm wz-check-action" onclick="fillData(\''+p.cas+'\','+idx+')">核对</button>']);
       }).join('')
       +'</tbody></table></div>'
       +'<div class="src-note"><span class="tag grey">提示</span>辅助来源仅可用于交叉核对，不能作为第 2 / 11 章的合规依据；存在更高优先级来源时不得采用。</div>'
@@ -913,7 +913,7 @@ function renderStep3(){
         return row([esc(casName(x.cas)),kTerm(x.k),
           '<b>'+esc(x.a[0])+'</b><br><span class="tag '+SRC_META[x.a[1]].cls+'">'+SRC_META[x.a[1]].t+'</span>',
           esc(x.b[0])+'<br><span class="tag '+SRC_META[x.b[1]].cls+'">'+SRC_META[x.b[1]].t+'</span>',
-          '<button class="btn sm" onclick="fillData(\''+x.cas+'\','+idx+')">复核</button>'])
+          '<button class="btn sm wz-check-action" onclick="fillData(\''+x.cas+'\','+idx+')">复核</button>'])
           +'<tr><td><small class="muted">处理口径</small></td><td colspan="4" style="color:var(--ink2)">'+esc(x.note)+'</td></tr>';
       }).join('')
       +'</tbody></table></div>'
@@ -925,7 +925,7 @@ function renderStep3(){
       +'<th>影响的危害类别</th><th style="width:96px">操作</th></tr></thead><tbody>'
       +blockers.map(function(b){
         return row([esc(b.name),kTerm(b.k),'<span style="color:var(--orange)">'+esc(b.v)+'</span>',
-          esc(b.eff),'<button class="btn sm" onclick="gotoCompFill(\''+b.cas+'\')">去组分库补录</button>']);
+          esc(b.eff),'<button class="btn sm wz-check-action" onclick="gotoCompFill(\''+b.cas+'\')">去组分库补录</button>']);
       }).join('')
       +'</tbody></table></div>'
       +'<div class="src-note"><span class="tag orange">说明</span>这类缺失不会由系统臆测填值 —— 对应危害类别在第 4 步会落到「待人工判断」。</div>'
@@ -983,7 +983,7 @@ function renderStep3(){
         +'<div class="sub-hd">② 仅辅助来源的数据<span class="tag '+(pubOnly.length?'orange':'green')+'">'+pubOnly.length+' 项</span></div>'+pubHtml
         +'<div class="sub-hd">③ 多来源冲突<span class="tag '+(conflicts.length?'orange':'green')+'">'+conflicts.length+' 项</span></div>'+confHtml
         +'<div class="sub-hd">④ 会导致危害类别无法计算的数据<span class="tag '+(blockers.length?'red':'green')+'">'+blockers.length+' 项</span>'
-      +(blockers.length?'<button class="btn sm" style="margin-left:8px" onclick="wzFillDemo(4)">一键补充演示数据</button>':'')+'</div>'+blkHtml
+      +(blockers.length?'<button class="btn sm primary" onclick="wzFillDemo(4)">一键补充演示数据</button>':'')+'</div>'+blkHtml
       +'</div></div>'
     +'<div class="card"><div class="card-hd"><h3>全部汇集数据</h3>'
       +'<span class="sub">按组分维度展示，标签颜色代表数据来源优先级</span>'
@@ -1344,6 +1344,7 @@ function edStmt(where){
 /* ---------- B7：第 16 章 —— 分类推导方法与数据来源声明 ---------- */
 function deriveMethod(c){
   var r=c.rule||'';
+  if(c.demo)return '演示填充（非真实分类判定）';
   if(c.status==='manual')return '专家判断（Expert judgement）';
   if(r.indexOf('加和法')>=0)return '加和法（Calculation method）';
   if(r.indexOf('通用浓度限值')>=0)return '加和法（Calculation method · 通用浓度限值）';
@@ -1359,7 +1360,8 @@ function deriveTable(){
       +'　　推导方法：'+deriveMethod(c)+'\n'
       +'　　判定依据：'+c.rule+'\n'
       +'　　数据来源：'+srcs
-      +(c.status==='manual'&&c.note?'\n　　判定理由：'+c.note+'（'+c.noteAt+' · 张工）':'');
+      +(c.demo&&c.note?'\n　　演示备注：'+c.note+'（'+c.noteAt+'）':
+        (c.status==='manual'&&c.note?'\n　　判定理由：'+c.note+'（'+c.noteAt+' · 张工）':''));
   }).join('\n');
 }
 /* ==================================================================
@@ -1749,7 +1751,7 @@ function euhAuto(){
   if(wz.project.market==='CN')return [];
   var out=[];
   (wz.classItems||[]).forEach(function(c){
-    if(c.status==='pending'||!c.result)return;
+    if(c.status==='pending'||c.status==='demo'||!c.result)return;
     if(c.id==='ed'&&c.result.indexOf('类别 1')>=0&&c.result.indexOf('类别 2')<0)out.push('EUH380');
     if(c.id==='ed'&&c.result.indexOf('类别 2')>=0)out.push('EUH381');
     if(c.id==='pmt'&&c.result!=='不分类')out.push('EUH450');
@@ -1808,7 +1810,9 @@ function renderStep4(){
   var lb=labelParts();
 
   var evs=items.map(function(c,i){
-    var st=c.status==='pending'
+    var st=c.demo
+      ?'<span class="tag orange dot-tag">演示填充 · 待专业核验</span>'
+      :c.status==='pending'
       ?(c.need==='confirm'?'<span class="tag blue dot-tag">待人工确认</span>':'<span class="tag orange dot-tag">待人工判断</span>')
       :(c.status==='manual'?'<span class="tag blue dot-tag">已人工调整</span>'
         :(c.status==='confirmed'?'<span class="tag green dot-tag">已采纳系统建议</span>':'<span class="tag green dot-tag">系统自动判定</span>'));
@@ -1829,12 +1833,12 @@ function renderStep4(){
         +'<div class="ev-f"><span class="k">数据来源</span><span class="v">'+srcs+'</span></div>'
         +'<div class="ev-f span2" style="grid-column:span 2"><span class="k">输入参数</span><span class="v">'+esc(c.input)+'</span></div>'
         +'<div class="ev-f" style="grid-column:span 2"><span class="k">计算公式与判定过程</span><span class="v"><span class="formula">'+esc(c.formula)+'</span></span></div>'
-        +(c.note?'<div class="ev-f" style="grid-column:span 2"><span class="k">人工调整备注</span><span class="v" style="color:var(--brand)">'+esc(c.note)+'（'+c.noteAt+' · 张工）</span></div>':'')
+        +(c.note?'<div class="ev-f" style="grid-column:span 2"><span class="k">'+(c.demo?'演示填充备注':'人工调整备注')+'</span><span class="v" style="color:var(--brand)">'+esc(c.note)+'（'+c.noteAt+(c.demo?'':' · 张工')+'）</span></div>':'')
       +'</div></div>';
   }).join('');
 
   var pureNote=!cn&&wz.formType==='pure'
-    ? '<div class="notice info"><div class="ni">i</div><div><b>纯物质（单物料）分类</b>直接采用该物质在 CLP Annex VI / GHS 中的<b style="display:inline">统一分类</b>，无需执行混合物浓度加和推导；以下结论即该物质本身的 GHS 分类。</div></div>'
+    ? '<div class="notice info" data-wz-explain><div class="ni">i</div><div><b>纯物质（单物料）分类</b>直接采用该物质在 CLP Annex VI / GHS 中的<b style="display:inline">统一分类</b>，无需执行混合物浓度加和推导；以下结论即该物质本身的 GHS 分类。</div></div>'
     : '';
   /* B4：混合物才需要加和法输入参数表；纯物质走统一分类，不展示 */
   var paramTbl=cn||wz.formType==='pure'?'':clpParamTable();
@@ -1845,7 +1849,7 @@ function renderStep4(){
     +'带虚线下划线的'+term('GHS')+'术语可悬停查看解释，不确定时可点「问 AI 助手」。</div></div>');
   $('wzBody').innerHTML=
     pureNote
-    +'<div class="notice info" id="complianceScope"><div class="ni">i</div><div>本原型完整演示欧盟 CLP 自动分类链路。中国市场已接通国内名单、OEL、SDS 模板和人工分类流程，但尚未配置中国 GHS 自动规则包，系统不会使用欧盟 CLP 结果冒充中国 GHS 结论。运输第 14 章支持人工结构化结论，尚未配置自动运输分类数据库与规则。</div></div>'
+    +'<div class="notice info" id="complianceScope" data-wz-explain><div class="ni">i</div><div>本原型完整演示欧盟 CLP 自动分类链路。中国市场已接通国内名单、OEL、SDS 模板和人工分类流程，但尚未配置中国 GHS 自动规则包，系统不会使用欧盟 CLP 结果冒充中国 GHS 结论。运输第 14 章支持人工结构化结论，尚未配置自动运输分类数据库与规则。</div></div>'
     +(cn?'':clpPackCallCard())
     +'<div class="notice grey"><div class="ni">§</div><div>分类框架：'+esc(evaluation.results.classification.framework.label)+
       '；分类待处理：'+pend.length+'；名单列入：'+(evaluation.results.lists.entryResults||[]).filter(function(x){return x.assessmentStatus!=='DATASET_UNAVAILABLE';}).length+
@@ -1855,7 +1859,7 @@ function renderStep4(){
     +'<div class="concl" style="margin-bottom:16px">'
       +'<div class="ghs-box"><h4>混合物 '+term('GHS')+' 危险分类结论</h4><div class="hz-list">'
         +items.filter(function(c){return c.status!=='pending';}).map(function(c){
-          return '<div class="hz-item"><span class="code">'+c.code.split(' ')[0]+'</span><span>'+esc(c.name)+' · <b>'+esc(c.result)+'</b></span><span style="margin-left:auto" class="tag '+(c.status==='manual'?'blue':'green')+'">'+(c.status==='manual'?'人工改判':(c.status==='confirmed'?'人工采纳':'自动'))+'</span></div>';
+          return '<div class="hz-item"><span class="code">'+c.code.split(' ')[0]+'</span><span>'+esc(c.name)+' · <b>'+esc(c.result)+'</b></span><span style="margin-left:auto" class="tag '+(c.demo?'orange':(c.status==='manual'?'blue':'green'))+'">'+(c.demo?'演示填充':(c.status==='manual'?'人工改判':(c.status==='confirmed'?'人工采纳':'自动')))+'</span></div>';
         }).join('')
         +pend.map(function(c){var conf=c.need==='confirm';
           return '<div class="hz-item" style="background:'+(conf?'var(--blue-bg)':'var(--orange-bg)')+';border-color:'+(conf?'var(--blue-b)':'var(--orange-b)')+'">'
@@ -1883,6 +1887,7 @@ function renderStep4(){
     +(cn?'':euhCard())
     +'<div class="card"><div class="card-hd"><h3>分类证据追溯</h3>'
       +'<span class="sub">共 '+items.length+' 条分类结论 · 逐条可审计</span>'
+      +(pend.length?'<button class="btn sm" onclick="wzDemoFillClass()">一键填充演示数据</button> ':'')
       +(pend.filter(function(c){return c.need==='confirm';}).length
         ? '<button class="btn sm primary" onclick="adoptAllSug()" title="仅采纳有建议值的待确认项；缺算式/缺输入的结论仍须逐条判断">✓ 采纳全部系统建议</button> '
         : '')
@@ -1894,6 +1899,7 @@ function renderStep4(){
       +'</div>'
       +'<div class="card-bd">'+evs+'</div></div>'
     +complianceEvaluationStep4Html(evaluation);
+  wzCollectPageNotes();
 }
 /* 从标题旁的待判定标签跳转到第一个待判定证据卡并短暂高亮 */
 function jumpPend(){
@@ -1932,6 +1938,25 @@ function adoptAllSug(){
   if(!n){toast('当前没有可采纳的系统建议项','warn');return;}
   renderStep4();wzUpdateFoot();
   toast('已采纳 '+n+' 项系统建议，'+cnt+' 条 H 短语写入标签要素','ok');
+}
+/* 仅供原型试走：系统建议可批量采纳；无可计算结论的条目保留显式演示占位。 */
+function wzDemoFillClass(){
+  var pending=(wz.classItems||[]).filter(function(c){return c.status==='pending';});
+  if(!pending.length){toast('当前没有待填充的分类项目','info');return;}
+  var at=nowStr(),placeholders=0;
+  pending.forEach(function(c){
+    c.demo=true;c.noteAt=at;
+    if(c.need==='confirm'&&c.result&&c.result!=='—'){
+      c.status='confirmed';
+      c.note='演示批量采纳系统建议；正式编制须由法规人员核对证据';
+    }else{
+      c.status='demo';c.result='演示占位（待专业核验）';c.code='—';
+      c.note='无可用自动结论；此项仅供原型流程演示，未作真实危害分类判定';
+      placeholders++;
+    }
+  });
+  renderStep4();wzUpdateFoot();
+  toast('已填充 '+pending.length+' 项演示数据，其中 '+placeholders+' 项仍需法规人员核验','info');
 }
 function adjClass(i){
   var c=wz.classItems[i];
@@ -1980,7 +2005,7 @@ function adjSave(i){
   if(!code){toast('请填写对应危险说明','warn');return;}
   var c=wz.classItems[i];
   var was=c.result;
-  c.result=$('adjRes').value;c.code=code;c.status='manual';c.note=note;c.noteAt=nowStr();
+  c.result=$('adjRes').value;c.code=code;c.status='manual';c.demo=false;c.note=note;c.noteAt=nowStr();
   closeModal();renderStep4();wzUpdateFoot();
   toast('分类「'+c.name+'」已'+(was==='—'?'完成判定':'调整为 '+c.result)+'，理由已记录','ok');
 }
@@ -2009,6 +2034,7 @@ var SDS_16=[
 /* 取某一危害类别的分类结论（供第 11 章逐端点输出） */
 function classOf(id){
   var c=(wz.classItems||[]).filter(function(x){return x.id===id;})[0];
+  if(c&&c.status==='demo')return c.result;
   return (c&&c.status!=='pending'&&c.result!=='不分类')?(c.result+'（'+c.code+'）'):'Not classified / 不分类';
 }
 /* 混合物经口 ATE 加和法估算：全部组分均有可用 ATE 时才计算，否则如实返回空
@@ -2279,13 +2305,14 @@ function accToggle(i){$('acc'+i).classList.toggle('open');}
 function accAll(open){for(var i=0;i<16;i++)$('acc'+i).classList.toggle('open',open);}
 function secEdit(i){
   var cur=wz.draftEdits[i]!==undefined?wz.draftEdits[i]:draftText(i);
-  var box=$('sec'+i);
-  box.outerHTML='<textarea class="ctrl" id="sec'+i+'" style="min-height:180px;font-size:12.8px;line-height:1.8">'+esc(cur)+'</textarea>';
-  var tools=$('acc'+i).querySelector('.acc-tools');
-  tools.innerHTML='<button class="btn sm primary" onclick="secSave('+i+')">保存修改</button><button class="btn sm" onclick="renderStep5();$(\'acc'+i+'\').classList.add(\'open\')">取消</button><span style="font-size:11.5px;color:var(--orange);margin-left:4px">临时编辑仅作用于当前草案，不回写基础数据库</span>';
+  openModal({title:'临时编辑 · 第 '+(i+1)+' 章 '+SDS_16[i].n,width:1000,cls:'sds-scope sds-chapter-editor',
+    body:'<div class="field"><label for="sdsChapterText">章节正文</label><textarea class="ctrl" id="sdsChapterText">'+esc(cur)+'</textarea>'
+      +'<span class="help">修改仅作用于当前草案，不回写基础数据库。</span></div>',
+    footer:'<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" onclick="secSave('+i+')">保存修改</button>'});
 }
 function secSave(i){
-  wz.draftEdits[i]=$('sec'+i).value;
+  wz.draftEdits[i]=$('sdsChapterText').value;
+  closeModal();
   renderStep5();$('acc'+i).classList.add('open');
   toast('第 '+(i+1)+' 章「'+SDS_16[i].n+'」已保存修改','ok');
 }
@@ -2302,13 +2329,14 @@ function renderStep6(){
   var p=wz.project;
   var release=sdsActiveRelease();
   var pend=(wz.classItems||[]).filter(function(c){return c.status==='pending';}).length;
+  var demo=(wz.classItems||[]).filter(function(c){return c.demo;}).length;
   var miss=wzMissCount();
   var transport=transportAssessmentStatus();
   var checks=[
     ['项目基础信息完整','ok','产品名称、目标市场、语言、投放日期均已填写'],
     ['配方已冻结','ok','快照 FORM-WPU320-V1.0 · '+wz.frozenAt],
     ['受控数据齐套',miss?'err':'ok',miss?(miss+' 项待补充'):'全部数据项已具备来源'],
-    ['分类结论已判定',pend?'err':'ok',pend?(pend+' 项待人工判定'):'含 '+(wz.classItems||[]).filter(function(c){return c.status==='manual';}).length+' 项人工调整'],
+    [demo?'分类结论待核验':'分类结论已判定',pend?'err':demo?'warn':'ok',pend?(pend+' 项待人工判定'):demo?(demo+' 项为演示填充，须由法规人员逐项核验'):'含 '+(wz.classItems||[]).filter(function(c){return c.status==='manual';}).length+' 项人工调整'],
     ['第 14 章运输结论',transport==='NOT_ASSESSED'||transport==='STALE'?'err':'ok',
       transport==='NOT_ASSESSED'?'尚未人工评估':transport==='STALE'?'原结论需重新确认':'已人工确认'],
     ['16 章节结构齐套','ok','已生成 16 章，其中 '+Object.keys(wz.draftEdits).length+' 章经人工编辑'],
@@ -2358,7 +2386,8 @@ function renderStep6(){
       +'　运输结论：'+esc(release.review.transportAssessment&&release.review.transportAssessment.status||'旧版未记录')
       +'　SDS 模板：'+esc(release.evaluation.versions.template)
       +'<div class="muted">本版本已冻结，后续法规或模板升级不会改变本次发布内容。</div></div></div>':'')
-    +'<div class="notice warn"><div class="ni">!</div><div><b>合规责任提示</b>正式发布版本需通过 EHS 与法规人员审核，<b style="display:inline">系统不替代人工合规责任</b>。系统生成内容仅作为编制辅助，最终文本的准确性由发布责任人承担。</div></div>';
+    +'<div class="notice warn" data-wz-explain><div class="ni">!</div><div><b>合规责任提示</b>正式发布版本需通过 EHS 与法规人员审核，<b style="display:inline">系统不替代人工合规责任</b>。系统生成内容仅作为编制辅助，最终文本的准确性由发布责任人承担。</div></div>';
+  wzCollectPageNotes();
 }
 function wzSubmit(){
   sdsConfirm('提交审核','确认将当前 SDS 草案提交至 <b>EHS 合规部 + 法规事务</b> 审核？<br><span style="color:var(--muted)">提交后草案进入审核流程，编辑将被锁定。</span>',function(){
@@ -2394,6 +2423,7 @@ var DB_CFG={
     desc:'企业内部物料的唯一身份档案，是配方、SDS 与法规匹配的基础。',
     cols:[{k:'code',t:'物料编码',w:'130px',mono:true},{k:'name',t:'物料名称'},{k:'type',t:'物料类型',w:'92px'},
           {k:'form',t:'物质形态',w:'140px',tag:true},{k:'_comp',t:'组分数',w:'72px'},{k:'spec',t:'规格 / 型号',w:'150px'},{k:'_sup',t:'主供应商',w:'160px'},
+          {k:'manufacturer',t:'生产厂商',w:'180px'},
           {k:'substType',t:'替代类型',w:'96px',fmt:function(r){ if(!r.substType)return '<span class="muted">—</span>'; return '<span class="tag '+(r.substType==='等值替代'?'green':'orange')+'">'+esc(r.substType)+'</span>'; }},
           {k:'owner',t:'责任人',w:'90px'},
           {k:'status',t:'状态',w:'80px',tag:true},
@@ -2406,12 +2436,15 @@ var DB_CFG={
             {k:'substType',t:'替代类型',type:'select',opts:['等值替代','降级替代']},
             {k:'substTo',t:'替代料编码',ph:'如 MAT-00904，停用后由哪只物料接替'},
             {k:'stopDate',t:'停用时间',type:'date'},
+            {k:'_supCode',t:'主供应商',type:'supplier'},
+            {k:'manufacturer',t:'生产厂商',ph:'输入厂商名称，可选择联想结果'},
+            {k:'_supNo',t:'供应商货号',ph:'供应商对应的物料货号'},
             {k:'spec',t:'规格 / 型号'},{k:'owner',t:'责任人'},{k:'remark',t:'备注',type:'textarea',span:true}],
     filter:{k:'type',label:'全部物料类型',opts:['原料','中间体','成品','助剂','包装材料']},
-    kwKeys:['code','name','spec','_sup'],
-    sample:[{code:'MAT-00901',name:'水性丙烯酸乳液 AC-55',type:'原料',spec:'55% 固含',owner:'李工',status:'正常'},
-            {code:'MAT-00902',name:'流平剂 LV-08',type:'助剂',spec:'工业级',owner:'李工',status:'正常'},
-            {code:'MAT-00903',name:'消泡剂 DF-12',type:'助剂',spec:'有机硅型',owner:'王工',status:'正常'}],
+    kwKeys:['code','name','spec','_sup','manufacturer'],
+    sample:[{code:'MAT-00901',name:'水性丙烯酸乳液 AC-55',type:'原料',spec:'55% 固含',owner:'李工',status:'正常',_sup:'厂内自制',manufacturer:'厂内自制'},
+            {code:'MAT-00902',name:'流平剂 LV-08',type:'助剂',spec:'工业级',owner:'李工',status:'正常',_sup:'厂内自制',manufacturer:'厂内自制'},
+            {code:'MAT-00903',name:'消泡剂 DF-12',type:'助剂',spec:'有机硅型',owner:'王工',status:'正常',_sup:'厂内自制',manufacturer:'厂内自制'}],
     rows:sdsMk([
       {code:'MAT-00127',name:'水性聚氨酯涂饰树脂 WPU-320',type:'成品',form:'混合物（混合料）',spec:'35% 固含 / 200kg 桶',owner:'张工',status:'正常',created:'2025-11-03 09:22',remark:'皮革表面涂饰主料',
         recipe:[{cas:'9009-54-5',name:'聚氨酯预聚体',conc:'40.00',range:'30–50%',secret:false},{cas:'7732-18-5',name:'水',conc:'58.00',range:'48–68%',secret:false},{cas:'111-76-2',name:'成膜助剂（乙二醇单丁醚等）',conc:'2.00',range:'1–5%',secret:true},{cas:'124-68-5',name:'pH 调节剂（AMP-95）',conc:'0.50',range:'0.5–3%',secret:true}]},
@@ -2825,7 +2858,8 @@ function dbEdit(id){
   var body='<div class="form-grid">'+c.fields.map(function(fd){
     var v=r[fd.k]||'';
     var ctrl;
-    if(fd.type==='select')ctrl='<select class="ctrl" id="fx_'+fd.k+'"><option value="">请选择</option>'+fd.opts.map(function(o){return '<option '+(o===v?'selected':'')+'>'+o+'</option>';}).join('')+'</select>';
+    if(dbKey==='material'&&fd.type==='supplier')ctrl=matSupplierSelect(r);
+    else if(fd.type==='select')ctrl='<select class="ctrl" id="fx_'+fd.k+'"><option value="">请选择</option>'+fd.opts.map(function(o){return '<option '+(o===v?'selected':'')+'>'+o+'</option>';}).join('')+'</select>';
     else if(fd.type==='textarea')ctrl='<textarea class="ctrl" id="fx_'+fd.k+'" style="min-height:64px" placeholder="'+(fd.ph||'')+'">'+esc(v)+'</textarea>';
     else if(fd.type==='date')ctrl='<input class="ctrl" type="date" id="fx_'+fd.k+'" value="'+esc(v)+'">';
     else ctrl='<input class="ctrl" id="fx_'+fd.k+'" value="'+esc(v)+'" placeholder="'+(fd.ph||'')+'">';
@@ -2846,7 +2880,7 @@ function dbEdit(id){
   }
   openModal({title:(id?'编辑':'新增')+' · '+c.title,width:600,body:body,
     footer:'<div class="left">带 * 为必填项</div><button class="btn" onclick="closeModal()">取消</button><button class="btn primary" onclick="dbSave('+(id?"'"+id+"'":'null')+')">保存</button>'});
-  if(dbKey==='material')matRecipeRender();
+  if(dbKey==='material'){matRecipeRender();matSupplierFormInit();}
   if(dbKey==='component')compClpRender();
 }
 /* 物料编辑：配方组成可编辑子表 */
@@ -2888,6 +2922,7 @@ function dbSave(id){
   });
   if(bad){toast('请填写必填项：'+bad,'warn');return;}
   if(dbKey==='material'){
+    if(!matCollectSupplier(data))return;
     data.form=_edForm;
     var pure=_edForm==='纯物质（单物料）';
     if(pure){
@@ -2909,6 +2944,7 @@ function dbSave(id){
       clpSupplementalUpsert(cas,p,{sourceType:'enterprise-supplement',sourceRef:'组分基础信息',by:'当前用户'});
     }catch(e){toast(e.message,'warn');return;}
   }
+  if(dbKey==='material')matSaveSupplier(data,id?c.rows.filter(function(x){return x._id===id;})[0].code:null);
   if(id){
     var r=c.rows.filter(function(x){return x._id===id;})[0];
     Object.keys(data).forEach(function(k){r[k]=data[k];});
@@ -2918,7 +2954,9 @@ function dbSave(id){
     c.rows.unshift(data);dbPage=1;
     toast('新增成功，已加入列表首行','ok');
   }
-  closeModal();dbRender();
+  closeModal();
+  if(dbKey==='material'&&curPage==='bd:rawmat-detail')matOpen(data.code);
+  else dbRender();
 }
 /* ---- 删除 / 批量删除 ---- */
 function dbDel(id){
@@ -3421,8 +3459,8 @@ function sdsWrap(inner){
     +inner+'</div>';
 }
 /* noteKey 有值时：desc 不再平铺在标题下，改为标题右侧「说明」按钮 + 可展开面板 */
-function sdsHead(id,title,desc,acts,descId,noteKey){
-  var n=noteKey?noteBlock(noteKey,desc):null;
+function sdsHead(id,title,desc,acts,descId,noteKey,noteLabel){
+  var n=noteKey?noteBlock(noteKey,desc,noteLabel):null;
   /* 折叠说明模式下标题与面板间距收紧（面板自带 16px 下边距） */
   var mb=n?'10px':'16px';
   return '<div class="page-hd" style="display:flex;align-items:flex-start;gap:16px;margin-bottom:'+mb+'">'
@@ -3540,10 +3578,32 @@ function renderGhs(){
 }
 
 /* ---------- SDS 生成向导（6 步） ---------- */
-/* 步骤级操作说明：统一渲染在步骤导航下方，与内容区分离（避免整屏宽横幅插在内容中间） */
+/* 步骤标题常驻；操作说明收进向导页右上角的「页面说明」。 */
 function wzGuide(html){
   var g=$('wzGuide');
-  if(g)g.innerHTML=html||'';
+  if(!g)return;
+  var tmp=document.createElement('div');tmp.innerHTML=html||'';
+  var notice=tmp.querySelector('.notice'),body=notice&&notice.lastElementChild;
+  var title=body&&body.querySelector('b');
+  if(!title){g.innerHTML='';return;}
+  var heading=title.outerHTML;
+  title.remove();
+  g.innerHTML='<div class="'+notice.className+'">'+notice.firstElementChild.outerHTML+'<div>'+heading+'</div></div>';
+  var panel=$('np-sds-wizard');
+  if(panel){
+    var content=panel.querySelector('.np-x');
+    if(content)content.innerHTML='<b>'+heading.replace(/<[^>]*>/g,'')+'</b><br>'+body.innerHTML;
+  }
+}
+function wzCollectPageNotes(){
+  var panel=$('np-sds-wizard'),body=$('wzBody');
+  if(!panel||!body)return;
+  var content=panel.querySelector('.np-x');
+  if(!content)return;
+  body.querySelectorAll('[data-wz-explain]').forEach(function(el){
+    content.appendChild(el);
+    el.removeAttribute('data-wz-explain');
+  });
 }
 function renderSdsWizard(){
   var host=$('pageHost');
@@ -3551,7 +3611,7 @@ function renderSdsWizard(){
     +sdsHead('','SDS 文档生成向导',
       '按 6 步标准流程完成一份 SDS 的创建、配方冻结、数据汇集、分类判定、草案生成与审核发布。',
       '<span class="tag blue" id="wzProjNo">项目号：SDS-2026-0158</span>'
-      +'<button class="btn" onclick="resetWizard()">重新开始</button>')
+      +'<button class="btn" onclick="resetWizard()">重新开始</button>',null,'sds-wizard','页面说明')
     +'<div class="steps" id="wzSteps"></div>'
     +'<div id="wzGuide"></div>'
     +'<div id="wzBody"></div>'

@@ -179,8 +179,7 @@ mdReg({
       sub:mono(s.code)+' · '+esc(s.type)+' · '+esc(s.region)+' · 合作起始 '+esc(s.since)};
   },
   acts:function(s){
-    return '<button class="btn" onclick="showPage(\'bd:sup-data\')">供应商原料数据</button>'+
-           '<button class="btn" disabled title="本原型未接入评审单创建">发起评审（未接入）</button>';
+    return '<button class="btn" onclick="showPage(\'bd:sup-data\')">供应商原料数据</button>';
   },
   warns:function(s){
     var w=[];
@@ -217,21 +216,21 @@ mdReg({
        empty:'该供应商尚未维护资质证照'},
       {t:'供货物料',sub:mats.length+' 种在册（一物一供：同一物料只挂一家主供）',type:'tbl',
        cols:[{t:'物料编码',w:'120px'},{t:'物料名称'},{t:'供方货号',w:'130px'},
-             {t:'供货周期',w:'90px'},{t:'参考价',w:'110px'},{t:'物料状态',w:'90px'},{t:'操作',w:'90px'}],
+             {t:'物料状态',w:'90px'},{t:'操作',w:'90px'}],
        rows:mats.map(function(m){
-         return [mono(m.code),esc(m.name),mono(m.no||'—'),esc(m.lead||'—'),esc(m.price||'—'),
+         return [mono(m.code),esc(m.name),mono(m.no||'—'),
                  gtag(m.status),mdLink('原料详情','matOpen(\''+esc(m.code)+'\')')];
        }),
        empty:'该供应商暂无在册供货物料'},
       {t:'到货批次',sub:'近 12 个月到货与放行记录',type:'tbl',
        cols:[{t:'批次号',w:'120px'},{t:'物料'},{t:'到货日期',w:'105px'},{t:'有效期至',w:'105px'},
-             {t:'数量 (kg)',w:'95px',num:true},{t:'批次状态',w:'90px'},{t:'检测报告',w:'140px'}],
+             {t:'规格',w:'110px'},{t:'数量',w:'95px',num:true},{t:'批次状态',w:'90px'},{t:'检测报告',w:'140px'}],
        rows:bat.map(function(b){
          var m=(typeof matByCode==='function')?matByCode(b.mat):null;
          return [mono(b.no),(m?esc(m.name):esc(b.mat)),
-                 esc(b.arrive),esc(b.expiry),esc(b.qty),
+                 esc(b.arrive),esc(b.expiry),esc(b.spec),esc(b.qty),
                  gtag(b.status),
-                 (b.report&&b.report!=='—'?mono(b.report):'<span class="muted">—</span>')];
+                 (b.report&&b.report!=='—'?mono(b.report):'<span class="muted">未上传附件</span>')];
        }),
        empty:'暂无到货批次记录'}
     ];

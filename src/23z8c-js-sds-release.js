@@ -24,7 +24,7 @@ function sdsReleaseReviewSnapshot(evaluation){
       if(!system)throw new Error('分类项目 '+final.id+' 缺少原始系统建议，请重新评估。');
       return {id:final.id,name:final.name,systemResult:system.result,systemCode:system.code,
         systemStatus:system.status,finalResult:final.result,finalCode:final.code,
-        finalStatus:final.status,decisionType:final.status==='confirmed'?'confirmed':
+        finalStatus:final.status,decisionType:final.demo?'demo':final.status==='confirmed'?'confirmed':
           final.status==='manual'?'manual':'automatic',
         changed:system.result!==final.result||system.code!==final.code||system.status!==final.status,
         reason:final.note||'',decidedAt:final.noteAt||evaluation.evaluatedAt};
