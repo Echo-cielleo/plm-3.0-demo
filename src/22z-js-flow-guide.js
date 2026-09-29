@@ -110,7 +110,7 @@ regPage('comp:guide',{
     var law='<section class="card flow-guide-card"><div class="card-hd"><h3>法规库维护 <span class="sub">明确数据来源、维护责任与版本变化处理</span></h3></div><div class="flow-guide-body">'+guideLine([
       guideNode('01','官网人工下载','法规专员按复审周期从各法规官网取得正式文件。',null,['线下操作','官网来源']),
       guideNode('02','导入向导演示','进入对应法规库维护页查看导入步骤；原型不解析真实上传文件。',"showPage('law:reach')",['分库维护']),
-      guideNode('03','核对版本差异示例','当前差异内容为演示数据，正式使用须由法规专员核对。',null,['人工核对','示例 diff'])
+      guideNode('03','核对版本差异示例','当前差异内容为示例内容，正式使用须由法规专员核对。',null,['人工核对','示例 diff'])
     ])+regulationCards()+'<div class="notice warn flow-guide-alert"><div class="ni">!</div><div><b>维护模式：</b>法规库采用“专员定期下载维护”，系统不支持自动联网更新；法规超过复审期时，在统一查询页与 SDS 文档列表标为“待复审”；引用的不是最新版本时标为“需改版”。状态只描述语义、不用颜色区分。</div></div><div class="flow-guide-actions"><button class="btn" onclick="showPage(\'law:query\')">统一查询</button><button class="btn btn-primary" onclick="showPage(\'law:reach\')">维护法规库</button></div></div></section>';
     guidePage('流程引导','合规管理有两条并列主线：SDS 编写由系统按配方的组分与浓度自动匹配法规、计算分类并填充文档；法规统一查询供人工随时查阅某一物质在各法规中的列入情况，两者互不为上下游。法规库版本由法规专员定期下载维护。',sds+lawQueryFlowCard()+law);
   }

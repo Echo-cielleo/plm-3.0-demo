@@ -251,7 +251,8 @@ with sync_playwright() as pw:
     print('\n=== 运输法规库（law:trans 占位 · 多运输方式） ===')
     page.evaluate("()=>showPage('law:trans')");page.wait_for_timeout(250)
     tt=page.locator('#pageHost').inner_text()
-    ok('数据源待确认、本期仅占位' in tt,'标注数据源待确认、本期仅占位')
+    ok('数据源待确认' in tt and '本期未接入' in tt and '本期仅占位' not in tt,
+       '运输法规库标注数据源待确认、本期未接入（文案由「占位」改「未接入」）')
     ok('UN TDG' in tt and 'IMDG' in tt and 'IATA' in tt and 'GB 6944' in tt and 'GB 12268' in tt,'列明各运输方式适用规则')
     ok(page.locator('.law-card').count()==4,'以 4 张卡片体现「多运输方式」')
     ok('独立的法规体系' in tt and 'CLP 只管分类与标签、不管运输' in tt,'写明运输属独立法规体系')

@@ -56,11 +56,18 @@ function sdsDocBodyHtml(){return sdsEffectiveBodyHtml();}
 
 /* 预览外壳：灰底 + 白纸 + 页脚（依赖页面 CSS 视觉） */
 function sdsDocPreviewHtml(){
-  var release=wz.published&&sdsActiveRelease();
+  var release=wz.published&&sdsActiveRelease(),pj=wz.project||{};
   return '<div class="doc-shell"><div class="doc-page">'
     + sdsDocBodyHtml()
-    + '<div class="doc-foot">PLM 3.0 演示原型 · 第 5 步交付预览 · '
-      + esc(release?release.document.productName:wz.project.product || '未命名产品') + '</div>'
+    /* 页脚按真实 SDS 的样子给要素：责任主体 · 产品 · 版本 · 编制日期；
+       末尾保留演示标识——原型对外试用时必须让人知道这不是经签署的正式 SDS。 */
+    + '<div class="doc-foot">'
+      + esc(pj.orName || '（供应商 / 责任主体未填）')
+      + '　·　' + esc(release?release.document.productName:(pj.product || '未命名产品'))
+      + '　·　' + esc(release?release.documentVersion:(wz.docVer || 'V1.0'))
+      + '　·　编制日期 ' + esc(todayStr())
+      + '<br>PLM 3.0 演示原型 · 未经签署，不作为正式 SDS 对外提供'
+      + '</div>'
     + '</div></div>';
 }
 

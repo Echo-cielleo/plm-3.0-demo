@@ -11,7 +11,7 @@
      并预留「查看豁免清单」入口（占位）
    · 中国 RoHS 为独立体系（工信部《电器电子产品有害物质限制使用管理办法》），
      是否纳入待业务确认，本页不做
-   · law:trans 运输法规库：本期仍为占位页，页面内注明「数据源待确认、本期仅占位」；
+   · law:trans 运输法规库：本期仍未接入数据源，页面内注明「数据源待确认、本期未接入」；
      运输需体现「多运输方式」
    · law:oel 职业接触限值（OEL）**已升级为独立维护页面**（2026-09-18 第三十轮），
      注册移交 23z9-js-oel.js，本分片仅保留 law:trans 占位页与 lawStripHTML 工具
@@ -128,12 +128,12 @@ function rohsExempt(){
 function transRender(){
   $('pageHost').innerHTML='<div class="sds-scope law-page">'+
     sdsHead('transTitle','运输法规库','危险货物运输法规（UN TDG / IMDG / IATA 与国内 GB 系列）· 用于 SDS 第 14 章「运输信息」','')+
-    '<div class="notice warn" style="margin-bottom:14px"><div class="ni">!</div><div><b>数据源待确认、本期仅占位。</b>运输属于独立的法规体系，CLP 只管分类与标签、不管运输。运输自动规则数据源仍待建立。当前 SDS 第 14 章已支持人工结构化运输结论与发布快照冻结，但不代表系统具备自动运输分类能力。</div></div>'+
+    '<div class="notice warn" style="margin-bottom:14px"><div class="ni">!</div><div><b>数据源待确认，本期未接入。</b>运输属于独立的法规体系，CLP 只管分类与标签、不管运输。运输自动规则数据源仍待建立。当前 SDS 第 14 章已支持人工结构化运输结论与发布快照冻结，但不代表系统具备自动运输分类能力。</div></div>'+
     '<div class="kpi-row">'+
       '<div class="kpi"><span>运输方式</span><b>4</b><small>公路 / 铁路 · 海运 · 空运 · 国内</small></div>'+
       '<div class="kpi"><span>数据源</span><b style="font-size:15px">4 类（待确认）</b><small>UN TDG · IMDG · IATA · GB 6944/12268</small></div>'+
       '<div class="kpi"><span>联动功能</span><b style="font-size:15px">SDS 第 14 章</b><small>运输信息</small></div>'+
-      '<div class="kpi"><span>当前状态</span><b style="font-size:15px;color:var(--orange)">占位 · 未接入</b><small>数据版本：规划中</small></div>'+
+      '<div class="kpi"><span>当前状态</span><b style="font-size:15px;color:var(--orange)">未接入 · 数据源待确认</b><small>数据版本：规划中</small></div>'+
     '</div>'+
     '<div class="card"><div class="toolbar"><b style="font-size:13.5px">按运输方式适用规则（规划）</b></div>'+
       '<div class="law-cards">'+
@@ -158,7 +158,7 @@ function transRender(){
     '<div class="card" style="padding:26px;text-align:center">'+
       '<div style="font-size:34px;color:#b6c2d1">▤</div>'+
       '<div style="font-size:15px;font-weight:650;margin:8px 0 4px">运输法规库 · 规划中</div>'+
-      '<div class="muted" style="font-size:12.5px">本期仅占位，数据源与运输方式覆盖范围待业务确认后录入</div>'+
+      '<div class="muted" style="font-size:12.5px">本期未接入，数据源与运输方式覆盖范围待业务确认后录入</div>'+
     '</div>'+
     '</div>';
 }

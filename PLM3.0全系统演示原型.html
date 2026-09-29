@@ -4022,7 +4022,7 @@ regPage('comp:guide',{
     var law='<section class="card flow-guide-card"><div class="card-hd"><h3>法规库维护 <span class="sub">明确数据来源、维护责任与版本变化处理</span></h3></div><div class="flow-guide-body">'+guideLine([
       guideNode('01','官网人工下载','法规专员按复审周期从各法规官网取得正式文件。',null,['线下操作','官网来源']),
       guideNode('02','导入向导演示','进入对应法规库维护页查看导入步骤；原型不解析真实上传文件。',"showPage('law:reach')",['分库维护']),
-      guideNode('03','核对版本差异示例','当前差异内容为演示数据，正式使用须由法规专员核对。',null,['人工核对','示例 diff'])
+      guideNode('03','核对版本差异示例','当前差异内容为示例内容，正式使用须由法规专员核对。',null,['人工核对','示例 diff'])
     ])+regulationCards()+'<div class="notice warn flow-guide-alert"><div class="ni">!</div><div><b>维护模式：</b>法规库采用“专员定期下载维护”，系统不支持自动联网更新；法规超过复审期时，在统一查询页与 SDS 文档列表标为“待复审”；引用的不是最新版本时标为“需改版”。状态只描述语义、不用颜色区分。</div></div><div class="flow-guide-actions"><button class="btn" onclick="showPage(\'law:query\')">统一查询</button><button class="btn btn-primary" onclick="showPage(\'law:reach\')">维护法规库</button></div></div></section>';
     guidePage('流程引导','合规管理有两条并列主线：SDS 编写由系统按配方的组分与浓度自动匹配法规、计算分类并填充文档；法规统一查询供人工随时查阅某一物质在各法规中的列入情况，两者互不为上下游。法规库版本由法规专员定期下载维护。',sds+lawQueryFlowCard()+law);
   }
@@ -10195,11 +10195,18 @@ function sdsDocBodyHtml(){return sdsEffectiveBodyHtml();}
 
 /* 预览外壳：灰底 + 白纸 + 页脚（依赖页面 CSS 视觉） */
 function sdsDocPreviewHtml(){
-  var release=wz.published&&sdsActiveRelease();
+  var release=wz.published&&sdsActiveRelease(),pj=wz.project||{};
   return '<div class="doc-shell"><div class="doc-page">'
     + sdsDocBodyHtml()
-    + '<div class="doc-foot">PLM 3.0 演示原型 · 第 5 步交付预览 · '
-      + esc(release?release.document.productName:wz.project.product || '未命名产品') + '</div>'
+    /* 页脚按真实 SDS 的样子给要素：责任主体 · 产品 · 版本 · 编制日期；
+       末尾保留演示标识——原型对外试用时必须让人知道这不是经签署的正式 SDS。 */
+    + '<div class="doc-foot">'
+      + esc(pj.orName || '（供应商 / 责任主体未填）')
+      + '　·　' + esc(release?release.document.productName:(pj.product || '未命名产品'))
+      + '　·　' + esc(release?release.documentVersion:(wz.docVer || 'V1.0'))
+      + '　·　编制日期 ' + esc(todayStr())
+      + '<br>PLM 3.0 演示原型 · 未经签署，不作为正式 SDS 对外提供'
+      + '</div>'
     + '</div></div>';
 }
 
@@ -15033,7 +15040,7 @@ complianceRegisterMethod({code:'M-LIST',version:'1.0.0-demo',name:'名单命中�
      并预留「查看豁免清单」入口（占位）
    · 中国 RoHS 为独立体系（工信部《电器电子产品有害物质限制使用管理办法》），
      是否纳入待业务确认，本页不做
-   · law:trans 运输法规库：本期仍为占位页，页面内注明「数据源待确认、本期仅占位」；
+   · law:trans 运输法规库：本期仍未接入数据源，页面内注明「数据源待确认、本期未接入」；
      运输需体现「多运输方式」
    · law:oel 职业接触限值（OEL）**已升级为独立维护页面**（2026-09-18 第三十轮），
      注册移交 23z9-js-oel.js，本分片仅保留 law:trans 占位页与 lawStripHTML 工具
@@ -15150,12 +15157,12 @@ function rohsExempt(){
 function transRender(){
   $('pageHost').innerHTML='<div class="sds-scope law-page">'+
     sdsHead('transTitle','运输法规库','危险货物运输法规（UN TDG / IMDG / IATA 与国内 GB 系列）· 用于 SDS 第 14 章「运输信息」','')+
-    '<div class="notice warn" style="margin-bottom:14px"><div class="ni">!</div><div><b>数据源待确认、本期仅占位。</b>运输属于独立的法规体系，CLP 只管分类与标签、不管运输。运输自动规则数据源仍待建立。当前 SDS 第 14 章已支持人工结构化运输结论与发布快照冻结，但不代表系统具备自动运输分类能力。</div></div>'+
+    '<div class="notice warn" style="margin-bottom:14px"><div class="ni">!</div><div><b>数据源待确认，本期未接入。</b>运输属于独立的法规体系，CLP 只管分类与标签、不管运输。运输自动规则数据源仍待建立。当前 SDS 第 14 章已支持人工结构化运输结论与发布快照冻结，但不代表系统具备自动运输分类能力。</div></div>'+
     '<div class="kpi-row">'+
       '<div class="kpi"><span>运输方式</span><b>4</b><small>公路 / 铁路 · 海运 · 空运 · 国内</small></div>'+
       '<div class="kpi"><span>数据源</span><b style="font-size:15px">4 类（待确认）</b><small>UN TDG · IMDG · IATA · GB 6944/12268</small></div>'+
       '<div class="kpi"><span>联动功能</span><b style="font-size:15px">SDS 第 14 章</b><small>运输信息</small></div>'+
-      '<div class="kpi"><span>当前状态</span><b style="font-size:15px;color:var(--orange)">占位 · 未接入</b><small>数据版本：规划中</small></div>'+
+      '<div class="kpi"><span>当前状态</span><b style="font-size:15px;color:var(--orange)">未接入 · 数据源待确认</b><small>数据版本：规划中</small></div>'+
     '</div>'+
     '<div class="card"><div class="toolbar"><b style="font-size:13.5px">按运输方式适用规则（规划）</b></div>'+
       '<div class="law-cards">'+
@@ -15180,7 +15187,7 @@ function transRender(){
     '<div class="card" style="padding:26px;text-align:center">'+
       '<div style="font-size:34px;color:#b6c2d1">▤</div>'+
       '<div style="font-size:15px;font-weight:650;margin:8px 0 4px">运输法规库 · 规划中</div>'+
-      '<div class="muted" style="font-size:12.5px">本期仅占位，数据源与运输方式覆盖范围待业务确认后录入</div>'+
+      '<div class="muted" style="font-size:12.5px">本期未接入，数据源与运输方式覆盖范围待业务确认后录入</div>'+
     '</div>'+
     '</div>';
 }
@@ -17045,6 +17052,161 @@ function secJudgeGuide(names,formal){
     +'<span class="muted" style="font-size:11.5px;margin-left:8px">'
     +esc(names.join('、'))+' 缺少可靠来源依据，系统不产出结论；判定入口在第 4 步分类评估。</span></div>';
 }
+
+</script>
+<script>
+/* ==================================================================
+   [23z9c] 第 5 步两处「防错过」提示
+
+   1) 交付预览的版本来源条
+      交付预览（dv）展示的是「已发布快照」还是「最新草案」，此前没有任何标识：
+      发布过一次之后，快照被冻结在本地存档里，之后怎么改草案、怎么强刷浏览器，
+      预览页都还是发布那一刻的老正文 —— 看起来像「改了没生效 / 缓存问题」。
+      这里在文档纸张之外（不进 Word 导出、不属于 SDS 正文）加一条来源说明：
+      明确写出当前看的是哪个版本、快照之后草案有没有再动过，并可一键切换。
+
+   2) 编制视图顶部的人工待办清单
+      第 11 / 12 / 14 章的缺口此前只在各自章节标题上有一个小标签，
+      章节收起时完全看不见，编制人员很容易漏掉（尤其第 14 章必须人工维护）。
+      这里在编制视图顶部汇总「必须动手」的红项，并给出直达处理入口。
+
+   范围：新分片，零侵入 —— 全部通过包装既有函数实现，不改旧文件渲染逻辑。
+   ================================================================== */
+
+/* ---------- 1. 交付预览：版本来源 ---------- */
+
+/* 当前是否展示发布快照（previewSource='draft' 时强制看草案） */
+function sdsPreviewIsRelease(){
+  return !!(wz.published && sdsActiveRelease() && wz.previewSource !== 'draft');
+}
+/* 发布快照之后，草案正文是否又变过（每次渲染多算一次，原型可接受） */
+function sdsPreviewDraftChanged(){
+  var r = wz.published && sdsActiveRelease();
+  if(!r) return false;
+  try{ return sdsDraftBodyHtml() !== r.document.bodyHtml; }catch(e){ return false; }
+}
+function sdsPreviewShowDraft(){ wz.previewSource = 'draft'; renderStep5(); toast('已切换到最新草案','ok'); }
+function sdsPreviewShowRelease(){ wz.previewSource = ''; renderStep5(); toast('已切换到已发布版本','ok'); }
+
+/* 来源条：位于白纸之外的灰底区，属工作台提示，不进 SDS 正文、不进 Word 导出 */
+function sdsPreviewBanner(){
+  var r = wz.published && sdsActiveRelease();
+  var h = '<div class="notice ' + (sdsPreviewDraftChanged() ? 'warn' : (r && !sdsPreviewIsRelease() ? 'warn' : 'info')) + '"'
+        + ' style="margin:0 0 10px"><div class="ni">' + (sdsPreviewDraftChanged() ? '!' : 'i') + '</div><div>';
+  if(sdsPreviewIsRelease()){
+    h += '<b>当前展示：' + esc(r.documentVersion) + ' 发布版本</b>'
+       + '<span class="muted" style="font-size:11.5px;margin-left:6px">'
+       + '（发布于 ' + esc(r.publishedAt || '—') + '，审核人 ' + esc((r.reviewer && r.reviewer.name) || '—') + '）</span>';
+    if(sdsPreviewDraftChanged())
+      h += '<br>发布之后草案又有改动，本页按法规口径仍以发布版为准，不体现这些改动；'
+         + '如需在正式文档中体现，请回到编制视图发布新版本号。'
+         + '<div style="margin-top:6px"><button class="btn sm" onclick="sdsPreviewShowDraft()">查看最新草案</button></div>';
+    else
+      h += '<br>当前草案与发布版本内容一致。';
+  }else{
+    h += '<b>当前展示：最新草案（未发布' + (r ? '，已发布版本为 ' + esc(r.documentVersion) : '') + '）</b>'
+       + '<br>内容随编制实时变化。';
+    if(r)
+      h += '<div style="margin-top:6px"><button class="btn sm" onclick="sdsPreviewShowRelease()">回到 ' + esc(r.documentVersion) + ' 发布版本</button></div>';
+  }
+  return h + '</div></div>';
+}
+
+/* 让「当前预览的是哪一份」真正生效：包一层，不改动旧函数的既有分支 */
+(function(){
+  var _eff = sdsEffectiveBodyHtml;
+  sdsEffectiveBodyHtml = function(){
+    var r = wz.published && sdsActiveRelease();
+    if(wz.previewSource === 'draft' || !r) return sdsDraftBodyHtml();
+    return r.document.bodyHtml;
+  };
+  var _pv = sdsDocPreviewHtml;
+  sdsDocPreviewHtml = function(){ return sdsPreviewBanner() + _pv(); };
+  /* 发布成功即回到「看发布版」，避免刚发布完还停在草案视图 */
+  var _cr = sdsReleaseCreate;
+  sdsReleaseCreate = function(v){ var rel = _cr(v); wz.previewSource = ''; return rel; };
+})();
+
+/* ---------- 2. 编制视图：人工待办清单 ---------- */
+
+/* 必须动手的缺口（红）；配方变化导致的需重新确认（橙）
+   act: 'step4' = 判定入口在第 4 步；'chapter' = 处理入口就在本章内 */
+function secTodoList(){
+  var out = [];
+  var nTox = secPendingToxEndpoints().length;
+  if(nTox) out.push({i:10, level:'red', act:'step4',
+    text:'第 11 章 毒理学信息 · ' + nTox + ' 个毒理端点待人工判定'});
+  var aq = (wz.classItems || []).filter(function(x){ return x.id === 'aqua'; })[0];
+  if(aq && aq.status === 'pending') out.push({i:11, level:'red', act:'step4',
+    text:'第 12 章 生态学信息 · 危害水生环境（长期）待人工判定'});
+  var st = transportAssessmentStatus();
+  if(st === 'NOT_ASSESSED') out.push({i:13, level:'red', act:'chapter',
+    text:'第 14 章 运输信息 · 运输结论尚未维护'});
+  else if(st === 'STALE') out.push({i:13, level:'orange', act:'chapter',
+    text:'第 14 章 运输信息 · 配方已变化，运输结论需重新确认'});
+  return out;
+}
+function secTodoJump(i, act){
+  if(act === 'step4'){ wzGo(4); return; }
+  if(wz.view !== 'edit'){ wz.view = 'edit'; }
+  renderStep5();
+  var el = $('acc' + i);
+  if(el){ el.classList.add('open'); el.scrollIntoView({block:'center'}); }
+}
+/* 顶部汇总条：只列「必须动手」的红项，模板文案类不逐章刷屏 */
+function secTodoBarHtml(){
+  if(wz.view === 'deliver') return '';
+  var all = secTodoList();
+  var red = all.filter(function(x){ return x.level === 'red'; });
+  var orange = all.filter(function(x){ return x.level === 'orange'; });
+  var h = '<div class="notice ' + (red.length ? 'warn' : (orange.length ? 'warn' : 'ok')) + '"'
+        + ' style="margin:0 0 10px"><div class="ni">' + (red.length || orange.length ? '!' : '✓')
+        + '</div><div>';
+  if(red.length){
+    h += '<b>还有 ' + red.length + ' 项人工待办未完成</b>'
+       + '<span class="muted" style="font-size:11.5px;margin-left:6">未处理完不能提交 / 发布</span>'
+       + '<div style="margin:6px 0 0;display:flex;flex-direction:column;gap:5px;align-items:flex-start">';
+    red.forEach(function(x){
+      h += '<button class="btn sm warn" onclick="secTodoJump(' + x.i + ',\'' + x.act + '\')">'
+         + esc(x.text) + '　›</button>';
+    });
+    h += '</div>';
+  }else if(orange.length){
+    h += '<b>有 ' + orange.length + ' 项结论需重新确认</b>'
+       + '<div style="margin:6px 0 0;display:flex;flex-direction:column;gap:5px;align-items:flex-start">';
+    orange.forEach(function(x){
+      h += '<button class="btn sm warn" onclick="secTodoJump(' + x.i + ',\'' + x.act + '\')">'
+         + esc(x.text) + '　›</button>';
+    });
+    h += '</div>';
+  }else{
+    h += '<b>16 章人工待办均已处理</b><br>可提交审核并发布。';
+  }
+  /* 模板文案类：一句话带过，不逐章列 */
+  var nM = 0;
+  SDS_16.forEach(function(s, i){
+    if(s.auto) return;
+    if(all.some(function(x){ return x.i === i; })) return;
+    nM++;
+  });
+  if(nM) h += '<div class="muted" style="font-size:11.5px;margin-top:6px">另有 ' + nM
+    + ' 章为模板候选文案，须由 EHS 逐条审核确认（章节标题旁标「需人工审核」）。</div>';
+  return h + '</div></div>';
+}
+/* 挂在切换栏下方：原 renderStep5 不动，渲染后插入 */
+(function(){
+  var _r5 = renderStep5;
+  renderStep5 = function(){
+    _r5();
+    var host = $('wzBody');
+    if(!host) return;
+    var bar = secTodoBarHtml();
+    if(!bar) return;
+    var tb = host.querySelector('.toolbar');
+    if(tb) tb.insertAdjacentHTML('afterend', bar);
+    else host.insertAdjacentHTML('afterbegin', bar);
+  };
+})();
 
 </script>
 <script>
@@ -27622,55 +27784,104 @@ function physTableTransform(code){
 </script>
 <script>
 /* ==================================================================
-   [27z7] 报表管理（一级菜单占位页）
+   [27z7] 报表管理（一级菜单页）
    — 分片名须 < 28-js-boot.js：否则用 #rpt:home 直接打开时页面尚未注册
-   — 2026-09-15：菜单挂在「设备资源」之后，无子菜单，直接进本页
-   — 当前为 BI 接入前的空态：不编造报表数据，只说明用途与后续能力
-   — 后续 BI 对接后，在此挂载真实报表（或改为 children 展开多个报表入口）
+   — 2026-09-29：由「BI 接入前空态」改为最小可用报表中心
+     口径：所有数字都从各业务模块的真实数据实时统计，不编造；
+           报表条目点击后跳到对应业务页面看明细。
+     BI 对接完成后，在此挂载 BI 报表（或改为 children 展开多个入口）。
    ================================================================== */
+/* 安全计数：任一数据源结构变化都不至于让整页白屏 */
+function rptCount(arr,fn){
+  try{return (Array.isArray(arr)?arr:[]).filter(fn).length;}catch(e){return 0;}
+}
+function rptPage(){
+  var inProgress=rptCount(PROJECTS,function(p){
+    return ['交付','推广'].indexOf(p.stage)<0;
+  });
+  var sdsTodo=rptCount(SDS_ROWS,function(s){
+    return ['编制中','审核中','待改版'].indexOf(s.status)>=0;
+  });
+  var stgTodo=rptCount(MAT_STAGING,function(r){return r.status!=='已关联';});
+  var matCnt=(function(){try{return Object.keys(DB_CFG.material||{}).length;}catch(e){return 0;}})();
+  var expCnt=(function(){try{return Array.isArray(experiments)?experiments.length:0;}catch(e){return 0;}})();
+
+  var h='';
+  h+='<div class="page-hd"><div class="t">'+
+     '<h1>报表管理</h1>'+
+     '<div class="page-sub">各业务模块的实时统计汇总 · 数据截止 '+esc(demoYmd())+'</div>'+
+     '</div></div>';
+
+  h+='<div class="notice notice-info"><i class="ni">ℹ</i><div>'+
+     '本页统计口径取自 PLM 内各业务模块的当前数据，点报表名称可直接进入对应页面查看明细。'+
+     'BI 系统对接后，企业级报表与订阅推送将在此统一挂载。'+
+     '</div></div>';
+
+  /* ---- 概览四卡 ---- */
+  var kpis=[
+    [inProgress,'在研项目','个','阶段处于预研 / 小试 / 中试的项目'],
+    [expCnt,'实验记录','条','实验管理模块已登记的实验'],
+    [sdsTodo,'SDS 待办','份','编制中 / 审核中 / 待改版'],
+    [stgTodo,'暂存区待处理','条','原料暂存区未完成的记录']
+  ];
+  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">';
+  kpis.forEach(function(k){
+    h+='<div class="card" style="margin:0"><div class="card-b">'+
+       '<div style="font-size:26px;font-weight:700;line-height:1.1">'+k[0]+
+       '<span style="font-size:13px;font-weight:400;color:var(--muted);margin-left:3px">'+k[2]+'</span></div>'+
+       '<div style="font-size:13px;font-weight:600;margin-top:4px">'+esc(k[1])+'</div>'+
+       '<div class="muted" style="font-size:11.5px;margin-top:2px">'+esc(k[3])+'</div>'+
+       '</div></div>';
+  });
+  h+='</div>';
+
+  /* ---- 报表清单 ---- */
+  var rows=[
+    ['研发项目进度','按阶段 / 负责人统计在研项目与节点完成情况',
+      '项目 '+PROJECTS.length+' 个','proj:list'],
+    ['实验台账','按项目、模板与状态统计实验记录与结论',
+      '实验 '+expCnt+' 条','exp:list'],
+    ['SDS 合规台账','按状态、目标市场、法规版本统计 SDS 文档',
+      'SDS '+SDS_ROWS.length+' 份（待办 '+sdsTodo+'）','sds:list'],
+    ['原料与暂存区','原料台账 + OA / NCC 同步暂存区待处理项',
+      '原料 '+matCnt+' 项（暂存待处理 '+stgTodo+' 条）','bd:rawmat'],
+    ['受限物质符合性','受限物质清单与产品配方的符合性结论',
+      '按受限物质清单页当前数据','subst:list'],
+    ['法规版本跟踪','各法规库当前生效版本与导入批次',
+      'CLP / REACH / OEL / 国内 / ZDHC','law:reach']
+  ];
+  h+='<div class="card"><div class="card-hd">'+
+     '<h3>常用报表</h3><span class="sub">点击「查看」进入对应页面看明细</span></div>'+
+     '<div class="card-b"><div class="tbl-wrap"><table class="tbl">'+
+     '<thead><tr><th style="width:160px">报表</th><th>统计口径</th>'+
+     '<th style="width:220px">当前覆盖数据</th><th style="width:80px">操作</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    h+='<tr><td><b>'+esc(r[0])+'</b></td><td class="muted">'+esc(r[1])+'</td>'+
+       '<td style="font-size:12px">'+esc(r[2])+'</td>'+
+       '<td><button class="btn btn-sm" onclick="showPage(\''+r[3]+'\')">查看</button></td></tr>';
+  });
+  h+='</tbody></table></div></div></div>';
+
+  /* ---- BI 接入后的能力（说明性，非排期承诺） ---- */
+  h+='<div class="card"><div class="card-hd">'+
+     '<h3>BI 对接后的扩展能力</h3><span class="sub">随对接进度开放</span></div>'+
+     '<div class="card-b"><div class="tbl-wrap"><table class="tbl">'+
+     '<thead><tr><th style="width:180px">能力</th><th>说明</th><th style="width:90px">状态</th></tr></thead><tbody>'+
+     [
+       ['报表查看','在 PLM 内直接打开 BI 报表，免二次登录','待接入'],
+       ['维度下钻','按项目 / 实验 / 产品 / 时间段下钻到明细','待接入'],
+       ['订阅推送','按角色订阅，定期推送至站内与邮件','待接入']
+     ].map(function(r){
+       return '<tr><td><b>'+esc(r[0])+'</b></td><td class="muted">'+esc(r[1])+'</td>'+
+              '<td><span class="tag">'+esc(r[2])+'</span></td></tr>';
+     }).join('')+
+     '</tbody></table></div></div></div>';
+
+  $('pageHost').innerHTML=h;
+}
 regPage('rpt:home',{
   title:'报表管理',crumb:['报表管理'],
-  render:function(){
-    var h='';
-    h+='<div class="page-hd"><div class="t">'+
-       '<h1>报表管理</h1>'+
-       '<div class="page-sub">统一承载 BI 报表与统计看板 · 数据源接入中</div>'+
-       '</div></div>';
-
-    h+='<div class="notice notice-info"><i class="ni">ℹ</i><div>'+
-       '本模块为 BI 报表预留入口。待 BI 系统完成对接后，各类报表在此统一查看与订阅；'+
-       '当前尚未接入数据源，暂无可展示的报表。'+
-       '</div></div>';
-
-    /* ---- 空态 ---- */
-    h+='<div class="card" style="margin-bottom:16px"><div class="card-b">'+
-       '<div style="text-align:center;padding:46px 20px">'+
-       '<div style="font-size:40px;line-height:1;color:#c2cbd6">▤</div>'+
-       '<div style="margin-top:14px;font-size:15px;font-weight:600;color:var(--text)">暂无已接入的报表</div>'+
-       '<div class="muted" style="margin-top:6px;font-size:13px">'+
-       '报表由 BI 侧统一生产，接入后按角色授权可见'+
-       '</div>'+
-       '</div></div></div>';
-
-    /* ---- 接入后支持的能力（说明性，非承诺排期） ---- */
-    h+='<div class="card"><div class="card-hd">'+
-       '<h3>接入后的使用方式</h3><span class="sub">随 BI 对接进度开放</span></div>'+
-       '<div class="card-b">'+
-       '<div class="tbl-wrap"><table class="tbl">'+
-       '<thead><tr><th style="width:180px">能力</th><th>说明</th><th style="width:90px">状态</th></tr></thead><tbody>'+
-       [
-         ['报表查看','在 PLM 内直接打开 BI 报表，免二次登录','待接入'],
-         ['维度下钻','按项目 / 实验 / 产品 / 时间段下钻到明细','待接入'],
-         ['订阅推送','按角色订阅，定期推送至站内与邮件','待接入']
-       ].map(function(r){
-         return '<tr><td><b>'+esc(r[0])+'</b></td><td class="muted">'+esc(r[1])+'</td>'+
-                '<td><span class="tag">'+esc(r[2])+'</span></td></tr>';
-       }).join('')+
-       '</tbody></table></div>'+
-       '</div></div>';
-
-    $('pageHost').innerHTML=h;
-  }
+  render:rptPage
 });
 
 </script>
@@ -28354,6 +28565,137 @@ function eqPlanSave(id){
 
   /* 兜底同步：即便分片被挪到 boot 之后加载，首屏文案也不会错 */
   syncNavToggleAll();
+})();
+
+</script>
+<script>
+/* ==================================================================
+   [27z9b] 原料暂存区 + 供应商 的持久化（照 27z6 临时任务的模式扩展）
+
+   为什么需要：业务人员试用时会在暂存区做同步编码 / 补录 CAS / 上传 MSDS /
+   转建档，在供应商里新增与编辑——这两块此前不落盘，刷新即丢。
+
+   设计（与既有持久化模块保持一致）：
+   - **按主键合并**（暂存区按 id、供应商按 code），不整表替换。
+     这样出厂数据后续升级字段时，旧缓存仍能 patch 上去，不会把新字段抹掉。
+   - 带 SCHEMA 版本号，结构升级自动弃旧缓存，绝不污染新版。
+   - **零侵入**：不改旧分片，用「包装写函数」的方式在写操作后自动落盘，
+     因此不会出现漏挂某个入口的情况。
+   - 挂进「重置演示数据」：包装 wzReset，一键回到出厂状态。
+
+   分片位置：须在 22z1a（MAT_STAGING）/ 27-js-pages-b（SUPPLIERS）/
+   27z4（MD_SUP_QUAL）/ 23z1（wzReset）之后、28-js-boot 之前。
+   ================================================================== */
+
+var STG_P_KEY = 'plm3_staging_v1',  STG_P_SCHEMA = 'v1';
+var SUP_P_KEY = 'plm3_supplier_v1', SUP_P_SCHEMA = 'v1';
+
+function _peCopy(o){ try{ return JSON.parse(JSON.stringify(o)); }catch(e){ return o; } }
+
+/* ---------- 出厂快照（重置用，加载时抓一次） ---------- */
+var _STG_FACTORY = _peCopy(typeof MAT_STAGING !== 'undefined' ? MAT_STAGING : []);
+var _SUP_FACTORY = _peCopy(typeof SUPPLIERS  !== 'undefined' ? SUPPLIERS  : []);
+var _SUPQ_FACTORY= _peCopy(typeof MD_SUP_QUAL!== 'undefined' ? MD_SUP_QUAL: {});
+
+/* ---------- 原料暂存区 ---------- */
+function stgPersistSave(){
+  try{
+    localStorage.setItem(STG_P_KEY,
+      JSON.stringify({ s: STG_P_SCHEMA, rows: _peCopy(MAT_STAGING || []) }));
+  }catch(e){}
+}
+function stgPersistLoad(){
+  try{
+    if(typeof MAT_STAGING === 'undefined') return;
+    var o = JSON.parse(localStorage.getItem(STG_P_KEY) || 'null');
+    if(!o || o.s !== STG_P_SCHEMA || !Array.isArray(o.rows)) return;
+    var byId = {};
+    MAT_STAGING.forEach(function(r){ if(r && r.id) byId[r.id] = r; });
+    o.rows.forEach(function(r){
+      if(!r || !r.id) return;
+      if(byId[r.id]) Object.assign(byId[r.id], r);   /* 出厂已有：用存档覆盖改动 */
+      else MAT_STAGING.push(r);                      /* 用户新增的：补进来 */
+    });
+  }catch(e){}
+}
+function _stgPersistReset(){
+  try{ localStorage.removeItem(STG_P_KEY); }catch(e){}
+  if(typeof MAT_STAGING === 'undefined' || !Array.isArray(_STG_FACTORY)) return;
+  MAT_STAGING.length = 0;
+  _STG_FACTORY.forEach(function(r){ MAT_STAGING.push(_peCopy(r)); });
+}
+
+/* ---------- 供应商（档案 + 资质证照） ---------- */
+function supPersistSave(){
+  try{
+    localStorage.setItem(SUP_P_KEY, JSON.stringify({
+      s: SUP_P_SCHEMA,
+      rows:  _peCopy(typeof SUPPLIERS   !== 'undefined' ? SUPPLIERS   : []),
+      quals: _peCopy(typeof MD_SUP_QUAL !== 'undefined' ? MD_SUP_QUAL : {})
+    }));
+  }catch(e){}
+}
+function supPersistLoad(){
+  try{
+    var o = JSON.parse(localStorage.getItem(SUP_P_KEY) || 'null');
+    if(!o || o.s !== SUP_P_SCHEMA) return;
+    if(typeof SUPPLIERS !== 'undefined' && Array.isArray(o.rows)){
+      var byCode = {};
+      SUPPLIERS.forEach(function(s){ if(s && s.code) byCode[s.code] = s; });
+      o.rows.forEach(function(r){
+        if(!r || !r.code) return;
+        if(byCode[r.code]) Object.assign(byCode[r.code], r);
+        else SUPPLIERS.unshift(r);
+      });
+    }
+    if(typeof MD_SUP_QUAL !== 'undefined' && o.quals){
+      Object.keys(o.quals).forEach(function(k){ MD_SUP_QUAL[k] = o.quals[k]; });
+    }
+  }catch(e){}
+}
+function _supPersistReset(){
+  try{ localStorage.removeItem(SUP_P_KEY); }catch(e){}
+  if(typeof SUPPLIERS !== 'undefined' && Array.isArray(_SUP_FACTORY)){
+    SUPPLIERS.length = 0;
+    _SUP_FACTORY.forEach(function(r){ SUPPLIERS.push(_peCopy(r)); });
+  }
+  if(typeof MD_SUP_QUAL !== 'undefined'){
+    Object.keys(MD_SUP_QUAL).forEach(function(k){ delete MD_SUP_QUAL[k]; });
+    Object.keys(_SUPQ_FACTORY).forEach(function(k){ MD_SUP_QUAL[k] = _peCopy(_SUPQ_FACTORY[k]); });
+  }
+}
+
+/* ---------- 零侵入落盘：包装写函数，执行后自动保存 ---------- */
+(function(){
+  ['stgUnlink','stgSyncCode','stgFillCasSave','stgUploadMsdsSave','stgLinkSave','stgToFormal']
+  .forEach(function(n){
+    if(typeof window[n] !== 'function') return;
+    var _o = window[n];
+    window[n] = function(){ var r = _o.apply(this, arguments); stgPersistSave(); return r; };
+  });
+  /* supSave 内部已会调 supSetQuals，包 supSave 一个即可覆盖新增 / 编辑两条路径 */
+  ['supSave'].forEach(function(n){
+    if(typeof window[n] !== 'function') return;
+    var _o = window[n];
+    window[n] = function(){ var r = _o.apply(this, arguments); supPersistSave(); return r; };
+  });
+})();
+
+/* ---------- 挂进「重置演示数据」 ---------- */
+(function(){
+  if(typeof window.wzReset !== 'function') return;
+  var _r = window.wzReset;
+  window.wzReset = function(){
+    _r();
+    _stgPersistReset();
+    _supPersistReset();
+  };
+})();
+
+/* ---------- 启动时恢复 ---------- */
+(function(){
+  stgPersistLoad();
+  supPersistLoad();
 })();
 
 </script>
