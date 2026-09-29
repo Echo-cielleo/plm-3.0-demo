@@ -40,8 +40,8 @@ with sync_playwright() as pw:
     ok(lawnames[-1]=='ZDHC MRSL','ZDHC MRSL 本期维持现状（仍在法规库维护下）')
     page.evaluate("showPage('law:reach')");page.wait_for_timeout(400)
     ok(page.evaluate('curPage')=='law:reach','law:reach 可正常进入（沿用既有路由）')
-    wide_rows=page.evaluate("()=>['更新频率','影响功能'].map(function(label){var ds=[].slice.call(document.querySelectorAll('#pageHost .desc-list dt'));var d=ds.filter(function(x){return x.textContent.trim()===label;})[0];return d&&d.style.gridColumn;})")
-    ok(wide_rows==['1','1'],'REACH 信息栏两组宽字段均从第 1 列起独占整行，避免网格错位')
+    wide_rows=page.evaluate("()=>['数据截止日期'].map(function(label){var ds=[].slice.call(document.querySelectorAll('#pageHost .desc-list dt'));var d=ds.filter(function(x){return x.textContent.trim()===label;})[0];return d&&d.style.gridColumn;})")
+    ok(wide_rows==['1'],'REACH 信息栏宽字段从第 1 列起独占整行，避免网格错位')
 
     print('\n=== 顶部法规主信息 ===')
     text=page.locator('#pageHost').inner_text()
@@ -49,12 +49,11 @@ with sync_playwright() as pw:
     ok('欧盟' in text and '已发布' in text,'展示适用市场与当前状态')
     ok(page.locator('#pageHost .ev').count()>0 and '复审预警' in text,'顶部展示证据灯')
     ok('REACH 主版本' in text and '合并文本' in text,'展示当前法规版本（合并文本日期）')
-    ok('EUR-Lex' in text,'展示官方来源 EUR-Lex')
     ok('当前发布状态' in text,'展示当前发布状态')
     ok('最近检查时间' in text and '最近审核时间' in text and '审核人' in text and '数据截止日期' in text,'展示检查 / 审核 / 审核人 / 数据截止日期')
-    ok('质管-杨工' in text and 'SVHC 每年 1 月 / 7 月各一批' in text,'展示维护责任人与更新频率')
-    for f in ['SDS 编制','第 15 章法规判断','受限物质查询']:
-        ok(f in text,'影响功能包含「%s」'%f)
+    dts=page.evaluate("()=>[].slice.call(document.querySelectorAll('#pageHost .desc-list dt')).map(function(x){return x.textContent.trim();})")
+    ok('官方来源' not in dts and '维护责任人' not in dts and '更新频率' not in dts and '影响功能' not in dts,
+       '主信息已移除官方来源 / 维护责任人 / 更新频率 / 影响功能：%s' % dts)
     ok('REACH 管注册、授权与限制' in text and '本页面仅涉及 REACH' in text,'法制定位说明（REACH / CLP 分工）')
     ok('RoHS 限用物质' in text and '拆分' in text and 'C&L Inventory' in text and '外部参考数据' in text,'标注 RoHS 与 C&L Inventory 不并入本页')
     ok(page.get_by_role('button',name='下载导入模板').count()==1,'顶部提供 REACH 导入模板下载入口')
@@ -72,7 +71,7 @@ with sync_playwright() as pw:
         page.evaluate("(k)=>{var b=document.querySelectorAll('#rchTabs button');for(var x of b){if(x.getAttribute('data-key')===k)x.click();}}",k)
         page.wait_for_timeout(150)
         ok(page.evaluate('()=>_rchTab')==k,'切到 %s'%label)
-    ok('影响功能' in page.locator('#pageHost').inner_text(),'切 Tab 后顶部主信息仍在')
+    ok('REACH 主版本' in page.locator('#pageHost').inner_text(),'切 Tab 后顶部主信息仍在')
 
     print('\n=== Tab1 SDS 编制要求（16 章） ===')
     page.evaluate("()=>{_rchF.sds={kw:'',mode:''};rchGoTab('sds');}");page.wait_for_timeout(200)

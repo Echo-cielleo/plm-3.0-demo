@@ -87,7 +87,9 @@ with sync_playwright() as pw:
     ok(page.locator('#pageHost .ev').count() > 0 and '复审预警' in text, '顶部展示证据灯')
     ok('CLP 主版本' in text and '2024/2865 修订版' in text, '展示 CLP 主版本')
     ok('最近审核时间' in text and '最近更新时间' in text and '数据截止日期' in text, '展示审核/更新/数据截止日期')
-    ok('质管-杨工' in text and '附录 VI 随 ATP 发布导入' in text, '展示维护责任人与更新频率')
+    dts = page.evaluate("()=>[].slice.call(document.querySelectorAll('#pageHost .desc-list dt')).map(function(x){return x.textContent.trim();})")
+    ok('维护责任人' not in dts and '更新频率' not in dts and '影响功能' not in dts,
+       '主信息已移除维护责任人 / 更新频率 / 影响功能：%s' % dts)
     pack = page.evaluate('()=>clpActivePack()')
     ok('生效规则包' in text and pack['id'] in text, '顶部展示当前生效规则包')
     ok(pack['id'] == 'CLP-EU-ATP22-R2026.2-L2026.3', '规则包编号由三个生效模块版本组成')
@@ -95,8 +97,6 @@ with sync_playwright() as pw:
        '规则包只纳入已支持、测试通过、已审核的 4 条规则')
     ok(pack['methods'] == ['CLP-M-ATE-SUM', 'CLP-M-GCL-SUM', 'CLP-M-SCL', 'CLP-M-MFACTOR'],
        '规则包登记 4 种已支持计算方法')
-    for f in ['物质查询', '混合物分类', '标签生成', 'SDS编制']:
-        ok(f in text, '影响功能包含「%s」' % f)
     ok(page.get_by_role('button', name='页面说明').count() == 1, '顶部提供折叠的「页面说明」入口')
     ok('open' not in (page.locator('#np-law-clp').get_attribute('class') or ''), '提示文本框默认收起')
     page.get_by_role('button', name='页面说明').click()
@@ -125,7 +125,7 @@ with sync_playwright() as pw:
             "(k)=>{var b=document.querySelectorAll('#clpTabs button');for(var x of b){if(x.getAttribute('data-key')===k)x.click();}}", k)
         page.wait_for_timeout(140)
         ok(page.evaluate('()=>_clpTab') == k, '切到 %s' % label)
-    ok('影响功能' in page.locator('#pageHost').inner_text(), '切 Tab 后顶部主信息仍在')
+    ok('CLP 主版本' in page.locator('#pageHost').inner_text(), '切 Tab 后顶部主信息仍在')
     page.evaluate("()=>clpLGoTab('vi')")
     page.wait_for_timeout(200)
 
@@ -326,7 +326,8 @@ with sync_playwright() as pw:
     page.wait_for_timeout(180)
     page.evaluate("()=>clpLImpNext(2)")
     page.wait_for_timeout(160)
-    ok(page.locator('#mBody .field').count() == 5, '第 2 步 5 个版本字段')
+    ok(page.locator('#mBody .field').count() == 4, '第 2 步 4 个版本字段（已移除维护责任人）')
+    ok(page.locator('#cipOwner').count() == 0, '导入向导不再提供「维护责任人」输入框')
     page.evaluate("()=>clpLImpNext(3)")
     page.wait_for_timeout(160)
     ok(page.evaluate("()=>$('cipNext3').disabled") is True, '未上传文件时「下一步」禁用')

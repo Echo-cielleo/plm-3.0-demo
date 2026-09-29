@@ -1,7 +1,7 @@
 /* ==================================================================
    [23z9] 职业接触限值（OEL）法规库 · 维护页面（2026-09-18 第三十轮）
    ------------------------------------------------------------------
-   需求口径（Cayla 2026-09-18）：
+   需求口径（业务确认 2026-09-18）：
    · OEL 不是一部单独法规，而是各市场官方发布的多套职业接触限值清单。
      用户不逐条维护散落法规，而是以「国家 / 地区的官方限值数据集版本」为单位维护：
      官方来源 → 数据集版本 → 限值明细 → 版本对比 → 审核发布
@@ -319,7 +319,7 @@ function oelRender(){
     sdsHead('oelTitle','职业接触限值（OEL）',
       '以「国家 / 地区的官方限值数据集版本」为单位维护：官方来源 → 数据集版本 → 限值明细 → 版本对比 → 审核发布',
       '<button class="btn" onclick="oelSrcNew()">新建数据来源</button>'+
-      '<button class="btn primary" onclick="oelImport()">导入限值数据集</button>','','')+
+      '<button class="btn primary" onclick="oelImport()">导入限值数据集</button>','','oel')+
     '<div class="kpi-row">'+
       '<div class="kpi"><span>已覆盖国家 / 地区</span><b>'+rgN+'</b><small>按已建数据集的国家 / 地区计</small></div>'+
       '<div class="kpi"><span>已发布数据集</span><b style="color:var(--green)">'+pubN+'</b><small>可作为合规依据</small></div>'+

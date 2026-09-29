@@ -392,11 +392,8 @@ function clpLRender(){
         '<dt>CLP 主版本</dt><dd class="mono">'+esc(CLP_TOP.ver)+'</dd>'+
         '<dt>最近审核时间</dt><dd>'+esc(CLP_TOP.lastReview)+'（人工复审）</dd>'+
         '<dt>最近更新时间</dt><dd>'+esc(CLP_TOP.lastUpdate)+'</dd>'+
-        '<dt>数据截止日期</dt><dd>'+esc(CLP_TOP.cutoff)+'<span class="muted">（本次导入官方来源文件日期）</span></dd>'+
-        '<dt>维护责任人</dt><dd>'+esc(CLP_TOP.owner)+'</dd>'+
-        '<dt>更新频率</dt><dd style="grid-column:span 3">'+esc(CLP_TOP.cycle)+'</dd>'+
-        '<dt>影响功能</dt><dd style="grid-column:span 3">'+CLP_TOP.funcs.map(function(f){return '<span class="tag blue">'+esc(f)+'</span>';}).join(' ')+'</dd>'+
-        '<dt>生效规则包</dt><dd style="grid-column:span 3"><b class="mono">'+esc(pack.id)+'</b> '
+        '<dt>数据截止日期</dt><dd style="grid-column:span 3">'+esc(CLP_TOP.cutoff)+'<span class="muted">（本次导入官方来源文件日期）</span></dd>'+
+        '<dt style="grid-column:1">生效规则包</dt><dd style="grid-column:span 3"><b class="mono">'+esc(pack.id)+'</b> '
           +'<span class="tag '+(pack.tested?'green':'red')+' dot-tag">'+esc(pack.status)+'</span>'
           +'<span class="muted" style="margin-left:8px">Annex VI '+esc(pack.modules.vi)+' · Annex I '+esc(pack.modules.rules)+' · 标签字典 '+esc(pack.modules.labels)+' · '+pack.methods.length+' 种计算方法</span></dd>'+
       '</dl>'+

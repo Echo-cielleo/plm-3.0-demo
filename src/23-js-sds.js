@@ -2581,7 +2581,10 @@ function dbFiltered(){
 function dbRender(){
   var c=dbCur();
   $('dbTitle').textContent=c.title;
-  $('dbDesc').textContent=c.desc;
+  /* 说明已收进右上角「说明」按钮：#dbDesc 不再渲染，改更新面板内容 */
+  var _np=$('np-db_'+dbKey),_nx=_np?_np.querySelector('.np-x'):null;
+  if(_nx)_nx.innerHTML=esc(c.desc);
+  var _od=$('dbDesc'); if(_od)_od.textContent=c.desc;
   /* 筛选下拉 */
   var fs=$('dbFilter');
   if(fs.dataset.for!==dbKey){
@@ -3482,7 +3485,7 @@ function renderDbPage(key,title,desc){
     +sdsHead('dbTitle',esc(title||DB_CFG[key].title),esc(desc||DB_CFG[key].desc),
       '<button class="btn" onclick="dbImport()">批量导入</button>'
       +'<button class="btn danger" id="dbBatchDel" onclick="dbBatchDelete()">批量删除</button>'
-      +'<button class="btn primary" onclick="dbEdit(null)">＋ 新增</button>','dbDesc')
+      +'<button class="btn primary" onclick="dbEdit(null)">＋ 新增</button>','',('db_'+key))
     +'<div class="kpi-row" id="dbKpi"></div>'
     +'<div class="card"><div class="toolbar">'
       +'<div class="search"><i class="si">⌕</i><input id="dbKw" placeholder="搜索关键词…" oninput="dbSearch(this.value)"></div>'
@@ -3502,7 +3505,7 @@ function renderPubChem(){
     +sdsHead('','系统接入数据源 · PubChem 公开数据库',
       '通过免费公开 API 自动查询的物质候选数据，用于辅助填充与交叉核对。',
       '<button class="btn" onclick="pcSyncAll()">全量重新同步</button>'
-      +'<button class="btn primary" onclick="pcAdd()">＋ 添加同步物质</button>')
+      +'<button class="btn primary" onclick="pcAdd()">＋ 添加同步物质</button>','','pubchem')
     +'<div class="notice warn"><div class="ni">!</div><div><b>公开辅助资料来源 · 免费 API 自动查询</b>'
       +'PubChem 数据仅作为候选数据参考，<b style="display:inline">不可作为最终合规依据</b>；'
       +'正式 SDS 的分类与法规结论必须以实测报告、供应商 SDS 或人工维护法规库为准。</div></div>'

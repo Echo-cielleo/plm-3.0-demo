@@ -8040,7 +8040,10 @@ function dbFiltered(){
 function dbRender(){
   var c=dbCur();
   $('dbTitle').textContent=c.title;
-  $('dbDesc').textContent=c.desc;
+  /* 说明已收进右上角「说明」按钮：#dbDesc 不再渲染，改更新面板内容 */
+  var _np=$('np-db_'+dbKey),_nx=_np?_np.querySelector('.np-x'):null;
+  if(_nx)_nx.innerHTML=esc(c.desc);
+  var _od=$('dbDesc'); if(_od)_od.textContent=c.desc;
   /* 筛选下拉 */
   var fs=$('dbFilter');
   if(fs.dataset.for!==dbKey){
@@ -8941,7 +8944,7 @@ function renderDbPage(key,title,desc){
     +sdsHead('dbTitle',esc(title||DB_CFG[key].title),esc(desc||DB_CFG[key].desc),
       '<button class="btn" onclick="dbImport()">批量导入</button>'
       +'<button class="btn danger" id="dbBatchDel" onclick="dbBatchDelete()">批量删除</button>'
-      +'<button class="btn primary" onclick="dbEdit(null)">＋ 新增</button>','dbDesc')
+      +'<button class="btn primary" onclick="dbEdit(null)">＋ 新增</button>','',('db_'+key))
     +'<div class="kpi-row" id="dbKpi"></div>'
     +'<div class="card"><div class="toolbar">'
       +'<div class="search"><i class="si">⌕</i><input id="dbKw" placeholder="搜索关键词…" oninput="dbSearch(this.value)"></div>'
@@ -8961,7 +8964,7 @@ function renderPubChem(){
     +sdsHead('','系统接入数据源 · PubChem 公开数据库',
       '通过免费公开 API 自动查询的物质候选数据，用于辅助填充与交叉核对。',
       '<button class="btn" onclick="pcSyncAll()">全量重新同步</button>'
-      +'<button class="btn primary" onclick="pcAdd()">＋ 添加同步物质</button>')
+      +'<button class="btn primary" onclick="pcAdd()">＋ 添加同步物质</button>','','pubchem')
     +'<div class="notice warn"><div class="ni">!</div><div><b>公开辅助资料来源 · 免费 API 自动查询</b>'
       +'PubChem 数据仅作为候选数据参考，<b style="display:inline">不可作为最终合规依据</b>；'
       +'正式 SDS 的分类与法规结论必须以实测报告、供应商 SDS 或人工维护法规库为准。</div></div>'
@@ -10926,11 +10929,8 @@ function clpLRender(){
         '<dt>CLP 主版本</dt><dd class="mono">'+esc(CLP_TOP.ver)+'</dd>'+
         '<dt>最近审核时间</dt><dd>'+esc(CLP_TOP.lastReview)+'（人工复审）</dd>'+
         '<dt>最近更新时间</dt><dd>'+esc(CLP_TOP.lastUpdate)+'</dd>'+
-        '<dt>数据截止日期</dt><dd>'+esc(CLP_TOP.cutoff)+'<span class="muted">（本次导入官方来源文件日期）</span></dd>'+
-        '<dt>维护责任人</dt><dd>'+esc(CLP_TOP.owner)+'</dd>'+
-        '<dt>更新频率</dt><dd style="grid-column:span 3">'+esc(CLP_TOP.cycle)+'</dd>'+
-        '<dt>影响功能</dt><dd style="grid-column:span 3">'+CLP_TOP.funcs.map(function(f){return '<span class="tag blue">'+esc(f)+'</span>';}).join(' ')+'</dd>'+
-        '<dt>生效规则包</dt><dd style="grid-column:span 3"><b class="mono">'+esc(pack.id)+'</b> '
+        '<dt>数据截止日期</dt><dd style="grid-column:span 3">'+esc(CLP_TOP.cutoff)+'<span class="muted">（本次导入官方来源文件日期）</span></dd>'+
+        '<dt style="grid-column:1">生效规则包</dt><dd style="grid-column:span 3"><b class="mono">'+esc(pack.id)+'</b> '
           +'<span class="tag '+(pack.tested?'green':'red')+' dot-tag">'+esc(pack.status)+'</span>'
           +'<span class="muted" style="margin-left:8px">Annex VI '+esc(pack.modules.vi)+' · Annex I '+esc(pack.modules.rules)+' · 标签字典 '+esc(pack.modules.labels)+' · '+pack.methods.length+' 种计算方法</span></dd>'+
       '</dl>'+
@@ -11289,7 +11289,7 @@ regPage('law:clp',{title:'CLP 法规库',crumb:['合规管理','法规库维护'
 /* ==================================================================
    [23z6a] CLP 法规库 · 导入新版本（五步演示向导，三模块分支）
    ------------------------------------------------------------------
-   需求口径（Cayla 2026-09-18 二次方向）：
+   需求口径（业务确认 2026-09-18 二次方向）：
    · 本系统是面向业务人员演示的 PLM 业务原型，**不出现 AI 解析**
    · Annex I 等规则类内容由**法规专员在系统外完成整理与核对**：
      使用统一规则表模板整理，逐条对照法规原文确认后导入
@@ -11729,7 +11729,7 @@ function clpLImpNext(n){
     _clpImp.ver=$('cipVer').value.trim()||clpImpMod().ver;
     _clpImp.eff=$('cipEff').value||clpImpMod().eff;
     _clpImp.cut=$('cipCut').value||clpImpMod().cut;
-    _clpImp.owner=$('cipOwner').value.trim()||CLP_TOP.owner;
+    _clpImp.owner=CLP_TOP.owner;
     _clpImp.verNote=$('cipNote2').value.trim();
   }
   if(n===4&&!_clpImp.file){toast('请先上传结构化数据文件（或使用示例文件）','warn');return;}
@@ -11811,7 +11811,6 @@ function clpLImpHtml2(){
     '<div class="field"><label class="req">模块版本号</label><input class="ctrl" id="cipVer" value="'+esc(_clpImp.ver||M.ver)+'"></div>'+
     '<div class="field"><label class="req">生效日期</label><input class="ctrl" type="date" id="cipEff" value="'+esc(_clpImp.eff||M.eff)+'"></div>'+
     '<div class="field"><label class="req">数据截止日期</label><input class="ctrl" type="date" id="cipCut" value="'+esc(_clpImp.cut||M.cut)+'"></div>'+
-    '<div class="field"><label>维护责任人</label><input class="ctrl" id="cipOwner" value="'+esc(CLP_TOP.owner)+'"></div>'+
     '<div class="field span2"><label>版本说明</label><input class="ctrl" id="cipNote2" value="'+esc(_clpImp.verNote||'')+'" placeholder="例如：新增 1 条规则；修正 1 处折算系数"></div>'+
     '</div>'+
     '<div class="notice info" style="margin-top:12px"><div class="ni">i</div><div>当前模块：<b>'+esc(M.label)+'</b> · 版本演进：<b>'+esc(M.verNote)+'</b>。不同 Annex 模块的版本与生效时间各自独立，登记后<b>仅更新所选模块</b>。</div></div>'+
@@ -14047,7 +14046,7 @@ clpSubstanceStoreInit();
 /* ==================================================================
    [23z7] REACH 法规库 · 统一页面（Tab 化清单管理，2026-09-18 第二十九轮）
    ------------------------------------------------------------------
-   需求口径（Cayla 2026-09-18）：
+   需求口径（业务确认 2026-09-18）：
    · law:reach 由「REACH / RoHS 分库维护页」升级为统一 REACH 页面：
      顶部法规主信息（与 CLP 法规库页同字段结构）+ 6 个 Tab
    · Tab1 SDS 编制要求（16 章结构与字段要求；三条法规依据分清：
@@ -14330,15 +14329,11 @@ function rchRender(){
         '<dt>当前状态</dt><dd><span class="tag green dot-tag">'+esc(REACH_TOP.status)+'</span></dd>'+
         '<dt>证据灯</dt><dd>'+worst+'</dd>'+
         '<dt>REACH 主版本</dt><dd class="mono">'+esc(REACH_TOP.ver)+'</dd>'+
-        '<dt>官方来源</dt><dd>'+esc(REACH_TOP.source)+'</dd>'+
         '<dt>当前发布状态</dt><dd>'+esc(REACH_TOP.publish)+'</dd>'+
         '<dt>最近检查时间</dt><dd>'+esc(REACH_TOP.lastCheck)+'（法规动态人工巡检）</dd>'+
         '<dt>最近审核时间</dt><dd>'+esc(REACH_TOP.lastReview)+'（人工复审）</dd>'+
         '<dt>审核人</dt><dd>'+esc(REACH_TOP.auditor)+'</dd>'+
-        '<dt>数据截止日期</dt><dd>'+esc(REACH_TOP.cutoff)+'<span class="muted">（本次导入官方来源文件日期）</span></dd>'+
-        '<dt>维护责任人</dt><dd>'+esc(REACH_TOP.owner)+'</dd>'+
-        '<dt style="grid-column:1">更新频率</dt><dd style="grid-column:span 3">'+esc(REACH_TOP.cycle)+'</dd>'+
-        '<dt style="grid-column:1">影响功能</dt><dd style="grid-column:span 3">'+REACH_TOP.funcs.map(function(f){return '<span class="tag blue">'+esc(f)+'</span>';}).join(' ')+'</dd>'+
+        '<dt style="grid-column:1">数据截止日期</dt><dd style="grid-column:span 3">'+esc(REACH_TOP.cutoff)+'<span class="muted">（本次导入官方来源文件日期）</span></dd>'+
       '</dl>'+
       '<div class="notice info" style="margin:12px 0 0"><div class="ni">i</div><div>'+esc(REACH_TOP.note)+'</div></div>'+
       '<div class="notice grey" style="margin:10px 0 0"><div class="ni">§</div><div>'+REACH_TOP.scope+'</div></div>'+
@@ -14741,7 +14736,7 @@ function rchImpHtml(n){
       '<div class="field"><label class="req">模块版本号</label><input class="ctrl" id="riVer" value="'+esc(_rchImp.ver||'')+'" placeholder="例如：第 34 批 / V2026.3 / R2026.2"></div>'+
       '<div class="field"><label class="req">生效日期</label><input class="ctrl" type="date" id="riEff" value="'+esc(_rchImp.eff||'2027-01-15')+'"></div>'+
       '<div class="field"><label class="req">数据截止日期</label><input class="ctrl" type="date" id="riCut" value="'+esc(_rchImp.cut||'2027-01-08')+'"></div>'+
-      '<div class="field"><label>维护责任人</label><input class="ctrl" id="riOwner" value="'+esc(REACH_TOP.owner)+'"></div></div>'+
+      '</div>'+
       '<div class="notice grey" style="margin-top:12px"><div class="ni">§</div><div>SVHC、Annex XIV、Annex XVII 与 Annex II 的更新时间并不一致，登记后<b>仅更新所选模块</b>的版本与生效日期。</div></div>';
   }
   if(n===3){
@@ -15019,7 +15014,7 @@ complianceRegisterMethod({code:'M-LIST',version:'1.0.0-demo',name:'名单命中�
 /* ==================================================================
    [23z8] 合规管理 · 法规条目页（RoHS 限用物质）与法规库占位页（运输）
    ------------------------------------------------------------------
-   需求口径（Cayla 2026-09-18）：
+   需求口径（业务确认 2026-09-18）：
    · RoHS 不再与 REACH 合并（原「REACH / RoHS」维护页拆开）：
      law:rohs 挂在「受限物质管理」下，**不做空占位页**——受限物质只有 10 种，
      直接列全 10 条更直观
@@ -15804,7 +15799,7 @@ function transportAssessmentTableHtml(){
 /* ==================================================================
    [23z9] 职业接触限值（OEL）法规库 · 维护页面（2026-09-18 第三十轮）
    ------------------------------------------------------------------
-   需求口径（Cayla 2026-09-18）：
+   需求口径（业务确认 2026-09-18）：
    · OEL 不是一部单独法规，而是各市场官方发布的多套职业接触限值清单。
      用户不逐条维护散落法规，而是以「国家 / 地区的官方限值数据集版本」为单位维护：
      官方来源 → 数据集版本 → 限值明细 → 版本对比 → 审核发布
@@ -16122,7 +16117,7 @@ function oelRender(){
     sdsHead('oelTitle','职业接触限值（OEL）',
       '以「国家 / 地区的官方限值数据集版本」为单位维护：官方来源 → 数据集版本 → 限值明细 → 版本对比 → 审核发布',
       '<button class="btn" onclick="oelSrcNew()">新建数据来源</button>'+
-      '<button class="btn primary" onclick="oelImport()">导入限值数据集</button>','','')+
+      '<button class="btn primary" onclick="oelImport()">导入限值数据集</button>','','oel')+
     '<div class="kpi-row">'+
       '<div class="kpi"><span>已覆盖国家 / 地区</span><b>'+rgN+'</b><small>按已建数据集的国家 / 地区计</small></div>'+
       '<div class="kpi"><span>已发布数据集</span><b style="color:var(--green)">'+pubN+'</b><small>可作为合规依据</small></div>'+
@@ -20086,7 +20081,7 @@ function wkReportHTMLInner(ro,perOverride){
 }
 
 /* ---------------- 示例数据：仅填充「人工维护项」 ----------------
-   口径（2026-09-14 Cayla 定）：
+   口径（2026-09-14 业务确认）：
    - 编辑态（查看本周完整周报）→ 只展示系统能自动取到的内容，人工项一律留空
    - 点「一键填充示例数据」→ 把下列示例写入草稿
    - 只读态（历史周报 / 归档）→ 直接按下列示例渲染，字段全满

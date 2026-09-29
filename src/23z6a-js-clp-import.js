@@ -1,7 +1,7 @@
 /* ==================================================================
    [23z6a] CLP 法规库 · 导入新版本（五步演示向导，三模块分支）
    ------------------------------------------------------------------
-   需求口径（Cayla 2026-09-18 二次方向）：
+   需求口径（业务确认 2026-09-18 二次方向）：
    · 本系统是面向业务人员演示的 PLM 业务原型，**不出现 AI 解析**
    · Annex I 等规则类内容由**法规专员在系统外完成整理与核对**：
      使用统一规则表模板整理，逐条对照法规原文确认后导入
@@ -441,7 +441,7 @@ function clpLImpNext(n){
     _clpImp.ver=$('cipVer').value.trim()||clpImpMod().ver;
     _clpImp.eff=$('cipEff').value||clpImpMod().eff;
     _clpImp.cut=$('cipCut').value||clpImpMod().cut;
-    _clpImp.owner=$('cipOwner').value.trim()||CLP_TOP.owner;
+    _clpImp.owner=CLP_TOP.owner;
     _clpImp.verNote=$('cipNote2').value.trim();
   }
   if(n===4&&!_clpImp.file){toast('请先上传结构化数据文件（或使用示例文件）','warn');return;}
@@ -523,7 +523,6 @@ function clpLImpHtml2(){
     '<div class="field"><label class="req">模块版本号</label><input class="ctrl" id="cipVer" value="'+esc(_clpImp.ver||M.ver)+'"></div>'+
     '<div class="field"><label class="req">生效日期</label><input class="ctrl" type="date" id="cipEff" value="'+esc(_clpImp.eff||M.eff)+'"></div>'+
     '<div class="field"><label class="req">数据截止日期</label><input class="ctrl" type="date" id="cipCut" value="'+esc(_clpImp.cut||M.cut)+'"></div>'+
-    '<div class="field"><label>维护责任人</label><input class="ctrl" id="cipOwner" value="'+esc(CLP_TOP.owner)+'"></div>'+
     '<div class="field span2"><label>版本说明</label><input class="ctrl" id="cipNote2" value="'+esc(_clpImp.verNote||'')+'" placeholder="例如：新增 1 条规则；修正 1 处折算系数"></div>'+
     '</div>'+
     '<div class="notice info" style="margin-top:12px"><div class="ni">i</div><div>当前模块：<b>'+esc(M.label)+'</b> · 版本演进：<b>'+esc(M.verNote)+'</b>。不同 Annex 模块的版本与生效时间各自独立，登记后<b>仅更新所选模块</b>。</div></div>'+

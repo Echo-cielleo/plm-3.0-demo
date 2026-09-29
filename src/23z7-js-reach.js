@@ -1,7 +1,7 @@
 /* ==================================================================
    [23z7] REACH 法规库 · 统一页面（Tab 化清单管理，2026-09-18 第二十九轮）
    ------------------------------------------------------------------
-   需求口径（Cayla 2026-09-18）：
+   需求口径（业务确认 2026-09-18）：
    · law:reach 由「REACH / RoHS 分库维护页」升级为统一 REACH 页面：
      顶部法规主信息（与 CLP 法规库页同字段结构）+ 6 个 Tab
    · Tab1 SDS 编制要求（16 章结构与字段要求；三条法规依据分清：
@@ -284,15 +284,11 @@ function rchRender(){
         '<dt>当前状态</dt><dd><span class="tag green dot-tag">'+esc(REACH_TOP.status)+'</span></dd>'+
         '<dt>证据灯</dt><dd>'+worst+'</dd>'+
         '<dt>REACH 主版本</dt><dd class="mono">'+esc(REACH_TOP.ver)+'</dd>'+
-        '<dt>官方来源</dt><dd>'+esc(REACH_TOP.source)+'</dd>'+
         '<dt>当前发布状态</dt><dd>'+esc(REACH_TOP.publish)+'</dd>'+
         '<dt>最近检查时间</dt><dd>'+esc(REACH_TOP.lastCheck)+'（法规动态人工巡检）</dd>'+
         '<dt>最近审核时间</dt><dd>'+esc(REACH_TOP.lastReview)+'（人工复审）</dd>'+
         '<dt>审核人</dt><dd>'+esc(REACH_TOP.auditor)+'</dd>'+
-        '<dt>数据截止日期</dt><dd>'+esc(REACH_TOP.cutoff)+'<span class="muted">（本次导入官方来源文件日期）</span></dd>'+
-        '<dt>维护责任人</dt><dd>'+esc(REACH_TOP.owner)+'</dd>'+
-        '<dt style="grid-column:1">更新频率</dt><dd style="grid-column:span 3">'+esc(REACH_TOP.cycle)+'</dd>'+
-        '<dt style="grid-column:1">影响功能</dt><dd style="grid-column:span 3">'+REACH_TOP.funcs.map(function(f){return '<span class="tag blue">'+esc(f)+'</span>';}).join(' ')+'</dd>'+
+        '<dt style="grid-column:1">数据截止日期</dt><dd style="grid-column:span 3">'+esc(REACH_TOP.cutoff)+'<span class="muted">（本次导入官方来源文件日期）</span></dd>'+
       '</dl>'+
       '<div class="notice info" style="margin:12px 0 0"><div class="ni">i</div><div>'+esc(REACH_TOP.note)+'</div></div>'+
       '<div class="notice grey" style="margin:10px 0 0"><div class="ni">§</div><div>'+REACH_TOP.scope+'</div></div>'+
@@ -695,7 +691,7 @@ function rchImpHtml(n){
       '<div class="field"><label class="req">模块版本号</label><input class="ctrl" id="riVer" value="'+esc(_rchImp.ver||'')+'" placeholder="例如：第 34 批 / V2026.3 / R2026.2"></div>'+
       '<div class="field"><label class="req">生效日期</label><input class="ctrl" type="date" id="riEff" value="'+esc(_rchImp.eff||'2027-01-15')+'"></div>'+
       '<div class="field"><label class="req">数据截止日期</label><input class="ctrl" type="date" id="riCut" value="'+esc(_rchImp.cut||'2027-01-08')+'"></div>'+
-      '<div class="field"><label>维护责任人</label><input class="ctrl" id="riOwner" value="'+esc(REACH_TOP.owner)+'"></div></div>'+
+      '</div>'+
       '<div class="notice grey" style="margin-top:12px"><div class="ni">§</div><div>SVHC、Annex XIV、Annex XVII 与 Annex II 的更新时间并不一致，登记后<b>仅更新所选模块</b>的版本与生效日期。</div></div>';
   }
   if(n===3){
