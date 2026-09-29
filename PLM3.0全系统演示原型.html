@@ -1312,6 +1312,11 @@ td.exp-tog.on{color:var(--primary)}
 .desc-list dt{background:#f7f9fc;padding:9px 13px;color:var(--text-2);border-bottom:1px solid var(--line);font-size:12.5px}
 .desc-list dd{padding:9px 13px;border-bottom:1px solid var(--line);word-break:break-word}
 .desc-list dt:nth-last-of-type(1),.desc-list dd:nth-last-of-type(1){border-bottom:none}
+/* 两列基本信息：竖向高度减半，窄屏自动退回单列 */
+.desc-list.desc-2col{grid-template-columns:118px minmax(0,1fr) 118px minmax(0,1fr)}
+.sds-scope .desc-list.desc-2col{grid-template-columns:118px minmax(0,1fr) 118px minmax(0,1fr)}
+.desc-list.desc-2col dt:nth-last-of-type(-n+2),.desc-list.desc-2col dd:nth-last-of-type(-n+2){border-bottom:none}
+@media (max-width:1180px){.desc-list.desc-2col,.sds-scope .desc-list.desc-2col{grid-template-columns:132px 1fr}}
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:13px 15px;box-shadow:var(--shadow)}
 .kpi span{font-size:12px;color:var(--muted);display:block}
@@ -1364,6 +1369,15 @@ td.exp-tog.on{color:var(--primary)}
 .df-main span{font-size:11.5px;color:var(--muted)}
 .df-ops{display:flex;gap:2px;flex:0 0 auto}
 .btn-link.danger{color:var(--danger)}
+
+/* ---------- 供应商双源表单（27z5b） ---------- */
+.sup-arch{background:#fafbfd;border:1px solid var(--line);border-radius:10px;padding:12px 14px 10px}
+.sup-arch-hd{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-bottom:10px}
+.sup-arch-note{font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:8px}
+.sup-qual{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.sup-qual .tbl.mini{margin:0}
+.sup-qual .tbl.mini th,.sup-qual .tbl.mini td{padding:6px 8px;font-size:12.5px}
+.sup-qual .tbl.mini .ctrl{height:30px;font-size:12.5px}
 /* ==================================================================
    [03z] 实验分析 AI 弹窗样式（24z4 专用）
    · 左栏 = 可勾选实验列表，右栏 = 问答 / 报表区
@@ -4430,22 +4444,22 @@ regPage('bd:rawmat-detail',{
     }
     /* --- 1. 基本信息 --- */
     h+='<div class="card"><div class="card-hd"><h3>基本信息</h3><span class="sub">物料主数据</span></div><div class="card-b">'+
-       '<dl class="desc-list">'+
+       '<dl class="desc-list desc-2col">'+
        '<dt>物料编码</dt><dd class="mono">'+esc(m.code)+'</dd>'+
        '<dt>物料名称</dt><dd>'+esc(m.name)+'</dd>'+
        '<dt>物料类型</dt><dd>'+esc(m.type)+'</dd>'+
        '<dt>物质形态</dt><dd>'+tagOf(m.form,(m.form||'').indexOf('纯物质')===0?'green':'purple')+'</dd>'+
        '<dt>自身 CAS 号</dt><dd>'+(cas?'<span class="mono">'+esc(cas)+'</span> <a class="mat-link" href="javascript:void(0)" onclick="compOpen(\''+esc(cas)+'\')">查看组分档案</a>':'<span class="muted">—（混合物，组分见下方构成）</span>')+'</dd>'+
        '<dt>规格 / 型号</dt><dd>'+esc(m.spec||'—')+'</dd>'+
-       '<dt>责任人</dt><dd>'+esc(m.owner||'—')+'</dd>'+
-       '<dt>状态</dt><dd>'+tagOf(m.status,(m.status==='正常')?'green':'grey')+'</dd>'+
-       '<dt>替代类型</dt><dd>'+(m.substType?('<span class="tag '+(m.substType==='等值替代'?'green':'orange')+'">'+esc(m.substType)+'</span>'):'<span class="muted">—</span>')+'</dd>'+
-       '<dt>替代料</dt><dd>'+matSubstToLink(m)+'</dd>'+
-       '<dt>停用时间</dt><dd>'+(m.stopDate?esc(m.stopDate):'<span class="muted">—</span>')+'</dd>'+
        '<dt>主供应商</dt><dd>'+(sp?('<a class="mat-link" href="javascript:void(0)" onclick="showPage(\'bd:supplier\')">'+esc(sp.name)+'</a> <span class="muted">'+esc(sp.code)+'</span>'):'<span class="muted">厂内自制</span>')+'</dd>'+
        '<dt>生产厂商</dt><dd>'+esc(m.manufacturer)+'</dd>'+
        '<dt>来源</dt><dd>'+tagOf(matOrigin(m),matOrigin(m)==='自制'?'green':'purple')+'</dd>'+
+       '<dt>责任人</dt><dd>'+esc(m.owner||'—')+'</dd>'+
+       '<dt>状态</dt><dd>'+tagOf(m.status,(m.status==='正常')?'green':'grey')+'</dd>'+
        '<dt>创建时间</dt><dd>'+esc(m.created||'—')+'</dd>'+
+       '<dt>替代类型</dt><dd>'+(m.substType?('<span class="tag '+(m.substType==='等值替代'?'green':'orange')+'">'+esc(m.substType)+'</span>'):'<span class="muted">—</span>')+'</dd>'+
+       '<dt>替代料</dt><dd>'+matSubstToLink(m)+'</dd>'+
+       '<dt>停用时间</dt><dd>'+(m.stopDate?esc(m.stopDate):'<span class="muted">—</span>')+'</dd>'+
        '<dt>备注</dt><dd>'+esc(m.remark||'—')+'</dd>'+
        '</dl></div></div>';
     /* --- 2. 组分构成 / 配方组成 --- */
@@ -4593,6 +4607,315 @@ function matCopyCode(code){
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(code);
   }catch(e){}
   toast('已复制物料编码 '+code,'ok');
+}
+
+</script>
+<script>
+/* ==================================================================
+   [22z1a] 原料信息 · 暂存区 Tab（2026-09-29，第三版模型）
+   ------------------------------------------------------------------
+   业务背景（2026-09-29 业务确认的真实流程）：
+
+   ① 业务发起 OA《新增原材料库存》流程 → 领导审批 → 采购部去 NCC 建档
+      → NCC 产生物料编码 → 编码回填到 OA 流程的「存货编码」字段。
+   ② 流程归档后 PLM 做双源拼合：OA 出 CAS 号与 MSDS 附件，NCC 出编码、
+      名称、分类、规格，两边以流程里的「存货编码」为连接键。
+   ③ 信息齐全的直接建成原料档案，**不进暂存区**；只有缺了某项的才落到
+      暂存区等人工补一手。
+
+   四种待办状态（按缺口，非按来源）：
+     · 待匹配编码 —— 采购还没在 NCC 建档，流程「存货编码」空着
+     · 待补 CAS   —— CAS 缺失且物质形态未判定，补录时可填 CAS 或标为混合物
+     · 待补 MSDS  —— 流程里没附 MSDS；可上传后建档，确认商家确实没有的
+                     也可直接手动建档
+     · 待建档     —— 信息已齐，等待转正式建档
+
+   bd:rawmat 由「单页台账」改为两个 Tab：原料台账（renderDbPage 原样）
+   + 暂存区（本分片）。只加展示与演示数据，不碰任何计算逻辑。
+   ================================================================== */
+
+var RAWMAT_TABS=[{key:'ledger',label:'原料台账'},{key:'staging',label:'暂存区'}];
+var rmTab='ledger';
+
+/* CAS 类型：CAS 号只颁给单一化学物质。
+   · 单一物质 —— CAS 精确到分子结构（如三乙醇胺 102-71-6）
+   · UVCB    —— 聚合物 / 同系物，CAS 代表一类物质而非单一分子（如 9006-65-9 硅油）
+   · 混合物  —— 多组分复配，没有自身 CAS，身份靠 MSDS 第 3 节的组分清单描述
+   · 未判定  —— 流程里没给 CAS 也没说明形态，等人工补录时判定 */
+var CAS_TYPE_NOTE={'单一物质':'单一化学物质，CAS 精确到分子结构',
+                   'UVCB':'聚合物或同系物，CAS 代表一类物质而非单一分子',
+                   '混合物':'多组分复配，没有自身 CAS，组分见 MSDS 第 3 节',
+                   '未判定':'流程未提供 CAS，也未说明物质形态，待人工判定'};
+var CAS_TYPE_TAG={'单一物质':'green','UVCB':'blue','混合物':'grey','未判定':'purple'};
+var STG_STATUS_TAG={'待匹配编码':'blue','待补 CAS':'purple','待补 MSDS':'orange','待建档':'grey','已关联':'green'};
+var STG_STATUS=['待匹配编码','待补 CAS','待补 MSDS','待建档','已关联'];
+
+/* 暂存区演示数据：5 条覆盖全部 5 种状态与 4 种 CAS 类型 */
+var MAT_STAGING=[
+  {id:'TMP-2026-001',name:'水性消泡剂 DF-90',cas:'9006-65-9',casType:'UVCB',
+   msds:'MSDS_DF-90_有机硅消泡剂.pdf',code:'MAT-00912',
+   src:'OA-MAT-2026-0812',at:'2026-09-12 10:24',status:'待建档',mat:''},
+  {id:'TMP-2026-002',name:'非离子乳化剂 AEO-9',cas:'68439-46-3',casType:'UVCB',
+   msds:'MSDS_AEO-9_脂肪醇聚氧乙烯醚.pdf',code:'',
+   src:'OA-MAT-2026-0825',at:'2026-09-18 15:07',status:'待匹配编码',mat:''},
+  {id:'TMP-2026-003',name:'三乙醇胺 TEA-99',cas:'102-71-6',casType:'单一物质',
+   msds:'',code:'MAT-00915',
+   src:'OA-MAT-2026-0901',at:'2026-09-20 09:12',status:'待补 MSDS',mat:''},
+  {id:'TMP-2026-004',name:'水性增稠剂 TT-935',cas:'',casType:'未判定',
+   msds:'MSDS_TT-935_碱溶胀增稠剂.pdf',code:'MAT-00918',
+   src:'OA-MAT-2026-0908',at:'2026-09-24 16:40',status:'待补 CAS',mat:''},
+  {id:'TMP-2026-005',name:'手感剂 HF-5',cas:'',casType:'混合物',
+   msds:'MSDS_HF-5_有机硅手感剂.pdf',code:'MAT-00631',
+   src:'OA-MAT-2026-0728',at:'2026-08-03 11:35',status:'已关联',mat:'MAT-00631'}
+];
+/* 演示用：待匹配编码的记录，「同步编码」时能取到的存货编码 */
+var STG_PENDING_CODE={'TMP-2026-002':'MAT-00933'};
+
+/* 页面说明（收起在右上角「说明」按钮里） */
+var STG_NOTE_TXT='<p><b>暂存区只承接信息不完整的原料。</b>OA 流程归档时若 CAS 号、存货编码、MSDS 附件齐全，会直接建成原料档案，不经过这里；只有缺了某项才落到暂存区，等人工补一手。</p>'
+  +'<p><b>物料信息来自双源拼合</b>　OA 流程提供 CAS 号与 MSDS 附件；NCC 物料档案提供编码、名称、分类与规格。两边以流程里的<b>存货编码</b>为连接键——采购部在 NCC 建档后把编码回填到流程，PLM 用这个编码去 NCC 取数。</p>'
+  +'<p><b>四种待办状态</b>　<b>待匹配编码</b> = 采购部还没在 NCC 建档，流程「存货编码」空着；<b>待补 CAS</b> = CAS 缺失且物质形态未判定，补录时可以填 CAS，也可以直接标记为混合物；<b>待补 MSDS</b> = 流程里没附 MSDS，可上传后再建档，确认商家确实没有 MSDS 的也可以直接手动建档；<b>待建档</b> = 信息已齐，等待转正式建档。</p>'
+  +'<p><b>CAS 类型</b>　<b>单一物质</b>：CAS 精确到分子结构；<b>UVCB</b>：聚合物或同系物，CAS 代表一类物质而非单一分子；<b>混合物</b>：多组分复配，没有自身 CAS，组分见 MSDS 第 3 节。</p>';
+
+function stgById(id){ return MAT_STAGING.filter(function(r){return r.id===id;})[0]||null; }
+function stgCountBy(st){ return MAT_STAGING.filter(function(r){return r.status===st;}).length; }
+/* 按字段齐备情况推算下一条状态 */
+function stgNextStatus(r){
+  if(!r.code)return '待匹配编码';
+  if(r.casType!=='混合物'&&!r.cas)return '待补 CAS';
+  if(!r.msds)return '待补 MSDS';
+  return '待建档';
+}
+
+/* ---------- 页面入口：bd:rawmat ---------- */
+function renderRawmatPage(){
+  var host=$('pageHost'); if(!host)return;
+  if(rmTab==='ledger'){
+    /* 台账 Tab：完全复用 renderDbPage，只在标题下方补插 Tab 条 */
+    renderDbPage('material','原料信息',
+      '企业采购与自产原料的身份档案，含物质形态、规格型号与配方组成，是 SDS 编制与法规匹配的基础。');
+    var anchor=$('dbKpi');
+    if(anchor&&!$('rmTabs')){
+      var d=document.createElement('div'); d.id='rmTabs';
+      anchor.parentNode.insertBefore(d,anchor);
+    }
+    stgMountTabs();
+    return;
+  }
+  renderStagingTab();
+}
+function stgMountTabs(){
+  var box=$('rmTabs'); if(!box)return;
+  box.innerHTML='';
+  box.appendChild(tabs(RAWMAT_TABS,rmTab,function(k){ rmTab=k; renderRawmatPage(); }));
+}
+
+/* ---------- 暂存区 Tab ---------- */
+function renderStagingTab(){
+  var host=$('pageHost'); if(!host)return;
+  var rows=MAT_STAGING;
+  host.innerHTML='<div class="sds-scope">'
+    +sdsHead('rmStgTitle','原料信息',STG_NOTE_TXT,'','','rmstg')
+    +'<div id="rmTabs"></div>'
+    +'<div class="kpi-row" id="rmStgKpi"></div>'
+    +'<div class="card"><div class="toolbar">'
+      +'<span style="font-size:12.5px;color:var(--muted)">共 <b>'+rows.length+'</b> 条暂存记录'
+      +STG_STATUS.map(function(s){return ' · '+s+' '+stgCountBy(s);}).join('')+'</span>'
+      +'<div class="grow"></div></div>'
+      +'<div class="tbl-wrap"><table class="tbl" id="stgTable"></table></div></div>'
+    +'</div>';
+  stgMountTabs();
+  stgRenderKpi();
+  stgRenderTable();
+}
+function stgRenderKpi(){
+  var box=$('rmStgKpi'); if(!box)return;
+  var items=[['待匹配编码',stgCountBy('待匹配编码'),'var(--brand)'],
+             ['待补 CAS',stgCountBy('待补 CAS'),'var(--purple)'],
+             ['待补 MSDS',stgCountBy('待补 MSDS'),'var(--orange)'],
+             ['待建档',stgCountBy('待建档'),'var(--ink2)']];
+  box.innerHTML=items.map(function(it){
+    return '<div class="kpi"><div class="k">'+it[0]+'</div><div class="v" style="color:'+it[2]+'">'+it[1]+'</div></div>';
+  }).join('');
+}
+/* CAS 单元格：混合物没有自身 CAS，未判定的待人工补录 */
+function stgCasCell(r){
+  var t=r.casType||'未判定';
+  var tip=esc(CAS_TYPE_NOTE[t]||'');
+  if(t==='混合物'){
+    return '<span class="muted">—（多组分，见 MSDS）</span>'
+      +'<br><span class="tag '+CAS_TYPE_TAG[t]+'" style="margin-top:3px" title="'+tip+'">混合物</span>';
+  }
+  if(!r.cas){
+    return '<span class="muted">—（待补录）</span>'
+      +'<br><span class="tag '+CAS_TYPE_TAG[t]+'" style="margin-top:3px" title="'+tip+'">'+esc(t)+'</span>';
+  }
+  return '<span class="mono">'+esc(r.cas)+'</span>'
+    +'<br><span class="tag '+CAS_TYPE_TAG[t]+'" style="margin-top:3px" title="'+tip+'">'+esc(t)+'</span>';
+}
+function stgRenderTable(){
+  var t=$('stgTable'); if(!t)return;
+  var head=['暂存编号','物料名称','CAS','MSDS 附件','存货编码','来源','进入时间','状态','操作'];
+  var h='<thead><tr>'+head.map(function(x,i){
+    return '<th'+([0,1,4,5].indexOf(i)>=0?'':' class="c"')+'>'+x+'</th>';
+  }).join('')+'</tr></thead><tbody>';
+  h+=MAT_STAGING.map(function(r){
+    return '<tr>'
+      +'<td class="mono">'+esc(r.id)+'</td>'
+      +'<td><b>'+esc(r.name)+'</b>'+(r.mat?'<br><small class="muted">已关联 '+mono(r.mat)+'</small>':'')+'</td>'
+      +'<td class="c">'+stgCasCell(r)+'</td>'
+      +'<td>'+(r.msds?'<span class="mono">'+esc(r.msds)+'</span>':'<span class="muted">—</span>')+'</td>'
+      +'<td class="mono">'+(r.code?esc(r.code):'<span class="muted">— 待回填</span>')+'</td>'
+      +'<td class="mono">'+esc(r.src)+'</td>'
+      +'<td>'+esc(r.at)+'</td>'
+      +'<td class="c"><span class="tag '+STG_STATUS_TAG[r.status]+' dot-tag">'+esc(r.status)+'</span></td>'
+      +'<td class="acts">'+stgActs(r)+'</td>'
+      +'</tr>';
+  }).join('');
+  h+='</tbody>';
+  t.innerHTML=h;
+}
+function stgActs(r){
+  if(r.status==='已关联'){
+    return '<button class="btn btn-link" onclick="matOpen(\''+esc(r.mat)+'\')">查看原料</button>'
+      +'<button class="btn btn-link" onclick="stgUnlink(\''+esc(r.id)+'\')">解除关联</button>';
+  }
+  var a='';
+  if(r.status==='待匹配编码'){
+    return '<button class="btn btn-link" onclick="stgSyncCode(\''+esc(r.id)+'\')">同步编码</button>'
+      +'<span class="muted" style="font-size:12px">编码到位后可建档</span>';
+  }
+  if(r.status==='待补 CAS')a+='<button class="btn btn-link" onclick="stgFillCas(\''+esc(r.id)+'\')">补录 CAS</button>';
+  if(r.status==='待补 MSDS')a+='<button class="btn btn-link" onclick="stgUploadMsds(\''+esc(r.id)+'\')">上传 MSDS</button>';
+  a+='<button class="btn btn-link" onclick="stgLinkMat(\''+esc(r.id)+'\')">关联物料</button>';
+  a+='<button class="btn btn-link" onclick="stgToFormal(\''+esc(r.id)+'\')">转正式建档</button>';
+  return a;
+}
+function stgUnlink(id){
+  var r=stgById(id); if(!r)return;
+  r.mat=''; r.status=stgNextStatus(r);
+  toast('已解除关联，回到'+r.status,'info'); renderStagingTab();
+}
+
+/* 同步存货编码：从 OA 流程再取一次「存货编码」字段 */
+function stgSyncCode(id){
+  var r=stgById(id); if(!r)return;
+  var c=STG_PENDING_CODE[id]||'';
+  if(!c){ toast('流程「存货编码」尚未回填，请等采购部在 NCC 建档','warn'); return; }
+  r.code=c; r.status=stgNextStatus(r);
+  toast('已从 OA 流程取到存货编码 '+c+'，并用它从 NCC 取回物料信息','ok');
+  renderStagingTab();
+}
+
+/* 补录 CAS：可填精确 CAS，也可直接判定为混合物（无自身 CAS） */
+function stgFillCas(id){
+  var r=stgById(id); if(!r)return;
+  var opts=['单一物质','UVCB','混合物'].map(function(t){
+    return '<option value="'+t+'"'+(r.casType===t?' selected':'')+'>'+t
+      +(t==='混合物'?'（无自身 CAS）':'')+'</option>';
+  }).join('');
+  openModal({title:'补录 CAS · '+r.id,width:580,
+    body:'<div class="form-grid">'
+      +'<div class="field span2"><label>物料</label><input class="ctrl" value="'+esc(r.name)+' · '+esc(r.code||'—')+'" disabled></div>'
+      +'<div class="field span2"><label>物质类型<span style="color:#b42318">*</span></label>'
+      +'<select class="ctrl" id="stg_ct" onchange="stgCasTypeSwitch()">'+opts+'</select></div>'
+      +'<div class="field span2" id="stg_cas_wrap"><label>CAS 号<span style="color:#b42318">*</span></label>'
+      +'<input class="ctrl" id="stg_cas" placeholder="如 102-71-6"></div>'
+      +'<div class="field span2"><small class="muted" id="stg_cas_tip">'+esc(CAS_TYPE_NOTE[r.casType]||'')+'</small></div>'
+      +'</div>',
+    footer:'<button class="btn" onclick="closeModal()">取消</button>'
+      +'<button class="btn primary" onclick="stgFillCasSave(\''+esc(r.id)+'\')">保存</button>'});
+}
+function stgCasTypeSwitch(){
+  var t=$('stg_ct').value,w=$('stg_cas_wrap'),tip=$('stg_cas_tip');
+  if(w)w.style.display=(t==='混合物')?'none':'';
+  if(tip)tip.textContent=CAS_TYPE_NOTE[t]||'';
+}
+function stgFillCasSave(id){
+  var r=stgById(id); if(!r)return;
+  var t=$('stg_ct').value;
+  var c=t==='混合物'?'':(($('stg_cas')||{}).value||'').trim();
+  if(t!=='混合物'&&!c){ toast('请填写 CAS 号，或把类型改为混合物','warn'); return; }
+  r.casType=t; r.cas=c; r.status=stgNextStatus(r);
+  closeModal();
+  toast(t==='混合物'?'已判定为混合物，无自身 CAS':'已补录 CAS '+c+'（'+t+'）','ok');
+  renderStagingTab();
+}
+
+/* 上传 MSDS：暂时没有的可以补传，确认商家没有的也可直接手动建档 */
+function stgUploadMsds(id){
+  var r=stgById(id); if(!r)return;
+  openModal({title:'上传 MSDS · '+r.id,width:580,
+    body:'<div class="form-grid">'
+      +'<div class="field span2"><label>物料</label><input class="ctrl" value="'+esc(r.name)+' · '+esc(r.code||'—')+'" disabled></div>'
+      +'<div class="field span2"><label>MSDS 附件</label>'
+      +'<input class="ctrl" id="stg_msds" placeholder="选择商家提供的 MSDS 文件…"></div>'
+      +'<div class="field span2"><small class="muted">确认商家确实没有 MSDS 的，不必上传，直接在暂存区点「转正式建档」即可，建档后原料档案会标注 MSDS 缺失。</small></div>'
+      +'</div>',
+    footer:'<button class="btn" onclick="closeModal()">取消</button>'
+      +'<button class="btn primary" onclick="stgUploadMsdsSave(\''+esc(r.id)+'\')">确认上传</button>'});
+}
+function stgUploadMsdsSave(id){
+  var r=stgById(id); if(!r)return;
+  var v=(($('stg_msds')||{}).value||'').trim();
+  if(!v){ toast('请选择 MSDS 文件','warn'); return; }
+  r.msds=v; r.status=stgNextStatus(r);
+  closeModal(); toast('MSDS 已上传，可转正式建档','ok'); renderStagingTab();
+}
+
+/* 关联物料：弹窗选现有原料编码，选完该行状态变「已关联」 */
+function stgLinkMat(id){
+  var r=stgById(id); if(!r)return;
+  var mats=(typeof matRows==='function')?matRows():[];
+  var opts=mats.map(function(m){
+    return '<option value="'+esc(m.code)+'"'+(r.mat===m.code?' selected':'')+'>'
+      +esc(m.name)+'（'+esc(m.code)+'）</option>';
+  }).join('');
+  openModal({title:'关联物料 · '+r.id,width:560,
+    body:'<div class="form-grid">'
+      +'<div class="field span2"><label>暂存物料</label><input class="ctrl" value="'+esc(r.name)+' · '
+      +(r.casType==='混合物'?'混合物（无自身 CAS）':(r.cas?'CAS '+esc(r.cas):'CAS 待补录'))+'" disabled></div>'
+      +'<div class="field span2"><label>关联到现有原料<span style="color:#b42318">*</span></label>'
+      +'<select class="ctrl" id="stg_mat">'+opts+'</select>'
+      +'<small class="muted">PLM 里已有该原料档案时选这个，避免重复建档</small></div>'
+      +'</div>',
+    footer:'<button class="btn" onclick="closeModal()">取消</button>'
+      +'<button class="btn primary" onclick="stgLinkSave(\''+esc(r.id)+'\')">确认关联</button>'});
+}
+function stgLinkSave(id){
+  var r=stgById(id); if(!r)return;
+  var sel=$('stg_mat'); if(!sel||!sel.value){toast('请选择要关联的原料','warn');return;}
+  r.mat=sel.value; r.status='已关联';
+  closeModal();
+  toast(r.id+' 已关联至 '+r.mat,'ok');
+  renderStagingTab();
+}
+
+/* 转正式建档：跳原料新增表单，带存货编码 / 名称 / 形态 / CAS / MSDS。
+   形态按 CAS 类型分支：混合物不带 100% 单组分，配方留空待按 MSDS 补录 */
+function stgToFormal(id){
+  var r=stgById(id); if(!r)return;
+  if(!r.code){ toast('该记录还没有存货编码，请先同步 OA 流程的存货编码','warn'); return; }
+  var mix=(r.casType==='混合物');
+  rmTab='ledger';
+  renderRawmatPage();
+  if(typeof dbEdit!=='function')return;
+  dbEdit(null);
+  if($('fx_code'))$('fx_code').value=r.code;
+  if($('fx_name'))$('fx_name').value=r.name;
+  if($('fx_type'))$('fx_type').value='原料';
+  if($('fx_status'))$('fx_status').value='正常';
+  _edForm=mix?'混合物（混合料）':'纯物质（单物料）';
+  if($('fx_form'))$('fx_form').value=_edForm;
+  _edRecipe=mix?[]:[{cas:r.cas,name:r.name,conc:'100.00',secret:false}];
+  if(typeof matRecipeRender==='function')matRecipeRender();
+  if($('fx_remark')){
+    var mk=r.msds?('MSDS 附件：'+r.msds):'MSDS 附件：缺失（商家未提供，建档后请补传）';
+    $('fx_remark').value=mk+'（由暂存区 '+r.id+' 转入，OA 流程 '+r.src+'）'
+      +(mix?'；混合物无自身 CAS，请按 MSDS 第 3 节补录组分':'');
+  }
+  toast(mix?'已带入存货编码与名称；形态为混合物，配方留空，请按 MSDS 补录组分'
+           :'已带入存货编码 / 名称 / CAS / MSDS，确认后保存','info');
 }
 
 </script>
@@ -8990,10 +9313,7 @@ regPage('bd:comp',{
 });
 regPage('bd:rawmat',{
   title:'原料信息',crumb:['基础数据','原料信息'],
-  render:function(){
-    renderDbPage('material','原料信息',
-      '企业采购与自产原料的身份档案，含物质形态、规格型号与配方组成，是 SDS 编制与法规匹配的基础。');
-  }
+  render:function(){ renderRawmatPage(); }
 });
 regPage('bd:sup-data',{
   title:'供应商原料数据',crumb:['基础数据','供应商原料数据'],
@@ -10215,7 +10535,7 @@ regPage('comp:guarantee',{
 /* ==================================================================
    [23z6] CLP 法规库 · 统一页面（Tab 化 Annex 管理，2026-09-18）
    ------------------------------------------------------------------
-   需求口径（王舒 2026-09-18）：
+   需求口径（业务确认 2026-09-18）：
    · law:clp 由「附录 VI 清单维护页」升级为统一 CLP 页面：
      顶部法规主信息（含证据灯）+ 5 个 Tab 管理 Annex 内容
    · Tab1 Annex VI 物质统一分类（保留原有 5 条示例数据）
@@ -23487,7 +23807,12 @@ regPage('bd:supplier',{
         {k:'type',t:'类型',w:'80px',align:'c'},
         {k:'cat',t:'主供品类',w:'200px'},
         {k:'region',t:'所在地',w:'110px'},
-        {k:'since',t:'合作起始',w:'100px'},
+        {k:'_src',t:'来源',w:'100px',align:'c',fmt:function(r){
+          var s=r._src||'NCC 同步';
+          return '<span class="tag '+(SUP_SRC_TAG[s]||'tag-grey')+'">'+esc(s)+'</span>';}},
+        {k:'_last',t:'上次采购日期',w:'110px',fmt:function(r){
+          var d=(typeof supLastBuy==='function')?supLastBuy(r.code):'';
+          return d?esc(d):'<span class="muted">—</span>';}},
         {k:'grade',t:'评级',w:'70px',align:'c',fmt:function(r){return '<span class="tag '+(GRADE_TAG[r.grade]||'tag-grey')+'">'+esc(r.grade)+'</span>';}},
         {k:'status',t:'状态',w:'80px',fmt:function(r){return gtag(r.status);}},
         {k:'_mat',t:'供应物料',w:'96px',align:'c',fmt:function(r){
@@ -23496,10 +23821,15 @@ regPage('bd:supplier',{
         }}
       ],
       rows:SUPPLIERS,kwKeys:['code','name','cat','region'],
-      acts:function(r){ return '<button class="btn btn-link" onclick="mdOpenSupplier(\''+esc(r.code)+'\')">查看</button>'; },
+      acts:function(r){
+        return '<button class="btn btn-link" onclick="mdOpenSupplier(\''+esc(r.code)+'\')">查看</button>'
+          +'<button class="btn btn-link" onclick="supForm(\''+esc(r.code)+'\')">编辑</button>';
+      },
       onRowClick:function(r){ mdOpenSupplier(r.code); },
+      headActs:'<button class="btn btn-primary" onclick="supForm(\'\')">＋ 新增供应商</button>',
       filters:[
         {k:'type',t:'类型',all:'全部',opts:[['生产商','生产商'],['经销商','经销商']]},
+        {k:'_src',t:'来源',all:'全部',opts:[['NCC 同步','NCC 同步'],['手工建档','手工建档']]},
         {k:'grade',t:'评级',all:'全部',opts:[['A','A 级'],['B','B 级'],['C','C 级']]},
         {k:'status',t:'状态',all:'全部',opts:[['合格','合格'],['观察','观察'],['停用','停用']]}
       ]
@@ -25353,10 +25683,15 @@ mdReg({
       {t:'基本信息',sub:'供应商主数据',rows:[
         ['供应商编码',mono(s.code)],
         ['供应商名称','<b>'+esc(s.name)+'</b>'],
+        ['英文名称',s.en?esc(s.en):'<span class="muted">—</span>'],
         ['供应商类型',esc(s.type)],
         ['主供品类',esc(s.cat)],
         ['所在地',esc(s.region)],
+        ['来源','<span class="tag '+(SUP_SRC_TAG[s._src||'NCC 同步']||'tag-grey')+'">'+esc(s._src||'NCC 同步')+'</span>'],
         ['合作起始',esc(s.since)],
+        ['上次采购日期',(function(){
+          var d=(typeof supLastBuy==='function')?supLastBuy(s.code):'';
+          return d?esc(d):'<span class="muted">—</span>';})()],
         ['评级','<span class="tag '+(GRADE_TAG[s.grade]||'tag-grey')+'">'+esc(s.grade)+'</span>'],
         ['状态',gtag(s.status)],
         ['在册物料','<b>'+mats.length+'</b> 种'+(mats.length?('（'+mats.slice(0,3).map(function(m){return esc(m.name);}).join('、')+(mats.length>3?' 等':'')+'）'):'')],
@@ -25369,6 +25704,13 @@ mdReg({
          return [esc(q[0]),esc(q[1]),esc(q[2]),'<span class="tag '+c+'">'+esc(q[3])+'</span>'];
        }),
        empty:'该供应商尚未维护资质证照'},
+      {t:'联系人',sub:'业务对接人，默认联系人用于到货异常与对账通知',type:'tbl',
+       cols:[{t:'姓名',w:'110px'},{t:'电话',w:'160px'},{t:'默认联系人',w:'100px'}],
+       rows:(typeof mdSupContacts==='function'?mdSupContacts(s.code):[]).map(function(c){
+         return [esc(c.name),'<span class="mono">'+esc(c.tel)+'</span>',
+                 c.def?'<span class="tag green">默认</span>':'<span class="muted">—</span>'];
+       }),
+       empty:'该供应商尚未维护联系人'},
       {t:'供货物料',sub:mats.length+' 种在册（一物一供：同一物料只挂一家主供）',type:'tbl',
        cols:[{t:'物料编码',w:'120px'},{t:'物料名称'},{t:'供方货号',w:'130px'},
              {t:'物料状态',w:'90px'},{t:'操作',w:'90px'}],
@@ -26473,6 +26815,210 @@ function prodCatSummaryRow(code){
   var p=PRODUCTS.filter(function(x){return x.code===code;})[0];
   if(!p||!p.catPath)return '';
   return '<tr><th style="width:120px;text-align:left">所属目录</th><td>'+esc(p.catPath)+'</td></tr>';
+}
+
+</script>
+<script>
+/* ==================================================================
+   [27z5b] 供应商维护 · 双源口径表单与联系人（2026-09-29）
+   ------------------------------------------------------------------
+   供应商双源口径（9-28 定）：
+     · 档案层（编码 / 名称 / 英文名称 / 类型 / 所在地）—— NCC 快照同步，只读
+     · 质量域（评级 / 状态 / 资质证照 / 主供产品）—— PLM 维护，可编辑
+
+   本分片只补展示与演示数据：字段回填、新增/编辑表单、联系人子表、
+   「上次采购日期」计算。不注册任何 regPage，不碰合规与判定逻辑。
+   ================================================================== */
+
+/* ---------- 1. 档案层字段回填（零侵入补进 SUPPLIERS） ---------- */
+var SUP_PROFILE={
+  'SUP-2026-001':{en:'Wanhua Chemical Group Co., Ltd.',src:'NCC 同步'},
+  'SUP-2026-002':{en:'BASF (China) Co., Ltd.',src:'NCC 同步'},
+  'SUP-2026-003':{en:'Zhejiang Runtu Co., Ltd.',src:'NCC 同步'},
+  'SUP-2026-004':{en:'Jiangsu Sanmu Group Co., Ltd.',src:'NCC 同步'},
+  'SUP-2026-005':{en:'Shandong Langhui Petrochemical Co., Ltd.',src:'NCC 同步'},
+  'SUP-2026-006':{en:'Guangzhou Tinci Advanced Materials Co., Ltd.',src:'NCC 同步'},
+  'SUP-2026-007':{en:'Shanghai Kaiyin Chemical Co., Ltd.',src:'NCC 同步'},
+  'SUP-2026-008':{en:'Changzhou Shanfeng Chemical Co., Ltd.',src:'NCC 同步'},
+  'SUP-2026-009':{en:'Anhui Jinhe Industrial Co., Ltd.',src:'NCC 同步'},
+  'SUP-2026-010':{en:'Dow Chemical (Zhangjiagang) Co., Ltd.',src:'NCC 同步'},
+  'SUP-2025-004':{en:'Hebei Chengxin Group Co., Ltd.',src:'NCC 同步'},
+  'SUP-2025-001':{en:'Zhangjiagang Free Trade Zone Huachang Chemical Co., Ltd.',src:'NCC 同步'}
+};
+(function(){
+  (typeof SUPPLIERS!=='undefined'?SUPPLIERS:[]).forEach(function(s){
+    var p=SUP_PROFILE[s.code]||{};
+    s.en=s.en||p.en||'';
+    s._src=s._src||p.src||'NCC 同步';
+  });
+})();
+var SUP_SRC_TAG={'NCC 同步':'tag-blue','手工建档':'tag-orange'};
+
+/* ---------- 2. 联系人演示数据（每家 1-2 个） ---------- */
+var SUP_CONTACTS=[
+  {sup:'SUP-2026-001',name:'张工',tel:'0535-6388666',def:true},
+  {sup:'SUP-2026-001',name:'李工',tel:'0535-6388677',def:false},
+  {sup:'SUP-2026-002',name:'王工',tel:'021-38668800',def:true},
+  {sup:'SUP-2026-003',name:'陈工',tel:'0575-82046666',def:true},
+  {sup:'SUP-2026-003',name:'周工',tel:'0575-82046688',def:false},
+  {sup:'SUP-2026-004',name:'吴工',tel:'0510-87558888',def:true},
+  {sup:'SUP-2026-005',name:'孙工',tel:'0533-7580666',def:true},
+  {sup:'SUP-2026-006',name:'郑工',tel:'020-32221888',def:true},
+  {sup:'SUP-2026-006',name:'何工',tel:'020-32221899',def:false},
+  {sup:'SUP-2026-007',name:'冯工',tel:'021-62198800',def:true},
+  {sup:'SUP-2026-008',name:'许工',tel:'0519-83216666',def:true},
+  {sup:'SUP-2026-009',name:'钱工',tel:'0550-5628666',def:true},
+  {sup:'SUP-2026-009',name:'蒋工',tel:'0550-5628677',def:false},
+  {sup:'SUP-2026-010',name:'沈工',tel:'0512-58326666',def:true},
+  {sup:'SUP-2025-004',name:'韩工',tel:'0311-85326666',def:true},
+  {sup:'SUP-2025-001',name:'杨工',tel:'0512-58398800',def:true}
+];
+function mdSupContacts(code){
+  return SUP_CONTACTS.filter(function(c){return c.sup===code;})
+    .sort(function(a,b){return (b.def?1:0)-(a.def?1:0);});
+}
+
+/* ---------- 3. 上次采购日期：取该供应商最近到货批次 ---------- */
+function supLastBuy(code){
+  var ds=(typeof MAT_BATCH!=='undefined'?MAT_BATCH:[])
+    .filter(function(b){return b.sup===code&&b.arrive;})
+    .map(function(b){return b.arrive;}).sort();
+  return ds.length?ds[ds.length-1]:'';
+}
+
+/* ---------- 4. 新增 / 编辑表单 ---------- */
+var _supQuals=[];
+function supForm(code){
+  var s=code?(typeof supByCode==='function'?supByCode(code):null):null;
+  var isNew=!s;
+  var src=isNew?'手工建档':(s._src||'NCC 同步');
+  /* NCC 同步的档案层只读；手工建档可填，但标注待 NCC 接管 */
+  var ro=(!isNew&&src==='NCC 同步')?' disabled':'';
+  var roCls=ro?' style="background:#f5f6f8;color:#5f6b7a"':'';
+  var q=isNew?[]:(typeof mdSupQuals==='function'?mdSupQuals(code):[]);
+  _supQuals=q.map(function(x){return {name:x[0],issue:x[1],valid:x[2]};});
+  var archives=[
+    ['供应商编码','sf_code',isNew?'':esc(s.code),isNew?'placeholder="SUP-2026-0xx"':'',true],
+    ['供应商名称','sf_name',isNew?'':esc(s.name),'',true],
+    ['英文名称','sf_en',isNew?'':esc(s.en||''),'placeholder="可空，NCC 同步后回填"',false],
+    ['类型','sf_type',isNew?'':esc(s.type),'',true],
+    ['所在地','sf_region',isNew?'':esc(s.region),'',true]
+  ];
+  var archHtml=archives.map(function(a){
+    var ctrl;
+    if(a[1]==='sf_type'){
+      ctrl='<select class="ctrl" id="sf_type"'+ro+roCls+'>'
+        +['生产商','经销商'].map(function(t){
+            return '<option'+((!isNew&&s.type===t)?' selected':'')+'>'+t+'</option>';}).join('')
+        +'</select>';
+    } else {
+      ctrl='<input class="ctrl" id="'+a[1]+'" value="'+a[2]+'"'+a[3]+ro+roCls+'>';
+    }
+    return '<div class="field"><label'+(a[5]?' class="req"':'')+'>'+a[0]+'</label>'+ctrl+'</div>';
+  }).join('');
+
+  openModal({
+    title:(isNew?'新增':'编辑')+'供应商',width:680,
+    body:'<div id="sfSrcTip"></div>'
+      +'<div class="sup-arch"><div class="sup-arch-hd">档案层'
+        +'<span class="tag '+(src==='NCC 同步'?'blue':'orange')+'">'+esc(src)
+        +(src==='NCC 同步'?' · 只读':'（待 NCC 同步接管）')+'</span></div>'
+        +'<div class="form-grid">'+archHtml+'</div>'
+        +'<div class="sup-arch-note">档案层由 NCC 快照同步维护，PLM 不直接改写；'
+        +'手工建档的条目在 NCC 产生编码后由快照接管。</div></div>'
+      +'<div class="form-grid" style="margin-top:14px">'
+        +'<div class="field"><label class="req">评级</label><select class="ctrl" id="sf_grade">'
+          +['A','B','C'].map(function(g){return '<option'+((!isNew&&s.grade===g)?' selected':'')+'>'+g+'</option>';}).join('')
+          +'</select></div>'
+        +'<div class="field"><label class="req">状态</label><select class="ctrl" id="sf_status">'
+          +['合格','观察','停用'].map(function(v){return '<option'+((!isNew&&s.status===v)?' selected':'')+'>'+v+'</option>';}).join('')
+          +'</select></div>'
+        +'<div class="field span2"><label class="req">主供产品</label>'
+          +'<input class="ctrl" id="sf_cat" value="'+esc(isNew?'':(s.cat||''))+'" placeholder="如：聚氨酯树脂·预聚体"></div>'
+      +'</div>'
+      +'<div class="sup-qual"><div class="sup-arch-hd">资质证照'
+        +'<span class="muted" style="font-weight:400;margin-left:auto">非必填 · 可多条</span></div>'
+        +'<div id="sfQualBox"></div>'
+        +'<button class="btn sm" style="margin-top:8px" onclick="supQualAdd()">＋ 添加证照</button></div>',
+    footer:'<div class="left">带 * 为必填项</div>'
+      +'<button class="btn" onclick="closeModal()">取消</button>'
+      +'<button class="btn primary" onclick="supSave('+(isNew?'null':"'"+esc(code)+"'")+')">保存</button>',
+    onOpen:function(){ supQualRender(); }
+  });
+  var tip=$('sfSrcTip');
+  if(tip)tip.innerHTML=(isNew
+    ? '<div class="notice warn" style="margin-bottom:12px"><div class="ni">!</div><div><b>手工建档（待 NCC 同步接管）</b>'
+      +'编码与名称先由 PLM 录入，NCC 建档产生正式编码后由快照接管档案层。</div></div>'
+    : '');
+}
+function supQualAdd(){ _supQuals.push({name:'',issue:'',valid:''}); supQualRender(); }
+function supQualDel(i){ _supQuals.splice(i,1); supQualRender(); }
+function supQualRender(){
+  var box=$('sfQualBox'); if(!box)return;
+  if(!_supQuals.length){
+    box.innerHTML='<div class="muted" style="font-size:12.5px">暂无资质证照记录</div>';
+    return;
+  }
+  box.innerHTML='<table class="tbl mini"><thead><tr><th>证书名称</th><th style="width:150px">发证日期</th>'
+    +'<th style="width:150px">有效期至</th><th style="width:70px"></th></tr></thead><tbody>'
+    +_supQuals.map(function(q,i){
+      return '<tr>'
+        +'<td><input class="ctrl" id="sq_n_'+i+'" value="'+esc(q.name)+'" placeholder="如：ISO 9001 质量管理体系认证"></td>'
+        +'<td><input class="ctrl" type="date" id="sq_i_'+i+'" value="'+esc(q.issue)+'"></td>'
+        +'<td><input class="ctrl" type="date" id="sq_v_'+i+'" value="'+esc(q.valid)+'"></td>'
+        +'<td class="acts"><button class="btn-link del" onclick="supQualDel('+i+')">删除</button></td>'
+        +'</tr>';
+    }).join('')+'</tbody></table>';
+}
+function supQualRead(){
+  for(var i=0;i<_supQuals.length;i++){
+    var n=$('sq_n_'+i),a=$('sq_i_'+i),b=$('sq_v_'+i);
+    if(n)_supQuals[i].name=n.value;
+    if(a)_supQuals[i].issue=a.value;
+    if(b)_supQuals[i].valid=b.value;
+  }
+  return _supQuals;
+}
+function supSave(code){
+  var get=function(id){var e=$(id);return e?e.value.trim():'';};
+  if(!get('sf_name')){toast('供应商名称必填','warn');return;}
+  if(!get('sf_code')){toast('供应商编码必填','warn');return;}
+  var quals=supQualRead().filter(function(q){return q.name;});
+  var patch={name:get('sf_name'),en:get('sf_en'),type:get('sf_type'),region:get('sf_region'),
+    cat:get('sf_cat'),grade:get('sf_grade'),status:get('sf_status')};
+  if(code){
+    var s=(typeof supByCode==='function')?supByCode(code):null;
+    if(!s){toast('未找到该供应商','warn');return;}
+    Object.keys(patch).forEach(function(k){s[k]=patch[k];});
+    if(typeof supSetQuals==='function')supSetQuals(code,quals);
+    toast('已保存供应商 '+code,'ok');
+  } else {
+    var n=typeof SUPPLIERS!=='undefined'?SUPPLIERS:[];
+    var row=Object.assign({code:get('sf_code'),_src:'手工建档',since:''},patch);
+    n.unshift(row);
+    if(typeof supSetQuals==='function')supSetQuals(row.code,quals);
+    toast('已新增供应商 '+row.code+'（手工建档）','ok');
+  }
+  closeModal();
+  var cur=(typeof curPage!=='undefined')?curPage:'';
+  if(cur==='bd:supplier-detail'&&code){ showPage('bd:supplier-detail',{key:code}); }
+  else if(cur==='bd:supplier'||cur==='bd:supplier-detail'){ showPage('bd:supplier'); }
+}
+/* 资质证照写回：状态按演示日期锚点推算，不写死 */
+function supQualState(valid){
+  if(!valid)return '有效';
+  var today=(typeof demoYmd==='function')?demoYmd():'';
+  if(!today)return '有效';
+  if(valid<today)return '已过期';
+  var d=Date.parse(valid)-Date.parse(today);
+  if(d<=90*86400000)return '待更新';
+  return '有效';
+}
+function supSetQuals(code,quals){
+  if(typeof MD_SUP_QUAL==='undefined')return;
+  MD_SUP_QUAL[code]=quals.map(function(q){
+    return [q.name,q.issue,q.valid,supQualState(q.valid)];
+  });
 }
 
 </script>

@@ -3854,10 +3854,7 @@ regPage('bd:comp',{
 });
 regPage('bd:rawmat',{
   title:'原料信息',crumb:['基础数据','原料信息'],
-  render:function(){
-    renderDbPage('material','原料信息',
-      '企业采购与自产原料的身份档案，含物质形态、规格型号与配方组成，是 SDS 编制与法规匹配的基础。');
-  }
+  render:function(){ renderRawmatPage(); }
 });
 regPage('bd:sup-data',{
   title:'供应商原料数据',crumb:['基础数据','供应商原料数据'],

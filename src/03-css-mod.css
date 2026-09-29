@@ -753,6 +753,11 @@ td.exp-tog.on{color:var(--primary)}
 .desc-list dt{background:#f7f9fc;padding:9px 13px;color:var(--text-2);border-bottom:1px solid var(--line);font-size:12.5px}
 .desc-list dd{padding:9px 13px;border-bottom:1px solid var(--line);word-break:break-word}
 .desc-list dt:nth-last-of-type(1),.desc-list dd:nth-last-of-type(1){border-bottom:none}
+/* 两列基本信息：竖向高度减半，窄屏自动退回单列 */
+.desc-list.desc-2col{grid-template-columns:118px minmax(0,1fr) 118px minmax(0,1fr)}
+.sds-scope .desc-list.desc-2col{grid-template-columns:118px minmax(0,1fr) 118px minmax(0,1fr)}
+.desc-list.desc-2col dt:nth-last-of-type(-n+2),.desc-list.desc-2col dd:nth-last-of-type(-n+2){border-bottom:none}
+@media (max-width:1180px){.desc-list.desc-2col,.sds-scope .desc-list.desc-2col{grid-template-columns:132px 1fr}}
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:13px 15px;box-shadow:var(--shadow)}
 .kpi span{font-size:12px;color:var(--muted);display:block}
@@ -805,3 +810,12 @@ td.exp-tog.on{color:var(--primary)}
 .df-main span{font-size:11.5px;color:var(--muted)}
 .df-ops{display:flex;gap:2px;flex:0 0 auto}
 .btn-link.danger{color:var(--danger)}
+
+/* ---------- 供应商双源表单（27z5b） ---------- */
+.sup-arch{background:#fafbfd;border:1px solid var(--line);border-radius:10px;padding:12px 14px 10px}
+.sup-arch-hd{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-bottom:10px}
+.sup-arch-note{font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:8px}
+.sup-qual{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.sup-qual .tbl.mini{margin:0}
+.sup-qual .tbl.mini th,.sup-qual .tbl.mini td{padding:6px 8px;font-size:12.5px}
+.sup-qual .tbl.mini .ctrl{height:30px;font-size:12.5px}

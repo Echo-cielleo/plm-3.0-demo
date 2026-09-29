@@ -277,7 +277,12 @@ regPage('bd:supplier',{
         {k:'type',t:'类型',w:'80px',align:'c'},
         {k:'cat',t:'主供品类',w:'200px'},
         {k:'region',t:'所在地',w:'110px'},
-        {k:'since',t:'合作起始',w:'100px'},
+        {k:'_src',t:'来源',w:'100px',align:'c',fmt:function(r){
+          var s=r._src||'NCC 同步';
+          return '<span class="tag '+(SUP_SRC_TAG[s]||'tag-grey')+'">'+esc(s)+'</span>';}},
+        {k:'_last',t:'上次采购日期',w:'110px',fmt:function(r){
+          var d=(typeof supLastBuy==='function')?supLastBuy(r.code):'';
+          return d?esc(d):'<span class="muted">—</span>';}},
         {k:'grade',t:'评级',w:'70px',align:'c',fmt:function(r){return '<span class="tag '+(GRADE_TAG[r.grade]||'tag-grey')+'">'+esc(r.grade)+'</span>';}},
         {k:'status',t:'状态',w:'80px',fmt:function(r){return gtag(r.status);}},
         {k:'_mat',t:'供应物料',w:'96px',align:'c',fmt:function(r){
@@ -286,10 +291,15 @@ regPage('bd:supplier',{
         }}
       ],
       rows:SUPPLIERS,kwKeys:['code','name','cat','region'],
-      acts:function(r){ return '<button class="btn btn-link" onclick="mdOpenSupplier(\''+esc(r.code)+'\')">查看</button>'; },
+      acts:function(r){
+        return '<button class="btn btn-link" onclick="mdOpenSupplier(\''+esc(r.code)+'\')">查看</button>'
+          +'<button class="btn btn-link" onclick="supForm(\''+esc(r.code)+'\')">编辑</button>';
+      },
       onRowClick:function(r){ mdOpenSupplier(r.code); },
+      headActs:'<button class="btn btn-primary" onclick="supForm(\'\')">＋ 新增供应商</button>',
       filters:[
         {k:'type',t:'类型',all:'全部',opts:[['生产商','生产商'],['经销商','经销商']]},
+        {k:'_src',t:'来源',all:'全部',opts:[['NCC 同步','NCC 同步'],['手工建档','手工建档']]},
         {k:'grade',t:'评级',all:'全部',opts:[['A','A 级'],['B','B 级'],['C','C 级']]},
         {k:'status',t:'状态',all:'全部',opts:[['合格','合格'],['观察','观察'],['停用','停用']]}
       ]

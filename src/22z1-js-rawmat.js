@@ -412,22 +412,22 @@ regPage('bd:rawmat-detail',{
     }
     /* --- 1. 基本信息 --- */
     h+='<div class="card"><div class="card-hd"><h3>基本信息</h3><span class="sub">物料主数据</span></div><div class="card-b">'+
-       '<dl class="desc-list">'+
+       '<dl class="desc-list desc-2col">'+
        '<dt>物料编码</dt><dd class="mono">'+esc(m.code)+'</dd>'+
        '<dt>物料名称</dt><dd>'+esc(m.name)+'</dd>'+
        '<dt>物料类型</dt><dd>'+esc(m.type)+'</dd>'+
        '<dt>物质形态</dt><dd>'+tagOf(m.form,(m.form||'').indexOf('纯物质')===0?'green':'purple')+'</dd>'+
        '<dt>自身 CAS 号</dt><dd>'+(cas?'<span class="mono">'+esc(cas)+'</span> <a class="mat-link" href="javascript:void(0)" onclick="compOpen(\''+esc(cas)+'\')">查看组分档案</a>':'<span class="muted">—（混合物，组分见下方构成）</span>')+'</dd>'+
        '<dt>规格 / 型号</dt><dd>'+esc(m.spec||'—')+'</dd>'+
-       '<dt>责任人</dt><dd>'+esc(m.owner||'—')+'</dd>'+
-       '<dt>状态</dt><dd>'+tagOf(m.status,(m.status==='正常')?'green':'grey')+'</dd>'+
-       '<dt>替代类型</dt><dd>'+(m.substType?('<span class="tag '+(m.substType==='等值替代'?'green':'orange')+'">'+esc(m.substType)+'</span>'):'<span class="muted">—</span>')+'</dd>'+
-       '<dt>替代料</dt><dd>'+matSubstToLink(m)+'</dd>'+
-       '<dt>停用时间</dt><dd>'+(m.stopDate?esc(m.stopDate):'<span class="muted">—</span>')+'</dd>'+
        '<dt>主供应商</dt><dd>'+(sp?('<a class="mat-link" href="javascript:void(0)" onclick="showPage(\'bd:supplier\')">'+esc(sp.name)+'</a> <span class="muted">'+esc(sp.code)+'</span>'):'<span class="muted">厂内自制</span>')+'</dd>'+
        '<dt>生产厂商</dt><dd>'+esc(m.manufacturer)+'</dd>'+
        '<dt>来源</dt><dd>'+tagOf(matOrigin(m),matOrigin(m)==='自制'?'green':'purple')+'</dd>'+
+       '<dt>责任人</dt><dd>'+esc(m.owner||'—')+'</dd>'+
+       '<dt>状态</dt><dd>'+tagOf(m.status,(m.status==='正常')?'green':'grey')+'</dd>'+
        '<dt>创建时间</dt><dd>'+esc(m.created||'—')+'</dd>'+
+       '<dt>替代类型</dt><dd>'+(m.substType?('<span class="tag '+(m.substType==='等值替代'?'green':'orange')+'">'+esc(m.substType)+'</span>'):'<span class="muted">—</span>')+'</dd>'+
+       '<dt>替代料</dt><dd>'+matSubstToLink(m)+'</dd>'+
+       '<dt>停用时间</dt><dd>'+(m.stopDate?esc(m.stopDate):'<span class="muted">—</span>')+'</dd>'+
        '<dt>备注</dt><dd>'+esc(m.remark||'—')+'</dd>'+
        '</dl></div></div>';
     /* --- 2. 组分构成 / 配方组成 --- */

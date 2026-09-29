@@ -198,10 +198,15 @@ mdReg({
       {t:'基本信息',sub:'供应商主数据',rows:[
         ['供应商编码',mono(s.code)],
         ['供应商名称','<b>'+esc(s.name)+'</b>'],
+        ['英文名称',s.en?esc(s.en):'<span class="muted">—</span>'],
         ['供应商类型',esc(s.type)],
         ['主供品类',esc(s.cat)],
         ['所在地',esc(s.region)],
+        ['来源','<span class="tag '+(SUP_SRC_TAG[s._src||'NCC 同步']||'tag-grey')+'">'+esc(s._src||'NCC 同步')+'</span>'],
         ['合作起始',esc(s.since)],
+        ['上次采购日期',(function(){
+          var d=(typeof supLastBuy==='function')?supLastBuy(s.code):'';
+          return d?esc(d):'<span class="muted">—</span>';})()],
         ['评级','<span class="tag '+(GRADE_TAG[s.grade]||'tag-grey')+'">'+esc(s.grade)+'</span>'],
         ['状态',gtag(s.status)],
         ['在册物料','<b>'+mats.length+'</b> 种'+(mats.length?('（'+mats.slice(0,3).map(function(m){return esc(m.name);}).join('、')+(mats.length>3?' 等':'')+'）'):'')],
@@ -214,6 +219,13 @@ mdReg({
          return [esc(q[0]),esc(q[1]),esc(q[2]),'<span class="tag '+c+'">'+esc(q[3])+'</span>'];
        }),
        empty:'该供应商尚未维护资质证照'},
+      {t:'联系人',sub:'业务对接人，默认联系人用于到货异常与对账通知',type:'tbl',
+       cols:[{t:'姓名',w:'110px'},{t:'电话',w:'160px'},{t:'默认联系人',w:'100px'}],
+       rows:(typeof mdSupContacts==='function'?mdSupContacts(s.code):[]).map(function(c){
+         return [esc(c.name),'<span class="mono">'+esc(c.tel)+'</span>',
+                 c.def?'<span class="tag green">默认</span>':'<span class="muted">—</span>'];
+       }),
+       empty:'该供应商尚未维护联系人'},
       {t:'供货物料',sub:mats.length+' 种在册（一物一供：同一物料只挂一家主供）',type:'tbl',
        cols:[{t:'物料编码',w:'120px'},{t:'物料名称'},{t:'供方货号',w:'130px'},
              {t:'物料状态',w:'90px'},{t:'操作',w:'90px'}],
