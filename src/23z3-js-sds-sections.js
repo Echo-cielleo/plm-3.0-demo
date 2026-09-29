@@ -88,7 +88,8 @@ function toxResult(id){
   if(c.result==='不分类') return 'Not classified / 不分类';
   return c.result+'（'+c.code+'）';
 }
-function toxTableHtml(){
+/* formal：导出时传 true，按正式交付口径（不放人工判定引导按钮等内部操作入口） */
+function toxTableHtml(formal){
   if(!wz.formula.length){
     return '<div style="padding:10px 14px;color:var(--muted);font-size:12.5px">'
       + '　（配方尚未录入，毒理信息表待生成）</div>';
@@ -124,6 +125,7 @@ function toxTableHtml(){
     + '<div style="font-size:12px;font-weight:700;margin:6px 0 4px">11.1 急性毒性（混合物 ATE 加和法估算）</div>'
     + '<table class="tbl mini"><tbody>'+ateRows+'</tbody></table>'
     + '<div style="font-size:12px;font-weight:700;margin:10px 0 4px">11.1 危害类别信息（依据 (EC) No 1272/2008）</div>'
+    + secJudgeGuide(secPendingToxEndpoints().map(function(e){return e[0];}),formal)
     + '<table class="tbl mini"><tbody>'+epRows+'</tbody></table>'
     + '<div style="font-size:12px;font-weight:700;margin:10px 0 4px">按组分急性毒性数据（LD50 / LC50）</div>'
     + '<table class="tbl mini"><thead><tr>'

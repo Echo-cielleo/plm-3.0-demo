@@ -42,7 +42,7 @@ var WZ_STEPS=[
 /* 向导全局状态 */
 var wz={};
 function transportAssessmentDefault(){return {status:'NOT_ASSESSED',conclusion:'',unNumber:'',
-  properShippingName:'',hazardClass:'',packingGroup:'',marinePollutant:'',
+  properShippingName:'',hazardClass:'',packingGroup:'',marinePollutant:'',bulkTransport:'',
   applicableModes:['ADR','RID','ADN','IMDG','IATA'],specialPrecautions:'',basis:'',
   assessedBy:'',assessedAt:'',inputFingerprint:''};}
 function wzInitState(){
@@ -2027,7 +2027,7 @@ var SDS_16=[
   {n:'毒理学信息',cov:'中高',auto:true},
   {n:'生态学信息',cov:'低',auto:false},
   {n:'废弃处置',cov:'低',auto:false},
-  {n:'运输信息',cov:'中高',auto:true},
+  {n:'运输信息',cov:'中高',auto:false},
   {n:'法规信息',cov:'高',auto:true},
   {n:'其他信息',cov:'高',auto:true}
 ];
@@ -2233,7 +2233,8 @@ function renderStep5(){
       +'<span class="no">'+String(i+1).padStart(2,'0')+'</span><b>'+s.n+'</b>'
       +'<span class="right">'
         +(dv?''
-          :'<span class="tag '+COV_CLS[s.cov]+'">系统覆盖度：'+s.cov+'</span>'
+          :secTodoTag(i)
+          +'<span class="tag '+COV_CLS[s.cov]+'">系统覆盖度：'+s.cov+'</span>'
           +(manual?'<span class="tag orange dot-tag">需人工审核</span>':'<span class="tag green dot-tag">系统自动生成</span>')
           +(wz.draftEdits[i]!==undefined?'<span class="tag blue">已编辑</span>':''))
         +'<i class="caret">›</i></span></button>';

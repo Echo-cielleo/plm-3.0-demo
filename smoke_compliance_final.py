@@ -104,7 +104,7 @@ with sync_playwright() as pw:
       var initial=transportAssessmentStatus(),body=transportTableHtml(),blocked='';
       try{sdsReleaseCreate({name:'EHS 负责人'});}catch(e){blocked=e.message;}
       transportAssessmentSave({status:'NOT_REGULATED',basis:'运输资料人工核对',assessedBy:'EHS 负责人'});
-      var unregulated=transportTableHtml(),time=wz.transportAssessment.assessedAt;
+      var unregulated=transportTableHtml(),unregFormal=transportTableHtml(true),time=wz.transportAssessment.assessedAt;
       wz.formula[0].conc='46.00';var stale=transportAssessmentStatus(),retained=wz.transportAssessment.basis,staleBody=transportTableHtml(),staleBlocked='';
       complianceEvaluationEnsure();wz.classItems.forEach(c=>{if(c.status==='pending'){
         c.status='manual';c.result='不分类（无需分类）';c.code='—';c.note='人工复核';c.noteAt=nowStr();
@@ -113,11 +113,17 @@ with sync_playwright() as pw:
       wz.formula[0].conc='45.00';complianceEvaluationEnsure();wz.classItems.forEach(c=>{if(c.status==='pending'){
         c.status='manual';c.result='不分类（无需分类）';c.code='—';c.note='人工复核';c.noteAt=nowStr();
       }});transportAssessmentSave({status:'NOT_REGULATED',basis:'重新核对',assessedBy:'EHS 负责人'});
-      return {initial,body,blocked,unregulated,time,stale,retained,staleBody,staleBlocked};
+      return {initial,body,blocked,unregulated,unregFormal,time,stale,retained,staleBody,staleBlocked};
     }''')
     check(transport['initial']=='NOT_ASSESSED' and '运输分类尚未评估' in transport['body'] and '非危险货物' not in transport['body'], '默认未评估且不伪造非危险货物结论')
     check('第 14 章运输结论尚未确认' in transport['blocked'], '未评估阻断发布')
-    check(transport['unregulated'].count('经人工确认：非危险货物 / 不受管制')==5 and bool(transport['time']), '人工非危险货物结论显示五种方式、依据、人员和时间')
+    check(transport['unregulated'].count('不受管制 / Not regulated')==25
+          and bool(transport['time'])
+          and '人工确认：EHS 负责人' in transport['unregulated'] and '判断依据：运输资料人工核对' in transport['unregulated']
+          and '人工确认：' not in transport['unregFormal'] and '不受管制 / Not regulated' in transport['unregFormal'],
+          '非危险货物四列统一写「不受管制 / Not regulated」，编制视图留痕、交付口径不留痕')
+    check(transport['unregulated'].count('>N/A</td>')==3 and transport['unregulated'].count('不受管制 / Not regulated')==25,
+          '14.7 IMO 散装海运只填海运列，其余三列标 N/A')
     check(transport['stale']=='STALE' and transport['retained']=='运输资料人工核对' and '重新确认' in transport['staleBody'], '配方变化使结论失效但保留旧内容')
     check('第 14 章运输结论尚未确认' in transport['staleBlocked'], '失效结论阻断发布')
     regulated=page.evaluate('''() => {
@@ -131,7 +137,7 @@ with sync_playwright() as pw:
       return {invalid,html,release:first,word:window._word};
     }''')
     check('UN 编号' in regulated['invalid'] and '正确运输名称' in regulated['invalid'], '危险货物必填字段校验')
-    check('UN TEST' in regulated['html'] and regulated['html'].count('UN TEST')==5 and '统一运输结论' in regulated['html'], '人工危险货物信息按五种方式展示并说明范围')
+    check('UN TEST' in regulated['html'] and regulated['html'].count('UN TEST')==4 and '统一运输结论' in regulated['html'], '人工危险货物信息按四种运输方式列展示并说明范围')
     check(regulated['release']['review']['transportAssessment']['status']=='REGULATED' and 'UN TEST' in regulated['release']['document']['bodyHtml'], '发布快照冻结完整运输结论与第 14 章正文')
     check('V2026.1' in regulated['release']['document']['bodyHtml'] and regulated['release']['evaluation']['results']['oel']['rows'], '发布快照冻结 OEL 结果与第 8 章正文')
     check('UN TEST' in regulated['word']['html'] and regulated['word']['name'].endswith('.doc'), '正式 Word 使用冻结发布正文')

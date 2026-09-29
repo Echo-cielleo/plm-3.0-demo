@@ -37,8 +37,8 @@ function sdsDraftBodyHtml(documentStatus){
     var txt = wz.draftEdits[i] !== undefined ? wz.draftEdits[i] : draftText(i,documentStatus);
     var body = esc(txt).replace(/\n/g, '<br>');
     var extra = (i === 2 ? compTableHtml() : '') + (i === 7 ? oelTableHtml() : '')
-      + (i === 8 ? physTableHtml() : '') + (i === 10 ? toxTableHtml() : '')
-      + (i === 11 ? ecotoxTableHtml() : '') + (i === 13 ? transportTableHtml() : '')
+      + (i === 8 ? physTableHtml() : '') + (i === 10 ? toxTableHtml(true) : '')
+      + (i === 11 ? ecotoxTableHtml(true) : '') + (i === 13 ? transportTableHtml(true) : '')
       + (i === 14 ? legalTableHtml() : '');
     return '<section class="doc-sec-wrap">'
       + '<h2 class="doc-sec"><span class="doc-sec-no">' + String(i + 1).padStart(2, '0') + '</span>' + esc(s.n) + '</h2>'

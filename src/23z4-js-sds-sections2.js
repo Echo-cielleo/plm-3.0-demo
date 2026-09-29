@@ -22,13 +22,18 @@ function aquaClassOf(cas){
   var m = (q.uni||'').match(/Aquatic[^/]*(?=\s*\/\s*|$)/);
   return m ? m[0].trim() : '不分类';
 }
-function ecotoxTableHtml(){
+/* formal：导出时传 true，按正式交付口径（不放人工判定引导按钮等内部操作入口） */
+function ecotoxTableHtml(formal){
   if(!wz.formula.length){
     return '<div style="padding:10px 14px;color:var(--muted);font-size:12.5px">'
       + '　（配方尚未录入，生态毒性表待生成）</div>';
   }
   /* 12.1 混合物级水生危害结论（复用 aqua classItem） */
   var mixAqua = toxResult('aqua');
+  /* 该结论若来自「待人工判定」的分类项，第 12 章本身没有判定入口 —— 引导回第 4 步。
+     正式交付文档不放操作入口。 */
+  var aqItem=(wz.classItems||[]).filter(function(x){return x.id==='aqua';})[0];
+  var aqGuide=secJudgeGuide((aqItem&&aqItem.status==='pending')?[aqItem.name]:[],formal);
   /* 按组分水生毒性表：物质 / CAS / 水生危害分类 / 急性 L(E)C50 / 数据状态 */
   var rows = wz.formula.map(function(f){
     var q  = clpParamOf(f.cas);
@@ -52,7 +57,7 @@ function ecotoxTableHtml(){
 
   return '<div class="tbl-wrap" style="margin:0 0 10px">'
     + '<div style="font-size:12px;font-weight:700;margin:6px 0 4px">'
-      + '12.1 急性水生毒性（混合物）— '+esc(mixAqua)+'</div>'
+      + '12.1 急性水生毒性（混合物）— '+esc(mixAqua)+'</div>'+aqGuide
     + '<table class="tbl mini"><thead><tr>'
       + '<th style="width:130px">物质</th>'
       + '<th style="width:100px">CAS 号</th>'
@@ -85,7 +90,8 @@ function ecotoxTableHtml(){
 }
 
 /* ---------- G10 · 第 14 章运输信息 ---------- */
-function transportTableHtml(){return transportAssessmentTableHtml();}
+/* formal：导出时传 true，按正式交付口径（不带内部留痕）渲染 */
+function transportTableHtml(formal){return transportAssessmentTableHtml(formal);}
 
 /* ---------- 阶段 5A · 第 15 章从统一评估快照读取名单事实 ---------- */
 function legalTableHtml(){
