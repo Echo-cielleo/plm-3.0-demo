@@ -715,12 +715,12 @@ var DATA_ITEMS=['物理状态/外观','闪点 / 沸点','急性毒性 LD50','皮
 function clpCollectControlled(i){return [3,4,5,8,9,10,11,12,13].indexOf(i)>=0;}
 /* 各组分 Mock 汇集结果，miss=true 表示缺失待补充 */
 var COLLECT_MOCK={
-  '7732-18-5':[['无色透明液体','lab'],['沸点 100 ℃ / 无闪点','lab'],['LD50 > 90000 mg/kg (大鼠经口)','pub'],null,null,null,[null,'pub'],null,['未命中其他演示管控清单','reg']],
-  '111-76-2':[['无色液体，微醚味','sup'],['闪点 62 ℃ / 沸点 171 ℃','lab'],['LD50 1480 mg/kg (大鼠经口)','sup'],null,null,null,['LC50 1474 mg/L (96h 鱼)','pub'],null,null],
-  '64-17-5':[['无色液体，酒精味','sup'],['闪点 13 ℃ / 沸点 78.4 ℃','lab'],['LD50 7060 mg/kg (大鼠经口)','pub'],null,null,null,['LC50 > 100 mg/L','pub'],null,null],
-  '79-10-7':[['无色液体，强刺激气味','sup'],[null,'lab'],['LD50 340 mg/kg (大鼠经口)','sup'],null,null,null,['EC50 95 mg/L (48h 溞)','pub'],[null,'reg'],null],
-  '50-00-0':[['无色液体，强刺激气味','sup'],['闪点 59 ℃ (37%水溶液)','sup'],['LD50 100 mg/kg (大鼠经口)','reg'],null,null,null,['LC50 24 mg/L (96h 鱼)','pub'],null,['SVHC 候选清单','reg']],
-  '9009-54-5':[['淡黄色粘稠液体','lab'],['闪点 > 200 ℃','lab'],[null,'sup'],null,null,null,[null,'pub'],null,['聚合物豁免注册 (REACH Art.2(9))','reg']]
+  '7732-18-5':[['无色透明液体','lab'],['沸点 100 ℃ / 无闪点','lab'],['LD50 > 90000 mg/kg (大鼠经口)','pub'],['Not available（水无 GHS 健康危害分类）','pub'],['Not available（水无 GHS 健康危害分类）','pub'],['Not available（水无 GHS 健康危害分类）','pub'],[null,'pub'],null,['未命中其他演示管控清单','reg']],
+  '111-76-2':[['无色液体，微醚味','sup'],['闪点 62 ℃ / 沸点 171 ℃','lab'],['LD50 1480 mg/kg (大鼠经口)','sup'],['刺激 类别 2（Skin Irrit. 2 · ECHA C&L H315）','pub'],['刺激 类别 2（Eye Irrit. 2 · ECHA C&L H319）','pub'],['Not available（无致癌性分类）','pub'],['LC50 1474 mg/L (96h 鱼)','pub'],null,null],
+  '64-17-5':[['无色液体，酒精味','sup'],['闪点 13 ℃ / 沸点 78.4 ℃','lab'],['LD50 7060 mg/kg (大鼠经口)','pub'],['Not available（无皮肤腐蚀/刺激分类）','pub'],['刺激 类别 2（Eye Irrit. 2 · ECHA C&L H319）','pub'],['Not available（无致癌性分类）','pub'],['LC50 > 100 mg/L','pub'],null,null],
+  '79-10-7':[['无色液体，强刺激气味','sup'],[null,'lab'],['LD50 340 mg/kg (大鼠经口)','sup'],['腐蚀 类别 1A（Skin Corr. 1A · ECHA C&L H314）','pub'],['严重损伤 类别 1（Eye Dam. 1 · ECHA C&L H318）','pub'],['Not available（无致癌性分类）','pub'],['EC50 95 mg/L (48h 溞)','pub'],[null,'reg'],null],
+  '50-00-0':[['无色液体，强刺激气味','sup'],['闪点 59 ℃ (37%水溶液)','sup'],['LD50 100 mg/kg (大鼠经口)','reg'],['腐蚀 类别 1B（Skin Corr. 1B · ECHA C&L H314）','pub'],['严重损伤 类别 1（Eye Dam. 1 · ECHA C&L H318）','pub'],['致癌 类别 1B（Carc. 1B · ECHA C&L H350 · REACH 候选清单）','pub'],['LC50 24 mg/L (96h 鱼)','pub'],null,['SVHC 候选清单','reg']],
+  '9009-54-5':[['淡黄色粘稠液体','lab'],['闪点 > 200 ℃','lab'],[null,'sup'],['刺激 类别 2（Skin Irrit. 2 · ECHA C&L H315）','pub'],['Not available（无眼损伤分类数据）','pub'],['Not available（无致癌性分类）','pub'],[null,'pub'],null,['聚合物豁免注册 (REACH Art.2(9))','reg']]
 };
 function clpCollectItems(cas,asOfDate){
   var p=clpSubstanceProfile(cas,asOfDate),e=p.effective,h=e.hazardMap||{},v={};
@@ -1315,15 +1315,29 @@ function unknownNames(kind){
 function unknownStmt(kind){
   var pct=unknownPct(kind),n=pct.toFixed(2).replace(/\.?0+$/,'');
   var ns=unknownNames(kind);
+  /* G11：含保密组分时，unknown 占比改区间表达（与同文档保密组分浓度区间披露口径一致） */
+  var rangeStr=n+' %';
+  var secItems=wz.formula.filter(function(f){return toxUnknown(clpParamOf(f.cas),kind)&&f.secret;});
+  if(secItems.length){
+    var lo=0,hi=0;
+    wz.formula.forEach(function(f){
+      if(toxUnknown(clpParamOf(f.cas),kind)){
+        var c=parseFloat(f.conc)||0;
+        if(f.secret){var r=concRangeNums(c);lo+=r[0];hi+=r[1];}
+        else{lo+=c;hi+=c;}
+      }
+    });
+    rangeStr=lo+' – '+hi+' %';
+  }
   if(kind==='acute'){
     return '未知急性毒性声明（REACH Annex II 强制固定声明）：\n'
-      +'　· 本混合物中 '+n+' % 的组分急性毒性未知（经口 / 经皮 / 吸入）\n'
-      +'　· "'+n+' % of the mixture consists of component(s) of unknown acute toxicity."\n'
+      +'　· 本混合物中 '+rangeStr+' 的组分急性毒性未知（经口 / 经皮 / 吸入）\n'
+      +'　· "'+rangeStr+' of the mixture consists of component(s) of unknown acute toxicity."\n'
       +(ns.length?'　· 涉及组分：'+ns.join('、'):'　· 全部组分均已维护急性毒性数据');
   }
   return '未知水生危害声明（REACH Annex II 强制固定声明）：\n'
-    +'　· 本混合物中 '+n+' % 的组分对水生环境的危害未知\n'
-    +'　· "'+n+' % of the mixture consists of component(s) of unknown hazards to the aquatic environment."\n'
+    +'　· 本混合物中 '+rangeStr+' 的组分对水生环境的危害未知\n'
+    +'　· "'+rangeStr+' of the mixture consists of component(s) of unknown hazards to the aquatic environment."\n'
     +(ns.length?'　· 涉及组分：'+ns.join('、'):'　· 全部组分均已维护水生毒性数据');
 }
 /* ---------- B6 收尾：ED / PMT 声明（CLP (EU) 2024/2865 强制） ----------
@@ -2209,6 +2223,16 @@ function concRange(c){
   if(v<25)return '10 – 25 %';
   if(v<50)return '25 – 50 %';
   return '≥ 50 %';
+}
+/* G11：返回保密组分浓度区间的数值边界，供 unknown 占比区间求和 */
+function concRangeNums(c){
+  var v=parseFloat(c);
+  if(v<1)return [0,1];
+  if(v<5)return [1,5];
+  if(v<10)return [5,10];
+  if(v<25)return [10,25];
+  if(v<50)return [25,50];
+  return [50,100];
 }
 var COV_CLS={'高':'green','中高':'blue','中':'orange','低':'red'};
 function setWzView(v){wz.view=v;renderStep5();window.scrollTo(0,0);}

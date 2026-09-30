@@ -93,7 +93,7 @@ function supForm(code){
     } else {
       ctrl='<input class="ctrl" id="'+a[1]+'" value="'+a[2]+'"'+a[3]+ro+roCls+'>';
     }
-    return '<div class="field"><label'+(a[5]?' class="req"':'')+'>'+a[0]+'</label>'+ctrl+'</div>';
+    return '<div class="field"><label'+(a[4]?' class="req"':'')+'>'+a[0]+'</label>'+ctrl+'</div>';
   }).join('');
 
   openModal({
@@ -105,14 +105,16 @@ function supForm(code){
         +'<div class="form-grid">'+archHtml+'</div>'
         +'<div class="sup-arch-note">档案层由 NCC 快照同步维护，PLM 不直接改写；'
         +'手工建档的条目在 NCC 产生编码后由快照接管。</div></div>'
+      +'<div class="sup-arch-hd">质量域'
+        +'<span class="muted" style="font-weight:400;margin-left:auto">PLM 维护</span></div>'
       +'<div class="form-grid" style="margin-top:14px">'
-        +'<div class="field"><label class="req">评级</label><select class="ctrl" id="sf_grade">'
+        +'<div class="field"><label>评级</label><select class="ctrl" id="sf_grade">'
           +['A','B','C'].map(function(g){return '<option'+((!isNew&&s.grade===g)?' selected':'')+'>'+g+'</option>';}).join('')
           +'</select></div>'
-        +'<div class="field"><label class="req">状态</label><select class="ctrl" id="sf_status">'
+        +'<div class="field"><label>状态</label><select class="ctrl" id="sf_status">'
           +['合格','观察','停用'].map(function(v){return '<option'+((!isNew&&s.status===v)?' selected':'')+'>'+v+'</option>';}).join('')
           +'</select></div>'
-        +'<div class="field span2"><label class="req">主供产品</label>'
+        +'<div class="field span2"><label>主供产品</label>'
           +'<input class="ctrl" id="sf_cat" value="'+esc(isNew?'':(s.cat||''))+'" placeholder="如：聚氨酯树脂·预聚体"></div>'
       +'</div>'
       +'<div class="sup-qual"><div class="sup-arch-hd">资质证照'

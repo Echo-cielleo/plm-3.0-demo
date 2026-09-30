@@ -1584,6 +1584,7 @@ td.exp-tog.on{color:var(--primary)}
 .sds-scope .field.span2{grid-column:span 2}
 .sds-scope .field label{font-size:12.5px;color:var(--ink2);font-weight:500}
 .sds-scope .field label.req::before{content:'*';color:var(--red);margin-right:3px}
+.sup-arch .field label.req::before{content:'*';color:var(--red);margin-right:3px}
 .sds-scope .ctrl{height:34px;padding:0 11px;border:1px solid var(--line);border-radius:6px;background:#fff;transition:border-color .16s,box-shadow .16s;width:100%}
 .sds-scope .ctrl:hover{border-color:#b9c8da}
 .sds-scope .ctrl:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(26,95,180,.1)}
@@ -6174,12 +6175,12 @@ var DATA_ITEMS=['物理状态/外观','闪点 / 沸点','急性毒性 LD50','皮
 function clpCollectControlled(i){return [3,4,5,8,9,10,11,12,13].indexOf(i)>=0;}
 /* 各组分 Mock 汇集结果，miss=true 表示缺失待补充 */
 var COLLECT_MOCK={
-  '7732-18-5':[['无色透明液体','lab'],['沸点 100 ℃ / 无闪点','lab'],['LD50 > 90000 mg/kg (大鼠经口)','pub'],null,null,null,[null,'pub'],null,['未命中其他演示管控清单','reg']],
-  '111-76-2':[['无色液体，微醚味','sup'],['闪点 62 ℃ / 沸点 171 ℃','lab'],['LD50 1480 mg/kg (大鼠经口)','sup'],null,null,null,['LC50 1474 mg/L (96h 鱼)','pub'],null,null],
-  '64-17-5':[['无色液体，酒精味','sup'],['闪点 13 ℃ / 沸点 78.4 ℃','lab'],['LD50 7060 mg/kg (大鼠经口)','pub'],null,null,null,['LC50 > 100 mg/L','pub'],null,null],
-  '79-10-7':[['无色液体，强刺激气味','sup'],[null,'lab'],['LD50 340 mg/kg (大鼠经口)','sup'],null,null,null,['EC50 95 mg/L (48h 溞)','pub'],[null,'reg'],null],
-  '50-00-0':[['无色液体，强刺激气味','sup'],['闪点 59 ℃ (37%水溶液)','sup'],['LD50 100 mg/kg (大鼠经口)','reg'],null,null,null,['LC50 24 mg/L (96h 鱼)','pub'],null,['SVHC 候选清单','reg']],
-  '9009-54-5':[['淡黄色粘稠液体','lab'],['闪点 > 200 ℃','lab'],[null,'sup'],null,null,null,[null,'pub'],null,['聚合物豁免注册 (REACH Art.2(9))','reg']]
+  '7732-18-5':[['无色透明液体','lab'],['沸点 100 ℃ / 无闪点','lab'],['LD50 > 90000 mg/kg (大鼠经口)','pub'],['Not available（水无 GHS 健康危害分类）','pub'],['Not available（水无 GHS 健康危害分类）','pub'],['Not available（水无 GHS 健康危害分类）','pub'],[null,'pub'],null,['未命中其他演示管控清单','reg']],
+  '111-76-2':[['无色液体，微醚味','sup'],['闪点 62 ℃ / 沸点 171 ℃','lab'],['LD50 1480 mg/kg (大鼠经口)','sup'],['刺激 类别 2（Skin Irrit. 2 · ECHA C&L H315）','pub'],['刺激 类别 2（Eye Irrit. 2 · ECHA C&L H319）','pub'],['Not available（无致癌性分类）','pub'],['LC50 1474 mg/L (96h 鱼)','pub'],null,null],
+  '64-17-5':[['无色液体，酒精味','sup'],['闪点 13 ℃ / 沸点 78.4 ℃','lab'],['LD50 7060 mg/kg (大鼠经口)','pub'],['Not available（无皮肤腐蚀/刺激分类）','pub'],['刺激 类别 2（Eye Irrit. 2 · ECHA C&L H319）','pub'],['Not available（无致癌性分类）','pub'],['LC50 > 100 mg/L','pub'],null,null],
+  '79-10-7':[['无色液体，强刺激气味','sup'],[null,'lab'],['LD50 340 mg/kg (大鼠经口)','sup'],['腐蚀 类别 1A（Skin Corr. 1A · ECHA C&L H314）','pub'],['严重损伤 类别 1（Eye Dam. 1 · ECHA C&L H318）','pub'],['Not available（无致癌性分类）','pub'],['EC50 95 mg/L (48h 溞)','pub'],[null,'reg'],null],
+  '50-00-0':[['无色液体，强刺激气味','sup'],['闪点 59 ℃ (37%水溶液)','sup'],['LD50 100 mg/kg (大鼠经口)','reg'],['腐蚀 类别 1B（Skin Corr. 1B · ECHA C&L H314）','pub'],['严重损伤 类别 1（Eye Dam. 1 · ECHA C&L H318）','pub'],['致癌 类别 1B（Carc. 1B · ECHA C&L H350 · REACH 候选清单）','pub'],['LC50 24 mg/L (96h 鱼)','pub'],null,['SVHC 候选清单','reg']],
+  '9009-54-5':[['淡黄色粘稠液体','lab'],['闪点 > 200 ℃','lab'],[null,'sup'],['刺激 类别 2（Skin Irrit. 2 · ECHA C&L H315）','pub'],['Not available（无眼损伤分类数据）','pub'],['Not available（无致癌性分类）','pub'],[null,'pub'],null,['聚合物豁免注册 (REACH Art.2(9))','reg']]
 };
 function clpCollectItems(cas,asOfDate){
   var p=clpSubstanceProfile(cas,asOfDate),e=p.effective,h=e.hazardMap||{},v={};
@@ -6774,15 +6775,29 @@ function unknownNames(kind){
 function unknownStmt(kind){
   var pct=unknownPct(kind),n=pct.toFixed(2).replace(/\.?0+$/,'');
   var ns=unknownNames(kind);
+  /* G11：含保密组分时，unknown 占比改区间表达（与同文档保密组分浓度区间披露口径一致） */
+  var rangeStr=n+' %';
+  var secItems=wz.formula.filter(function(f){return toxUnknown(clpParamOf(f.cas),kind)&&f.secret;});
+  if(secItems.length){
+    var lo=0,hi=0;
+    wz.formula.forEach(function(f){
+      if(toxUnknown(clpParamOf(f.cas),kind)){
+        var c=parseFloat(f.conc)||0;
+        if(f.secret){var r=concRangeNums(c);lo+=r[0];hi+=r[1];}
+        else{lo+=c;hi+=c;}
+      }
+    });
+    rangeStr=lo+' – '+hi+' %';
+  }
   if(kind==='acute'){
     return '未知急性毒性声明（REACH Annex II 强制固定声明）：\n'
-      +'　· 本混合物中 '+n+' % 的组分急性毒性未知（经口 / 经皮 / 吸入）\n'
-      +'　· "'+n+' % of the mixture consists of component(s) of unknown acute toxicity."\n'
+      +'　· 本混合物中 '+rangeStr+' 的组分急性毒性未知（经口 / 经皮 / 吸入）\n'
+      +'　· "'+rangeStr+' of the mixture consists of component(s) of unknown acute toxicity."\n'
       +(ns.length?'　· 涉及组分：'+ns.join('、'):'　· 全部组分均已维护急性毒性数据');
   }
   return '未知水生危害声明（REACH Annex II 强制固定声明）：\n'
-    +'　· 本混合物中 '+n+' % 的组分对水生环境的危害未知\n'
-    +'　· "'+n+' % of the mixture consists of component(s) of unknown hazards to the aquatic environment."\n'
+    +'　· 本混合物中 '+rangeStr+' 的组分对水生环境的危害未知\n'
+    +'　· "'+rangeStr+' of the mixture consists of component(s) of unknown hazards to the aquatic environment."\n'
     +(ns.length?'　· 涉及组分：'+ns.join('、'):'　· 全部组分均已维护水生毒性数据');
 }
 /* ---------- B6 收尾：ED / PMT 声明（CLP (EU) 2024/2865 强制） ----------
@@ -7668,6 +7683,16 @@ function concRange(c){
   if(v<25)return '10 – 25 %';
   if(v<50)return '25 – 50 %';
   return '≥ 50 %';
+}
+/* G11：返回保密组分浓度区间的数值边界，供 unknown 占比区间求和 */
+function concRangeNums(c){
+  var v=parseFloat(c);
+  if(v<1)return [0,1];
+  if(v<5)return [1,5];
+  if(v<10)return [5,10];
+  if(v<25)return [10,25];
+  if(v<50)return [25,50];
+  return [50,100];
 }
 var COV_CLS={'高':'green','中高':'blue','中':'orange','低':'red'};
 function setWzView(v){wz.view=v;renderStep5();window.scrollTo(0,0);}
@@ -27244,7 +27269,7 @@ function supForm(code){
     } else {
       ctrl='<input class="ctrl" id="'+a[1]+'" value="'+a[2]+'"'+a[3]+ro+roCls+'>';
     }
-    return '<div class="field"><label'+(a[5]?' class="req"':'')+'>'+a[0]+'</label>'+ctrl+'</div>';
+    return '<div class="field"><label'+(a[4]?' class="req"':'')+'>'+a[0]+'</label>'+ctrl+'</div>';
   }).join('');
 
   openModal({
@@ -27256,14 +27281,16 @@ function supForm(code){
         +'<div class="form-grid">'+archHtml+'</div>'
         +'<div class="sup-arch-note">档案层由 NCC 快照同步维护，PLM 不直接改写；'
         +'手工建档的条目在 NCC 产生编码后由快照接管。</div></div>'
+      +'<div class="sup-arch-hd">质量域'
+        +'<span class="muted" style="font-weight:400;margin-left:auto">PLM 维护</span></div>'
       +'<div class="form-grid" style="margin-top:14px">'
-        +'<div class="field"><label class="req">评级</label><select class="ctrl" id="sf_grade">'
+        +'<div class="field"><label>评级</label><select class="ctrl" id="sf_grade">'
           +['A','B','C'].map(function(g){return '<option'+((!isNew&&s.grade===g)?' selected':'')+'>'+g+'</option>';}).join('')
           +'</select></div>'
-        +'<div class="field"><label class="req">状态</label><select class="ctrl" id="sf_status">'
+        +'<div class="field"><label>状态</label><select class="ctrl" id="sf_status">'
           +['合格','观察','停用'].map(function(v){return '<option'+((!isNew&&s.status===v)?' selected':'')+'>'+v+'</option>';}).join('')
           +'</select></div>'
-        +'<div class="field span2"><label class="req">主供产品</label>'
+        +'<div class="field span2"><label>主供产品</label>'
           +'<input class="ctrl" id="sf_cat" value="'+esc(isNew?'':(s.cat||''))+'" placeholder="如：聚氨酯树脂·预聚体"></div>'
       +'</div>'
       +'<div class="sup-qual"><div class="sup-arch-hd">资质证照'
