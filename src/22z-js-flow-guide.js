@@ -115,3 +115,26 @@ regPage('comp:guide',{
     guidePage('流程引导','合规管理有两条并列主线：SDS 编写由系统按配方的组分与浓度自动匹配法规、计算分类并填充文档；法规统一查询供人工随时查阅某一物质在各法规中的列入情况，两者互不为上下游。法规库版本由法规专员定期下载维护。',sds+lawQueryFlowCard()+law);
   }
 });
+
+/* 保养维护 5 Tab 直达：设置全局 eqmTab 后跳转，点击流程节点即落在对应页签 */
+function eqGuideMaint(tab){ if(typeof eqmTab!=='undefined')eqmTab=tab; showPage('eq:maint'); }
+regPage('eq:guide',{
+  title:'设备资源流程引导',crumb:['设备资源','流程引导'],
+  render:function(){
+    var main=guideCard('设备建档与能力','设备主数据是所有维保动作的载体，能力挂在设备之上',[
+      guideNode('01','设备列表','维护设备名称、型号、位置、类别（实验仪器 / 分析仪器）与所属部门，是后续能力与保养的承载对象。',"showPage('eq:list')",['设备主数据']),
+      guideNode('02','设备能力','查看每台设备可承担的检测项目与实验能力，研发排程时据此选择可用设备。',"showPage('eq:cap')",['能力挂载'])
+    ],'<button class="btn btn-primary" onclick="showPage(\'eq:list\')">去设备列表</button>');
+    var maint=guideCard('保养维护','一台设备、五类台账：到期靠台账自动算，异常自动转维修工单',[
+      guideNode('01','维护台账','默认页。按“最近保养日期 + 周期”自动算出下次到期日，逾期标红置顶，并同步进首页行动区。',"eqGuideMaint('ledger')",['默认页','自动到期']),
+      guideNode('02','保养要求','每台一份：类型、周期、内容与责任人；是到期计算与提醒的依据。',"eqGuideMaint('plan')",['保养标准']),
+      guideNode('03','保养记录','每次保养的执行留痕；结果“异常”可勾选转维修自动生成工单。',"eqGuideMaint('log')",['执行留痕']),
+      guideNode('04','校准记录','分析检测仪器的内 / 外校档案，含证书编号与有效期。',"eqGuideMaint('cal')",['分析仪器']),
+      guideNode('05','维保工单','校准 / 保养 / 维修工单台账；保养异常转维修自动汇入。',"eqGuideMaint('wo')",['维修闭环'])
+    ],'<button class="btn btn-primary" onclick="eqGuideMaint(\'ledger\')">去保养维护</button>');
+    var spare=guideCard('零备件支撑','备件与耗材是保养换件的物资基础，库存不足会直接卡住维修',[
+      guideNode('01','零备件管理','维护常用备件与耗材库存，保养异常需更换部件时快速调出。',"showPage('eq:spare')",['备件支撑'])
+    ],'<button class="btn btn-primary" onclick="showPage(\'eq:spare\')">去零备件管理</button>');
+    guidePage('流程引导','设备资源覆盖设备主数据（列表 / 能力）、保养维护与零备件三条线：设备建档后，保养要求驱动维护台账自动算到期，保养异常转维修工单，零备件支撑更换，形成“建档 — 保养 — 维修 — 备件”的闭环。',main+maint+spare);
+  }
+});

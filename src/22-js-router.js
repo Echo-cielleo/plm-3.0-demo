@@ -61,6 +61,7 @@ var MENU=[
     {id:'doc:mine',name:'我的文档'}
   ]},
   {id:'eq',name:'设备资源',icon:'tool',prio:'P3',children:[
+    {id:'eq:guide',name:'流程引导'},
     {id:'eq:list',name:'设备列表'},
     {id:'eq:cap',name:'设备能力'},
     {id:'eq:maint',name:'保养维护'},

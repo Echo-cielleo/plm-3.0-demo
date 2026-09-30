@@ -133,7 +133,15 @@ with sync_playwright() as pw:
     ok("0 % of the mixture" in sec(2), "第 3 章声明数值正确（0%）")
     ok("unknown acute toxicity" in sec(10), "第 11 章含急性未知声明")
     ok("unknown hazards to the aquatic environment" in acc(11), "第 12 章含水生未知声明（acc 容器，声明随表格渲染）")
-    ok("47.5 % of the mixture" in acc(11), "第 12 章声明数值正确")
+    # 2026-09-30：配方含保密组分时，未知占比按区间表达（不暴露保密组分浓度占比），
+    # 与第 3 章保密组分浓度区间披露口径一致；区间须包住真实值 47.5%
+    import re as _re
+    _m = _re.search(r'"([0-9.]+)\s*[–\-]\s*([0-9.]+) % of the mixture consists of component\(s\) of unknown hazards', acc(11))
+    if _m:
+        _lo, _hi = float(_m.group(1)), float(_m.group(2))
+        ok(_lo <= 47.5 <= _hi, "第 12 章声明数值正确（含保密组分 → 区间表达，且区间包住真实值 47.5%）")
+    else:
+        ok("47.5 % of the mixture" in acc(11), "第 12 章声明数值正确（无保密组分 → 单值表达）")
     ok("全部组分均已维护急性毒性数据" in sec(10), "急性已全部维护时不列涉及组分")
     ok("涉及组分" in acc(11), "第 12 章声明列出涉及组分名称")
 
