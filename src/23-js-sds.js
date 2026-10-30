@@ -586,6 +586,13 @@ function fmCas(i,v){
     var tr=$('wzBody').querySelectorAll('tbody tr')[i];
     if(tr){tr.querySelectorAll('input')[1].value=hit.cn;}
     toast('已自动匹配物质：'+hit.cn+'（'+hit.en+'）','info');
+  }else if(v.trim()){
+    /* [反馈F17] CAS 改成库中不存在的号时不能静默保留旧名称——同步清空并提示，
+       否则「名称还是上一个物质的」会一路带进分类与 SDS（冻结校验会拦住空名称） */
+    wz.formula[i].name='';
+    var tr2=$('wzBody').querySelectorAll('tbody tr')[i];
+    if(tr2){tr2.querySelectorAll('input')[1].value='';}
+    toast('CAS '+v.trim()+' 未匹配到物质名称，已清空名称栏，请手动填写或从组分库选择','warn');
   }
 }
 function fmAdd(){wz.formula.push({cas:'',name:'',conc:'',secret:false,chk:true});if(typeof complianceEvaluationInvalidate==='function')complianceEvaluationInvalidate('添加组分');renderStep2();toast('已添加配方行','ok');}
@@ -2940,6 +2947,10 @@ function matRecipeSet(i,k,v){_edRecipe[i][k]=v;if(k==='secret')matRecipeRender()
 function matRecipeCas(i,v){
   _edRecipe[i].cas=v;var hit=CAS_LIB[v.trim()];
   if(hit){_edRecipe[i].name=hit.cn;var el=$('mr_name_'+i);if(el)el.value=hit.cn;toast('已自动匹配物质：'+hit.cn,'info');}
+  else if(v.trim()){ /* [反馈F17] 同 fmCas：未命中时清空旧名称，避免 CAS 与名称不一致 */
+    _edRecipe[i].name='';var el2=$('mr_name_'+i);if(el2)el2.value='';
+    toast('CAS '+v.trim()+' 未匹配到物质名称，已清空名称栏，请手动填写','warn');
+  }
 }
 function dbSave(id){
   var c=dbCur(),data={},bad=null;
@@ -3680,24 +3691,27 @@ function sdsEv(r){
 }
 function seedSdsRows(){
   /* no, product, market, lang, ver, status, date, owner,
-     rulePack, lawName, lawVer, lawLatest, reviewDue, pubCnt, gapCnt */
+     rulePack, lawName, lawVer, lawLatest, reviewDue, pubCnt, gapCnt
+     ⚠️ reviewDue 一律按演示锚点 demoYmd() 平移（20-js-core 铁律：相对日期不得写死），
+        偏移量语义：黄灯 15/25 天、绿灯 75/200/365 天、橙灯 -35 天（超出复审期） */
+  var T=demoYmd();
   [
     ['SDS-2026-0158','水性聚氨酯涂饰树脂 WPU-320','欧盟·德国','德语（DE）+ 英语（EN）','V1.0','已发布','2026-07-28','王工',
-     'CLP ATP21','REACH Annex II','2020/878','2020/878','2027-07-28',0,0],
+     'CLP ATP21','REACH Annex II','2020/878','2020/878',dateAdd(T,365),0,0],
     ['SDS-2026-0151','无铬鞣剂 TC-08','欧盟·荷兰','荷兰语（NL）+ 英语（EN）','V1.3','待改版','2026-07-10','陈工',
-     'CLP ATP21','REACH Annex II','2015/830','2020/878','2027-01-10',0,0],
+     'CLP ATP21','REACH Annex II','2015/830','2020/878',dateAdd(T,75),0,0],
     ['SDS-2026-0142','皮革涂饰光亮剂 GL-9','欧盟·意大利','意大利语（IT）','V2.1','已发布','2026-06-15','李工',
-     'CLP ATP21','REACH Annex II','2020/878','2020/878','2026-09-20',0,0],
+     'CLP ATP21','REACH Annex II','2020/878','2020/878',dateAdd(T,25),0,0],
     ['SDS-2026-0131','加脂剂 L-27','中国','简体中文（zh-CN）','V1.2','已发布','2026-05-30','李工',
-     'GB 30000','GB/T 16483','GB/T 16483-2008','GB/T 16483-2008','2026-08-25',0,0],
+     'GB 30000','GB/T 16483','GB/T 16483-2008','GB/T 16483-2008',dateAdd(T,-35),0,0],
     ['SDS-2026-0126','水性消泡剂 DF-6','中国','简体中文（zh-CN）','V1.0','待改版','2026-05-20','王工',
-     'GB 30000','GB 30000.1','GB 30000.1-2013','GB 30000.1-2024','2027-05-20',0,0],
+     'GB 30000','GB 30000.1','GB 30000.1-2013','GB 30000.1-2024',dateAdd(T,200),0,0],
     ['SDS-2026-0120','铬鞣剂 CR-33','欧盟·西班牙','西班牙语（ES）','V1.0','审核中','2026-05-12','王工',
-     'CLP ATP21','REACH Annex II','2020/878','2020/878','2027-05-12',2,0],
+     'CLP ATP21','REACH Annex II','2020/878','2020/878',dateAdd(T,195),2,0],
     ['SDS-2026-0108','水性封底树脂 SB-11','中国','简体中文（zh-CN）','V0.9','编制中','2026-04-26','王工',
      'GB 30000','GB/T 16483','GB/T 16483-2008','GB/T 16483-2008','—',0,3],
     ['SDS-2026-0096','手感剂 HF-5','欧盟·法国','法语（FR）','V1.1','已发布','2026-04-08','李工',
-     'CLP ATP21','REACH Annex II','2020/878','2020/878','2026-09-30',0,0],
+     'CLP ATP21','REACH Annex II','2020/878','2020/878',dateAdd(T,15),0,0],
     ['SDS-2026-0081','交联剂 XL-3','欧盟·荷兰','荷兰语（NL）','V1.0','已归档','2026-03-19','陈工',
      'CLP ATP21','REACH Annex II','2015/830','2020/878','2026-03-19',0,0],
     ['SDS-2026-0074','防霉剂 AM-7','中国','简体中文（zh-CN）','V1.0','已归档','2026-03-02','陈工',

@@ -503,17 +503,21 @@ with sync_playwright() as pw:
       var out = {};
 
       /* ---- 12.1 规则版本何时生效，只由系统日期决定，与 SDS 投放日期无关 ---- */
+      /* ⚠️ 生效日期用「系统今天 +30 天」（原写死 2026-10-01，真实日期推过后版本已生效，断言失真） */
       out.scen = {};
+      var _t = clpSystemToday().split('-');
+      var _d = new Date(+_t[0], +_t[1] - 1, +_t[2]); _d.setDate(_d.getDate() + 30);
+      var FUTURE_EFF = _d.getFullYear() + '-' + ('0' + (_d.getMonth() + 1)).slice(-2) + '-' + ('0' + _d.getDate()).slice(-2);
       ['2026-09-23', '2027-06-01', '2026-01-05'].forEach(function(pd, i){
         LF.setProjDate(pd);
         CLP_RULE_VERSION_STORE.length = 0;
         CLP_RULES = JSON.parse(JSON.stringify(window.PRISTINE_RULES));
         clpRuleVersionSeedBaseline(); clpRuleVersionSeedCandidate(); clpSyncActiveRulesProjection();
-        var d = LF.draft('R2099-DT' + i, '2026-10-01', LF.demoRows('R2099-DT' + i));
+        var d = LF.draft('R2099-DT' + i, FUTURE_EFF, LF.demoRows('R2099-DT' + i));
         var p = LF.pub(d);
         var act = LF.active(LF.asOf());
         out.scen[pd] = {ok: p.ok, st: d.status, act: act ? act.version : null,
-                        base: clpRuleVersionBaseline().status, sys: clpSystemToday()};
+                        base: clpRuleVersionBaseline().status, sys: clpSystemToday(), eff: FUTURE_EFF};
       });
       LF.setProjDate('2026-10-01');
 
@@ -563,8 +567,8 @@ with sync_playwright() as pw:
     for pd, label in [('2026-09-23', '投放日=系统今天'), ('2027-06-01', '投放日=未来'), ('2026-01-05', '投放日=过去')]:
         s = r['scen'][pd]
         ok(s['ok'] and s['st'] == '待生效' and s['act'] == 'R2026.2' and s['base'] == '已生效',
-           "生效日期 2026-10-01 尚未到期 → %s：版本「%s」、活动版本仍 %s（系统日 %s）"
-           % (label, s['st'], s['act'], s['sys']))
+           "生效日期 %s（锚点+30 天）尚未到期 → %s：版本「%s」、活动版本仍 %s（系统日 %s）"
+           % (s['eff'], label, s['st'], s['act'], s['sys']))
 
     ok(r['stopTwo']['pend'] == ['CLP-R-0004', 'CLP-R-0005']
        and r['stopTwo']['after'] == ['CLP-R-0001', 'CLP-R-0002', 'CLP-R-0003'],
@@ -600,3 +604,7 @@ with sync_playwright() as pw:
         print("页面错误：", errs[:5])
     print("=" * 46)
     b.close()
+
+# --- 统一退出码：存在失败断言时返回非零，避免 run_smoke.sh 误判为通过 ---
+if Fail:
+    raise SystemExit(1)

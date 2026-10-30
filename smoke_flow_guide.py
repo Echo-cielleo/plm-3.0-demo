@@ -42,9 +42,17 @@ with sync_playwright() as pw:
             if modal: page.evaluate('closeModal()')
 
     print('\n=== 实验管理 ===')
-    page.evaluate("showPage('exp:guide')"); page.wait_for_timeout(200)
-    active_color = page.locator('[data-go="exp:guide"] .nav-label').evaluate("e=>getComputedStyle(e).color")
-    ok(active_color == 'rgb(255, 255, 255)', '选中流程引导后文字保持白色，选中态清晰')
+    page.evaluate("showPage('exp:guide')")
+    # ⚠️ .nav-item 有 transition:color .16s；并行跑 4 个 Chromium 时渲染更慢，
+    # 固定 sleep 会赌输时序 —— 改轮询等颜色到位（最长 3s），到位才断言
+    try:
+        page.wait_for_function(
+            "() => getComputedStyle(document.querySelector('[data-go=\"exp:guide\"] .nav-label')).color === 'rgb(255, 255, 255)'",
+            timeout=3000)
+        active_color = 'rgb(255, 255, 255)'
+    except Exception:
+        active_color = page.locator('[data-go="exp:guide"] .nav-label').evaluate("e=>getComputedStyle(e).color")
+    ok(active_color == 'rgb(255, 255, 255)', '选中流程引导后文字保持白色，选中态清晰（实测 %s）' % active_color)
     text = page.locator('#pageHost').inner_text()
     ok(all(x in text for x in ['普通实验','DOE 实验','多组实验总结']), '三条实验流程完整')
     ok(page.locator('.flow-guide-card').count() == 3, '实验管理包含 3 张流程卡片')

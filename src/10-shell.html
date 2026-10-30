@@ -31,7 +31,9 @@
   <div id="pageHost" class="page-wrap fade-in"></div>
 </main>
 
-<div id="mask" onclick="if(event.target===this)closeModal()">
+<!-- [反馈C3] 遮罩点击关闭改为「按下+松开都在遮罩上」才关：
+     旧写法 onclick target===this 会把「在弹窗里拖选文本、松开落在遮罩」误判为点遮罩关闭（闪退） -->
+<div id="mask" onmousedown="this._md=(event.target===this)" onmouseup="if(this._md&&event.target===this)closeModal();this._md=false">
   <div id="modal"></div>
 </div>
 <div id="toastWrap"></div>
