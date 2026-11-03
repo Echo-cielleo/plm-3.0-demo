@@ -226,6 +226,12 @@ regPage('prod:detail',{
        '<dt>关联项目</dt><dd>'+(pr.prj?'<span class="mono">'+esc(pr.prj)+'</span>':'<span class="muted">—</span>')+'</dd>'+
        '<dt>负责人</dt><dd>'+esc(pr.owner||'—')+'</dd>'+
        '<dt>状态</dt><dd>'+gtag(pr.status)+'</dd>'+
+       '<dt>生产类型</dt><dd>'+(pr.prodType
+         ?('<span class="tag '+(pr.prodType==='合成'?'tag-purple':'tag-blue')+'">'+esc(pr.prodType)+'</span>'+
+           '<span class="muted" style="margin-left:8px">'+(pr.prodType==='合成'?'原料反应制得':'物料物理混配')+'</span>')
+         :'<span class="muted">—</span>')+'</dd>'+
+       '<dt>试推广时间</dt><dd>'+(pr.trialLaunch?esc(pr.trialLaunch):'<span class="muted">—</span>')+'</dd>'+
+       '<dt>正式推广时间</dt><dd>'+(pr.launch?esc(pr.launch):'<span class="muted">—</span>')+'</dd>'+
        '<dt>最近同步时间</dt><dd>'+esc(pr.upd||'—')+'</dd>'+
        '<dt>理化性质</dt><dd>已维护 <b>'+ids.length+'</b> 项指标，其中 <b>'+filled+'</b> 项已填值'+
           (ids.length-filled?('、<b>'+(ids.length-filled)+'</b> 项待填'):'')+'</dd>'+

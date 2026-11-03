@@ -76,20 +76,24 @@ var GRADE_TAG={'A':'tag-green','B':'tag-blue','C':'tag-orange'};
 /* ==================================================================
    数据：产品基础信息 prod:list
    ================================================================== */
+/* prodType 生产类型：合成=原料反应制得 / 复配=物料物理混配
+   trialLaunch/launch 推广时间：在产两者齐全；试产仅试推广；研发中留空；停产为历史日期
+   ⚠️ 日期按 demoYmd() 锚点平移（20-js-core 铁律），不写死年月日 */
+var _prdT=demoYmd();
 var PRODUCTS=[
-  {code:'PRD-2026-001',name:'水性聚氨酯涂饰树脂 WPU-320',cat:'涂饰树脂',series:'WPU 系列',prj:'PRJ-2026-002',owner:'王研究员',upd:'2026-08-28',status:'在产',catPath:'涂饰产品/聚氨酯树脂'},
-  {code:'PRD-2026-002',name:'皮革涂饰光亮剂 GL-9',cat:'涂饰助剂',series:'GL 系列',prj:'PRJ-2026-005',owner:'陈工',upd:'2026-09-01',status:'在产',catPath:'涂饰产品/光亮剂'},
-  {code:'PRD-2026-003',name:'加脂剂 L-27',cat:'加脂剂',series:'L 系列',prj:'PRJ-2026-001',owner:'王研究员',upd:'2026-08-20',status:'在产',catPath:'水场产品/加脂剂/加脂剂'},
-  {code:'PRD-2026-004',name:'铬鞣剂 CR-33',cat:'鞣剂',series:'CR 系列',prj:'',owner:'陈工',upd:'2026-07-15',status:'在产',catPath:'水场产品/鞣剂'},
-  {code:'PRD-2026-005',name:'水性封底树脂 SB-11',cat:'涂饰树脂',series:'SB 系列',prj:'',owner:'李工',upd:'2026-06-30',status:'在产',catPath:'涂饰产品/复合树脂'},
-  {code:'PRD-2026-006',name:'手感剂 HF-5',cat:'手感剂',series:'HF 系列',prj:'PRJ-2026-004',owner:'王研究员',upd:'2026-08-12',status:'在产',catPath:'涂饰产品/手感剂'},
-  {code:'PRD-2026-007',name:'交联剂 XL-3',cat:'交联剂',series:'XL 系列',prj:'',owner:'李工',upd:'2026-05-22',status:'在产',catPath:'涂饰产品/交联剂/交联剂'},
-  {code:'PRD-2026-008',name:'防霉剂 AM-7',cat:'防霉剂',series:'AM 系列',prj:'',owner:'赵工',upd:'2026-04-18',status:'在产',catPath:'水场产品/杀菌防霉剂'},
-  {code:'PRD-2026-009',name:'无溶剂合成革树脂 NS-10',cat:'合成革树脂',series:'NS 系列',prj:'PRJ-2026-003',owner:'李工',upd:'2026-09-02',status:'研发中',catPath:'涂饰产品/聚氨酯树脂/合成革聚氨酯'},
-  {code:'PRD-2026-010',name:'生物基加脂剂 BIO-30',cat:'加脂剂',series:'BIO 系列',prj:'',owner:'王研究员',upd:'2026-08-05',status:'研发中',catPath:'水场产品/加脂剂/加脂剂'},
-  {code:'PRD-2026-011',name:'水性消光填料浆 XG-6',cat:'涂饰助剂',series:'XG 系列',prj:'',owner:'李工',upd:'2026-07-08',status:'试产',catPath:'涂饰产品/涂饰助剂/填料'},
-  {code:'PRD-2026-012',name:'蒙囿剂 MK-2',cat:'鞣剂助剂',series:'MK 系列',prj:'',owner:'陈工',upd:'2026-03-11',status:'停产',catPath:''},
-  {code:'PRD-2026-013',name:'皮革酶制剂复合酶 ENZ-100',cat:'酶制剂类',series:'ENZ 系列',prj:'',owner:'王研究员',upd:'2026-09-05',status:'研发中',catPath:'水场产品/酶制剂'}
+  {code:'PRD-2026-001',name:'水性聚氨酯涂饰树脂 WPU-320',cat:'涂饰树脂',series:'WPU 系列',prj:'PRJ-2026-002',owner:'王研究员',upd:'2026-08-28',status:'在产',catPath:'涂饰产品/聚氨酯树脂',prodType:'合成',trialLaunch:dateAdd(_prdT,-240),launch:dateAdd(_prdT,-150)},
+  {code:'PRD-2026-002',name:'皮革涂饰光亮剂 GL-9',cat:'涂饰助剂',series:'GL 系列',prj:'PRJ-2026-005',owner:'陈工',upd:'2026-09-01',status:'在产',catPath:'涂饰产品/光亮剂',prodType:'复配',trialLaunch:dateAdd(_prdT,-300),launch:dateAdd(_prdT,-210)},
+  {code:'PRD-2026-003',name:'加脂剂 L-27',cat:'加脂剂',series:'L 系列',prj:'PRJ-2026-001',owner:'王研究员',upd:'2026-08-20',status:'在产',catPath:'水场产品/加脂剂/加脂剂',prodType:'复配',trialLaunch:dateAdd(_prdT,-420),launch:dateAdd(_prdT,-330)},
+  {code:'PRD-2026-004',name:'铬鞣剂 CR-33',cat:'鞣剂',series:'CR 系列',prj:'',owner:'陈工',upd:'2026-07-15',status:'在产',catPath:'水场产品/鞣剂',prodType:'合成',trialLaunch:dateAdd(_prdT,-360),launch:dateAdd(_prdT,-280)},
+  {code:'PRD-2026-005',name:'水性封底树脂 SB-11',cat:'涂饰树脂',series:'SB 系列',prj:'',owner:'李工',upd:'2026-06-30',status:'在产',catPath:'涂饰产品/复合树脂',prodType:'合成',trialLaunch:dateAdd(_prdT,-180),launch:dateAdd(_prdT,-90)},
+  {code:'PRD-2026-006',name:'手感剂 HF-5',cat:'手感剂',series:'HF 系列',prj:'PRJ-2026-004',owner:'王研究员',upd:'2026-08-12',status:'在产',catPath:'涂饰产品/手感剂',prodType:'复配',trialLaunch:dateAdd(_prdT,-200),launch:dateAdd(_prdT,-120)},
+  {code:'PRD-2026-007',name:'交联剂 XL-3',cat:'交联剂',series:'XL 系列',prj:'',owner:'李工',upd:'2026-05-22',status:'在产',catPath:'涂饰产品/交联剂/交联剂',prodType:'合成',trialLaunch:dateAdd(_prdT,-150),launch:dateAdd(_prdT,-60)},
+  {code:'PRD-2026-008',name:'防霉剂 AM-7',cat:'防霉剂',series:'AM 系列',prj:'',owner:'赵工',upd:'2026-04-18',status:'在产',catPath:'水场产品/杀菌防霉剂',prodType:'复配',trialLaunch:dateAdd(_prdT,-260),launch:dateAdd(_prdT,-170)},
+  {code:'PRD-2026-009',name:'无溶剂合成革树脂 NS-10',cat:'合成革树脂',series:'NS 系列',prj:'PRJ-2026-003',owner:'李工',upd:'2026-09-02',status:'研发中',catPath:'涂饰产品/聚氨酯树脂/合成革聚氨酯',prodType:'合成',trialLaunch:'',launch:''},
+  {code:'PRD-2026-010',name:'生物基加脂剂 BIO-30',cat:'加脂剂',series:'BIO 系列',prj:'',owner:'王研究员',upd:'2026-08-05',status:'研发中',catPath:'水场产品/加脂剂/加脂剂',prodType:'复配',trialLaunch:'',launch:''},
+  {code:'PRD-2026-011',name:'水性消光填料浆 XG-6',cat:'涂饰助剂',series:'XG 系列',prj:'',owner:'李工',upd:'2026-07-08',status:'试产',catPath:'涂饰产品/涂饰助剂/填料',prodType:'复配',trialLaunch:dateAdd(_prdT,-30),launch:''},
+  {code:'PRD-2026-012',name:'蒙囿剂 MK-2',cat:'鞣剂助剂',series:'MK 系列',prj:'',owner:'陈工',upd:'2026-03-11',status:'停产',catPath:'',prodType:'合成',trialLaunch:dateAdd(_prdT,-500),launch:dateAdd(_prdT,-420)},
+  {code:'PRD-2026-013',name:'皮革酶制剂复合酶 ENZ-100',cat:'酶制剂类',series:'ENZ 系列',prj:'',owner:'王研究员',upd:'2026-09-05',status:'研发中',catPath:'水场产品/酶制剂',prodType:'复配',trialLaunch:'',launch:''}
 ];
 
 /* ==================================================================
@@ -324,13 +328,15 @@ function prodListCfg(){
       {k:'catPath',t:'所属目录',w:'200px',fmt:function(r){
         if(!r.catPath)return '<span class="muted">'+esc((r.cat||'')+' · 待归类')+'</span>';
         return esc(r.catPath);}},
+      {k:'prodType',t:'生产类型',w:'88px',fmt:function(r){
+        return r.prodType?'<span class="tag '+(r.prodType==='合成'?'tag-purple':'tag-blue')+'">'+esc(r.prodType)+'</span>':'<span class="muted">—</span>';}},
       {k:'prj',t:'关联项目',w:'130px',fmt:function(r){
         return r.prj?'<span class="mono">'+esc(r.prj)+'</span>':'<span class="muted">—</span>';}},
       {k:'owner',t:'负责人',w:'100px'},
       {k:'upd',t:'最近同步时间',w:'120px'},
       {k:'status',t:'状态',w:'90px',fmt:function(r){return gtag(r.status);}}
     ],
-    rows:prodCatRows(),kwKeys:['code','name','cat','catPath','prj'],
+    rows:prodCatRows(),kwKeys:['code','name','cat','catPath','prj','prodType'],
     filters:[
       {k:'status',t:'状态',all:'全部',opts:[['在产','在产'],['试产','试产'],['研发中','研发中'],['停产','停产']]}
     ],

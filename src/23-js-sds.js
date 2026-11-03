@@ -2454,7 +2454,13 @@ var DB_CFG={
     title:'物料主数据',
     desc:'企业内部物料的唯一身份档案，是配方、SDS 与法规匹配的基础。',
     cols:[{k:'code',t:'物料编码',w:'130px',mono:true},{k:'name',t:'物料名称'},{k:'type',t:'物料类型',w:'92px'},
-          {k:'form',t:'物质形态',w:'140px',tag:true},{k:'_comp',t:'组分数',w:'72px'},{k:'spec',t:'规格 / 型号',w:'150px'},{k:'_sup',t:'主供应商',w:'160px'},
+          {k:'form',t:'物质形态',w:'140px',tag:true},{k:'_comp',t:'组分数',w:'72px'},{k:'spec',t:'规格 / 型号',w:'150px'},
+          /* [2026-11-03] 主供应商列 → 供应商列：主供简称 + 「+N 备选」角标（全称仍存 r._sup 供搜索） */
+          {k:'_sup',t:'供应商',w:'165px',fmt:function(r){
+            if(!r._supCode)return '<span class="muted">厂内自制</span>';
+            var bk=(typeof matBakCount==='function')?matBakCount(r.code):0;
+            return esc(supShort(r._supCode))+(bk?' <span class="tag orange" title="'+bk+' 家备选供应商">+'+bk+' 备选</span>':'');
+          }},
           {k:'manufacturer',t:'生产厂商',w:'180px'},
           {k:'substType',t:'替代类型',w:'96px',fmt:function(r){ if(!r.substType)return '<span class="muted">—</span>'; return '<span class="tag '+(r.substType==='等值替代'?'green':'orange')+'">'+esc(r.substType)+'</span>'; }},
           {k:'owner',t:'责任人',w:'90px'},

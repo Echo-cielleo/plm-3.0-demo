@@ -71,7 +71,7 @@ with sync_playwright() as pw:
     print("\n=== 四、原料信息列表页 ===")
     pg.evaluate("()=>showPage('bd:rawmat')"); pg.wait_for_timeout(400)
     head = pg.eval_on_selector_all("#dbTable thead th", "els=>els.map(e=>e.textContent.trim())")
-    ok("主供应商" in head, "物料列表新增「主供应商」列（表头：%s）" % head)
+    ok("供应商" in head, "物料列表含「供应商」列（2026-11-03 由主供应商列升级：简称+备选角标；表头：%s）" % head)
     n_detail = pg.eval_on_selector_all("#dbTable tbody button", "els=>els.filter(e=>e.textContent.trim()==='详情').length")
     ok(n_detail > 0, "物料行出现「详情」按钮（%d 个）" % n_detail)
     # 供应商侧筛选
@@ -100,10 +100,11 @@ with sync_playwright() as pw:
     ok(pg.evaluate("()=>{var t=matByCode('MAT-00127');return t.recipe.length===4 && !t.recipe.some(x=>['丙烯酸','甲醛','乙醇','乙二醇单丁醚'].includes(x.name)) && t.recipe.every(x=>x.range);}"),
        "MAT-00127 改为树脂自身披露（4 项、均带范围、且不再含实验配方组分 丙烯酸/甲醛/乙醇）")
     ok("保密" in txt, "BOM 表显示保密标记")
-    # 一物一供（2026-09-10）：每物料仅一条供应商数据
+    # 一物一供口径已推翻（2026-11-03 加备选供应商）：主供仍唯一，007 进口代采仍不在册
     ok("SUP-2026-001" in txt and "SUP-2026-007" not in txt,
-       "MAT-00127 一物一供（仅主供万华，进口代采已移除）")
+       "MAT-00127 主供万华在册、进口代采 007 仍不在册（2026-11-03 起允许备选条目）")
     ok("主供" in txt, "供应商表标出「主供」")
+    ok("备选" in txt, "供应商表标出「备选」（MAT-00127 有巴斯夫备选）")
     # 批次
     ok("WPU-D-2608B" in txt and "WPU-I-2608A" in txt,
        "批次记录含投料表用过的国产 / 进口两个批次号")

@@ -58,28 +58,39 @@ var MAT_ALIAS={
 };
 
 /* ------------------------------------------------------------------
-   3. 物料 ↔ 供应商（一个物料可有多家，main 为主供）
+   3. 物料 ↔ 供应商（一个物料可有多家，main 为主供；main:false 为备选）
+      备选条目要求：价格/交期与主供有差异，note 写明备选理由。
+      ⚠️ SUP-2026-001（万华）在册物料数被 smoke_rawmat 锁定为 3，勿新增万华条目。
    ------------------------------------------------------------------ */
 var MAT_SUP={
- 'MAT-00127':[{sup:'SUP-2026-001',no:'WH-WPU320-D',main:true,lead:'15 天',price:'18.6 元/kg',note:'国产料，主供'}],
+ 'MAT-00127':[{sup:'SUP-2026-001',no:'WH-WPU320-D',main:true,lead:'15 天',price:'18.6 元/kg',note:'国产料，主供'},
+              {sup:'SUP-2026-002',no:'BASF-WPU320',main:false,lead:'30 天',price:'20.4 元/kg',note:'进口价高 10%，质量稳定，主供断供备份'}],
  'MAT-00128':[{sup:'SUP-2026-001',no:'WH-PPU-90',main:true,lead:'20 天',price:'21.0 元/kg',note:'聚合物品级，需确认游离 NCO'}],
- 'MAT-00210':[{sup:'SUP-2026-003',no:'RT-L27',main:true,lead:'10 天',price:'15.2 元/kg',note:''}],
+ 'MAT-00210':[{sup:'SUP-2026-003',no:'RT-L27',main:true,lead:'10 天',price:'15.2 元/kg',note:''},
+              {sup:'SUP-2026-005',no:'LH-L27B',main:false,lead:'14 天',price:'14.0 元/kg',note:'价格低 8% 但账期短（货到付款）'}],
  'MAT-00211':[{sup:'SUP-2026-005',no:'LH-BASE-7',main:true,lead:'12 天',price:'9.8 元/kg',note:''}],
- 'MAT-00212':[{sup:'SUP-2026-003',no:'RT-F30',main:true,lead:'10 天',price:'16.4 元/kg',note:''}],
- 'MAT-00305':[{sup:'SUP-2026-008',no:'CS-CR33',main:true,lead:'7 天',price:'12.0 元/kg',note:'含 Cr(III)，需重点关注法规'}],
+ 'MAT-00212':[{sup:'SUP-2026-003',no:'RT-F30',main:true,lead:'10 天',price:'16.4 元/kg',note:''},
+              {sup:'SUP-2026-005',no:'LH-F30',main:false,lead:'12 天',price:'15.5 元/kg',note:'同产业园交期短，价格低 5%'}],
+ 'MAT-00305':[{sup:'SUP-2026-008',no:'CS-CR33',main:true,lead:'7 天',price:'12.0 元/kg',note:'含 Cr(III)，需重点关注法规'},
+              {sup:'SUP-2026-003',no:'RT-CR33',main:false,lead:'10 天',price:'12.8 元/kg',note:'第二货源，主供产能紧张时分单'}],
  'MAT-00306':[{sup:'SUP-2026-008',no:'CS-MK2',main:true,lead:'7 天',price:'18.5 元/kg',note:''}],
  'MAT-00307':[{sup:'SUP-2026-006',no:'TC-E12',main:true,lead:'8 天',price:'22.0 元/kg',note:''}],
- 'MAT-00412':[{sup:'SUP-2026-004',no:'SM-BCS',main:true,lead:'5 天',price:'13.6 元/kg',note:''}],
- 'MAT-00413':[{sup:'SUP-2026-004',no:'SM-EtOH',main:true,lead:'5 天',price:'7.2 元/kg',note:''}],
+ 'MAT-00412':[{sup:'SUP-2026-004',no:'SM-BCS',main:true,lead:'5 天',price:'13.6 元/kg',note:''},
+              {sup:'SUP-2026-009',no:'JH-BCS',main:false,lead:'6 天',price:'12.9 元/kg',note:'价格低 5%，C 级供应商到货需复检'}],
+ 'MAT-00413':[{sup:'SUP-2026-004',no:'SM-EtOH',main:true,lead:'5 天',price:'7.2 元/kg',note:''},
+              {sup:'SUP-2026-009',no:'JH-EtOH',main:false,lead:'6 天',price:'6.8 元/kg',note:'价格低 6% 但起订量高，应急补货用'}],
  'MAT-00414':[{sup:'SUP-2026-009',no:'JH-FA85',main:true,lead:'6 天',price:'4.8 元/kg',note:'C 级供应商，到货需复检'}],
  'MAT-00415':[{sup:'SUP-2026-009',no:'JH-GA50',main:true,lead:'6 天',price:'11.5 元/kg',note:'C 级供应商，到货需复检'}],
- 'MAT-00520':[{sup:'SUP-2026-002',no:'BASF-AA',main:true,lead:'30 天',price:'14.9 元/kg',note:'保密组分来源'}],
+ 'MAT-00520':[{sup:'SUP-2026-002',no:'BASF-AA',main:true,lead:'30 天',price:'14.9 元/kg',note:'保密组分来源'},
+              {sup:'SUP-2026-007',no:'KY-AA-IMP',main:false,lead:'35 天',price:'16.8 元/kg',note:'进口渠道代理，价格高 13%，长期备份'}],
  'MAT-00521':[{sup:'SUP-2025-004',no:'CX-FA37',main:true,lead:'—',price:'—',note:'供应商已停用，物料同步停用'}],
  'MAT-00630':[{sup:'SUP-2026-010',no:'DOW-GL-WAX',main:true,lead:'25 天',price:'31.0 元/kg',note:'蜡乳液外购，成品厂内复配'}],
- 'MAT-00631':[{sup:'SUP-2026-010',no:'DOW-HF5',main:true,lead:'25 天',price:'42.0 元/kg',note:''}],
+ 'MAT-00631':[{sup:'SUP-2026-010',no:'DOW-HF5',main:true,lead:'25 天',price:'42.0 元/kg',note:''},
+              {sup:'SUP-2026-006',no:'TC-SF5',main:false,lead:'20 天',price:'38.5 元/kg',note:'国产替代，手感差异需调整配方'}],
  'MAT-00632':[{sup:'SUP-2026-002',no:'BASF-AC48',main:true,lead:'30 天',price:'17.4 元/kg',note:''}],
  'MAT-00633':[{sup:'SUP-2026-003',no:'RT-WAX40',main:true,lead:'10 天',price:'13.9 元/kg',note:''}],
- 'MAT-00634':[{sup:'SUP-2026-010',no:'DOW-DF12',main:true,lead:'25 天',price:'36.0 元/kg',note:''}],
+ 'MAT-00634':[{sup:'SUP-2026-010',no:'DOW-DF12',main:true,lead:'25 天',price:'36.0 元/kg',note:''},
+              {sup:'SUP-2026-006',no:'TC-DF12',main:false,lead:'15 天',price:'31.2 元/kg',note:'价格低 13%，消泡效力略弱，试用评估中'}],
  'MAT-00635':[{sup:'SUP-2026-009',no:'JH-AM25',main:true,lead:'6 天',price:'2.6 元/kg',note:'C 级供应商，到货需复检'}],
  'MAT-00636':[{sup:'SUP-2026-010',no:'DOW-PDMS1K',main:true,lead:'25 天',price:'28.0 元/kg',note:''}],
  'MAT-00637':[{sup:'SUP-2026-006',no:'TC-S80',main:true,lead:'8 天',price:'19.5 元/kg',note:''}],
@@ -171,6 +182,19 @@ function matMainSup(code){
   var a=matSupRows(code);
   for(var i=0;i<a.length;i++)if(a[i].main)return a[i];
   return a[0]||null;
+}
+/* 备选供应商数量（列表角标用） */
+function matBakCount(code){ return matSupRows(code).filter(function(x){return !x.main;}).length; }
+/* 供应商简称（列表列展示用；全称留 r._sup 供关键词搜索） */
+var SUP_SHORT={
+ 'SUP-2026-001':'万华化学','SUP-2026-002':'巴斯夫','SUP-2026-003':'浙江闰土','SUP-2026-004':'江苏三木',
+ 'SUP-2026-005':'朗晖石化','SUP-2026-006':'广州天赐','SUP-2026-007':'上海凯茵','SUP-2026-008':'常州山峰',
+ 'SUP-2026-009':'安徽金禾','SUP-2026-010':'陶氏化学','SUP-2025-004':'河北诚信','SUP-2025-001':'华昌化工'
+};
+function supShort(code){
+  if(SUP_SHORT[code])return SUP_SHORT[code];
+  var s=supByCode(code);
+  return s?s.name.replace(/(集团股份有限公司|股份有限公司|有限公司)$/,''):'';
 }
 /* 生产厂商字典仅演示联想；经销商供货时允许录入字典外的厂商。 */
 var MAT_MANUFACTURERS=['苏州华源塑料包装有限公司','无锡恒泰金属包装有限公司'];
@@ -453,29 +477,30 @@ regPage('bd:rawmat-detail',{
       h+='<div class="muted" style="margin-top:8px;font-size:12.5px">供应商依法披露组分范围（CLP/GHS 第 3 部分）；精确配方属商业机密不予提供，非危成分与受保护商业秘密（CBI）可申请不公开。</div>';
     }
     h+='</div></div>';
-    /* --- 3. 供应商与货号 --- */
+    /* --- 3. 供应商与货号（单表：主供首行，彩色标签区分主/备） --- */
     var sups=matSupRows(m.code);
-    h+='<div class="card"><div class="card-hd"><h3>供应商与货号</h3><span class="sub">'+(sups.length===1?'一物一供 · 唯一供应商':sups.length+' 家在册')+'</span></div><div class="card-b">';
+    var mains=sups.filter(function(x){return x.main;});
+    var baks=sups.filter(function(x){return !x.main;});
+    h+='<div class="card"><div class="card-hd"><h3>供应商与货号</h3><span class="sub">'+
+       (sups.length===1?'一物一供 · 唯一供应商':sups.length+' 家在册 · 主供 1 · 备选 '+baks.length)+'</span></div><div class="card-b">';
     if(!sups.length){
       h+='<div class="muted">厂内自制物料，无外部供应商。</div>';
     }else{
       h+='<div class="tbl-wrap"><table class="tbl"><thead><tr>'+
-         '<th style="width:120px">供应商编码</th><th>供应商名称</th><th style="width:130px">供应商货号</th>'+
-         '<th style="width:70px">类型</th>'+
-         '<th style="width:60px">评级</th><th style="width:70px">状态</th></tr></thead><tbody>'+
-         sups.map(function(x){
+         '<th style="width:120px">供应商编码</th><th>供应商名称</th><th style="width:120px">供应商货号</th>'+
+         '<th style="width:64px">交期</th><th style="width:96px">价格</th>'+
+         '<th style="width:60px">评级</th><th style="width:70px">状态</th><th>备注</th></tr></thead><tbody>'+
+         mains.concat(baks).map(function(x){
            var s=supByCode(x.sup)||{};
            return '<tr><td class="mono">'+esc(x.sup)+'</td>'+
                   '<td><a class="mat-link" href="javascript:void(0)" onclick="showPage(\'bd:supplier\')">'+esc(s.name||'—')+'</a>'+
-                  (x.main?' <span class="tag blue">主供</span>':'')+'</td>'+
+                  (x.main?' <span class="tag blue">主供</span>':' <span class="tag orange">备选</span>')+'</td>'+
                   '<td class="mono">'+esc(x.no||'—')+'</td>'+
-                  '<td>'+esc(s.type||'—')+'</td>'+
+                  '<td>'+esc(x.lead||'—')+'</td><td>'+esc(x.price||'—')+'</td>'+
                   '<td>'+tagOf(s.grade||'—',(s.grade==='A')?'green':((s.grade==='B')?'blue':'orange'))+'</td>'+
-                  '<td>'+tagOf(s.status||'—',(s.status==='合格')?'green':((s.status==='观察')?'orange':'grey'))+'</td></tr>';
-         }).join('')+'</tbody></table>'+
-         '<div class="muted" style="margin-top:8px;font-size:12.5px">'+
-         sups.filter(function(x){return x.note;}).map(function(x){return '· '+esc((supByCode(x.sup)||{}).name||x.sup)+'：'+esc(x.note);}).join('<br>')+
-         '</div>';
+                  '<td>'+tagOf(s.status||'—',(s.status==='合格')?'green':((s.status==='观察')?'orange':'grey'))+'</td>'+
+                  '<td>'+(x.note?esc(x.note):'<span class="muted">—</span>')+'</td></tr>';
+         }).join('')+'</tbody></table></div>';
     }
     h+='</div></div>';
     /* --- 4. 批次测试记录（一批次一次检测，不合格必附备注） --- */
