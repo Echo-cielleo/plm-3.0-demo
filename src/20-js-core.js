@@ -302,9 +302,17 @@ function downloadFile(name,content,mime){
 function renderListPage(cfg){
   var st={
     kw:'', page:1, size:cfg.pageSize||10,
-    flt:{}
+    flt:{},
+    /* [27z8a eq:use] 日期范围筛选（可选）：cfg.dateRange={k:字段,t:标签} */
+    dFrom:'', dTo:''
   };
   (cfg.filters||[]).forEach(function(f){ st.flt[f.k]=''; });
+  /* [27z8a eq:use] 预筛默认值：外部 showPage(id,{eq:'EQ-xxx'}) 跳入时落到对应筛选 */
+  if(cfg.filterDefaults){
+    Object.keys(cfg.filterDefaults).forEach(function(k){
+      if(k in st.flt)st.flt[k]=cfg.filterDefaults[k];
+    });
+  }
 
   function match(row){
     if(st.kw){
@@ -313,6 +321,15 @@ function renderListPage(cfg){
         return String(row[k]===undefined?'':row[k]).toLowerCase().indexOf(st.kw)>=0;
       });
       if(!hit)return false;
+    }
+    /* 日期范围：闭区间；字段为空（'—'）时视为不匹配任何范围 */
+    if(cfg.dateRange){
+      var dv=String(row[cfg.dateRange.k]||'');
+      if(st.dFrom||st.dTo){
+        if(!dv)return false;
+        if(st.dFrom&&dv<st.dFrom)return false;
+        if(st.dTo&&dv>st.dTo)return false;
+      }
     }
     for(var k in st.flt){
       if(st.flt[k] && String(row[k])!==st.flt[k])return false;
@@ -345,6 +362,14 @@ function renderListPage(cfg){
       });
       h+='</select>';
     });
+    /* [27z8a eq:use] 日期范围筛选控件（闭区间，YYYY-MM-DD 字符串比较） */
+    if(cfg.dateRange){
+      h+='<span class="ctrl" style="display:inline-flex;align-items:center;gap:4px;background:none;border:none;padding:0;width:auto">'+
+         '<input class="ctrl" type="date" data-drange="from" value="'+esc(st.dFrom)+'" title="'+esc(cfg.dateRange.t+'从')+'" style="width:128px">'+
+         '<span class="muted" style="margin:0 2px">~</span>'+
+         '<input class="ctrl" type="date" data-drange="to" value="'+esc(st.dTo)+'" title="'+esc(cfg.dateRange.t+'到')+'" style="width:128px">'+
+         '</span>';
+    }
     h+='<div class="spacer"></div>'+
        '<span class="muted" style="font-size:13px">共 '+all.length+' 条</span></div>';
     if(cfg.extra)h+=cfg.extra;
@@ -402,6 +427,7 @@ function renderListPage(cfg){
     if(resetEl)resetEl.onclick=function(){
       st.kw='';st.page=1;
       Object.keys(st.flt).forEach(function(k){st.flt[k]='';});
+      st.dFrom='';st.dTo='';
       render();
     };
     var kwEl=$('lpKw');
@@ -411,6 +437,14 @@ function renderListPage(cfg){
     }
     $$('[data-flt]',host).forEach(function(sel){
       sel.onchange=function(){ st.flt[this.getAttribute('data-flt')]=this.value; st.page=1; render(); };
+    });
+    /* [27z8a eq:use] 日期范围输入：改变后重渲染并保住焦点值 */
+    $$('[data-drange]',host).forEach(function(inp){
+      inp.onchange=function(){
+        if(this.getAttribute('data-drange')==='from')st.dFrom=this.value;
+        else st.dTo=this.value;
+        st.page=1; render();
+      };
     });
     $$('[data-pg]',host).forEach(function(b){
       b.onclick=function(){

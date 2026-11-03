@@ -63,6 +63,7 @@ var MENU=[
   {id:'eq',name:'设备资源',icon:'tool',prio:'P3',children:[
     {id:'eq:guide',name:'流程引导'},
     {id:'eq:list',name:'设备列表'},
+    {id:'eq:use',name:'使用记录'},
     {id:'eq:cap',name:'设备能力'},
     {id:'eq:maint',name:'保养维护'},
     {id:'eq:spare',name:'零备件管理'}
@@ -72,7 +73,8 @@ var MENU=[
   {id:'bd',name:'基础数据',icon:'database',prio:'P2',children:[
     {id:'bd:mat',name:'原料管理',icon:'package',children:[
       {id:'bd:rawmat',name:'原料信息',prio:'P2'},
-      {id:'bd:inv',name:'原料库存',prio:'todo'}
+      {id:'bd:inv',name:'原料库存',prio:'P2'},
+      {id:'bd:invlog',name:'出入库记录',prio:'P2'}
     ]},
     {id:'bd:sup',name:'供应商管理',icon:'folder',children:[
       {id:'bd:supplier',name:'原料供应商管理',prio:'P2'},

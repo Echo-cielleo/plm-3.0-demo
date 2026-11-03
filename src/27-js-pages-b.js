@@ -22,11 +22,14 @@ function lp(cfg){
 function listCfg(o){
   var cfg={
     title:o.title,
-    sub:o.sub+' 本页为只读演示，当前仅支持查询与查看详情。',
+    sub:o.sub+((o.headActs||!o.sub)?'':' 本页为只读演示，当前仅支持查询与查看详情。'),
     cols:o.cols,
     rows:o.rows,
     kwKeys:o.kwKeys,
     filters:o.filters||[],
+    /* [27z8a eq:use] 透传新增可选能力：预筛默认值 / 日期范围筛选 */
+    filterDefaults:o.filterDefaults||null,
+    dateRange:o.dateRange||null,
     pageSize:o.pageSize||10,
     headActs:o.headActs||(''+
       '<button class="btn" data-lp-reset>重置筛选</button>'+
@@ -307,22 +310,7 @@ regPage('bd:supplier',{
   }
 });
 
-/* ---------- 原料库存（菜单标「暂不做」） ---------- */
-regPage('bd:inv',{
-  title:'原料库存',crumb:['基础数据','原料库存'],
-  render:function(){
-    $('pageHost').innerHTML=
-      '<div class="page-hd"><div class="t"><h1>原料库存</h1>'+
-      '<div class="page-sub">本模块在本期原型中标记为「暂不做」</div></div></div>'+
-      '<div class="card"><div class="card-b">'+
-      placeholder('📦','原料库存 · 暂不做',
-        '本期 PLM 3.0 原型聚焦<b>研发主线（需求 → 项目 → 实验 → 合规）</b>，'+
-        '仓储与库存周转由 ERP 承接，不在本系统范围内。<br><br>'+
-        '若后续需要，可承接的能力包括：批次库存与效期预警、先进先出（FIFO）领用追溯、'+
-        '原料留样管理、安全库存自动补货提醒。')+
-      '</div></div>';
-  }
-});
+/* ---------- 原料库存（bd:inv）：已改为正式页，实现见 27z8b-js-bd-inv.js ---------- */
 
 /* ---------- 产品基础信息 ---------- */
 /* 产品基础信息：左侧产品目录树 + 右侧列表（27z5 提供 lpWithCatTree / prodCatRows） */
@@ -433,7 +421,8 @@ regPage('eq:list',{
         {k:'cal',t:'下次校准',w:'110px'}
       ],
       rows:EQUIPMENTS,kwKeys:['id','name','model','loc','type','dept'],
-      acts:function(r){ return '<button class="btn btn-link" onclick="mdOpenEq(\''+esc(r.id)+'\')">查看</button>'; },
+      acts:function(r){ return '<button class="btn btn-link" onclick="mdOpenEq(\''+esc(r.id)+'\')">查看</button>'+
+        '<button class="btn btn-link" onclick="showPage(\'eq:use\',{eq:\''+esc(r.id)+'\'})">使用记录</button>'; },
       onRowClick:function(r){ mdOpenEq(r.id); },
       filters:[
         {k:'status',t:'状态',all:'全部',opts:[['正常','正常'],['校准中','校准中'],['维修','维修'],['停用','停用']]},

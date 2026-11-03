@@ -22,7 +22,7 @@ with sync_playwright() as pw:
     print('=== 修改边界 ===')
     bd=page.evaluate("()=>MENU.find(x=>x.id==='bd').children.map(x=>({id:x.id,name:x.name,children:(x.children||[]).map(y=>y.id)}))")
     ok(bd==[
-        {'id':'bd:mat','name':'原料管理','children':['bd:rawmat','bd:inv']},
+        {'id':'bd:mat','name':'原料管理','children':['bd:rawmat','bd:inv','bd:invlog']},
         {'id':'bd:sup','name':'供应商管理','children':['bd:supplier','bd:sup-data']},
         {'id':'bd:cas','name':'组分与合规','children':['bd:comp','bd:comp-auto','bd:ghs']},
         {'id':'bd:techcat','name':'关键技术分类','children':[]},

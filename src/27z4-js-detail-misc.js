@@ -446,6 +446,7 @@ mdReg({
   },
   acts:function(e){
     return '<button class="btn" onclick="showPage(\'eq:maint\')">维保计划</button>'+
+           '<button class="btn" onclick="showPage(\'eq:use\',{eq:\''+esc(e.id)+'\'})">使用记录</button>'+
            '<button class="btn" disabled title="本原型未接入校准申请">申请校准（未接入）</button>';
   },
   warns:function(e){
