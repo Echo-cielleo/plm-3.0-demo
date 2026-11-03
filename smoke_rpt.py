@@ -34,7 +34,7 @@ with __import__('playwright.sync_api', fromlist=['sync_playwright']).sync_playwr
     # KPI 数与真实数据一致
     kpi = pg.evaluate("""()=>{
       return {
-        proj: PROJECTS.filter(function(p){return ['交付','推广'].indexOf(p.stage)<0;}).length,
+        proj: PROJECTS.filter(function(p){return ['试推广','验收'].indexOf(p.stage)<0;}).length,
         projTotal: PROJECTS.length,
         exp: Array.isArray(experiments)?experiments.length:0,
         sdsTodo: SDS_ROWS.filter(function(s){return ['编制中','审核中','待改版'].indexOf(s.status)>=0;}).length,

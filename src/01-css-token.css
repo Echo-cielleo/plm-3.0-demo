@@ -134,6 +134,13 @@ body.nav-collapsed .nav-group{justify-content:center}
 .crumb b{color:var(--text);font-weight:600}
 .crumb .sep{opacity:.5;margin:0 6px}
 .crumb a:hover{color:var(--primary-hover)}
+/* [反馈F19] 来源返回入口（面包屑最前）与详情页头部面包屑 */
+.crumb .crumb-back{color:var(--primary);font-weight:600}
+.md-crumb{font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.md-crumb b{color:var(--text-2);font-weight:600}
+.md-crumb .sep{opacity:.5;margin:0 6px}
+.md-crumb a{color:var(--primary);cursor:pointer}
+.md-crumb a:hover{text-decoration:underline}
 .nav-toggle{
   width:32px;height:32px;border-radius:var(--radius-sm);display:grid;place-items:center;
   color:var(--text-2);font-size:16px;flex-shrink:0;

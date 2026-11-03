@@ -33,6 +33,11 @@ var EQ_TYPE_DEPT={
     if(m){ e.type=m[0]; e.dept=m[1]; }
     else { e.type=e.type||'实验仪器'; e.dept=e.dept||'研发部'; }
   });
+  /* [反馈F21] 能力项联查补所属部门 / 责任人（eq:cap 筛选依赖） */
+  (typeof EQCAPS!=='undefined'?EQCAPS:[]).forEach(function(c){
+    var e=(typeof EQUIPMENTS!=='undefined'?EQUIPMENTS:[]).filter(function(x){return x.id===c.eq;})[0]||{};
+    c.dept=e.dept||''; c.owner=e.owner||'';
+  });
 })();
 function eqById(id){ return EQUIPMENTS.filter(function(e){return e.id===id;})[0]||null; }
 function eqName(id){ var e=eqById(id); return e?e.name:id; }

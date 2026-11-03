@@ -271,6 +271,7 @@ function renderDetailTabs(e){
        '类型 '+esc(e.type)+' ｜ 负责人 '+esc(e.owner||e.assignee||'—')+' ｜ 创建人 '+esc(e.creator)+' ｜ 创建时间 '+esc(e.createTime)+'</div>'+
      '</div>'+
      '<div class="page-acts">'+
+       '<button class="btn" onclick="navBack(\'exp:detail\',\'exp:list\')">← 返回来源</button>'+
        (_isDoeRec?'<button class="btn" onclick="showPage(\'exp:doe\')">所属 DOE 方案</button>':'')+
        (e.status==='待配置'
          ?'<button class="btn btn-primary" onclick="openWizardEdit(\''+e.id+'\')">继续配置设计</button>'
@@ -364,7 +365,7 @@ function normalActionButtons(e,editing){
     (editing?'<button class="btn btn-primary" onclick="saveNormalExpEdit(\''+e.id+'\')">保存</button><button class="btn" onclick="cancelNormalExpEdit(\''+e.id+'\')">取消</button>':'<button class="btn" onclick="editNormalExp(\''+e.id+'\')">编辑</button>')+
     '<button class="btn danger-outline" onclick="deleteNormalExp(\''+e.id+'\')">删除</button>'+
     '<button class="btn" onclick="exportNormalExp(\''+e.id+'\')">导出</button>'+
-    '<button class="btn" onclick="showPage(\'exp:list\')">返回</button></div>';
+    '<button class="btn" onclick="navBack(\'exp:detail\',\'exp:list\')">返回</button></div>';
 }
 function renderNormalDetail(e){
   ensureNormalDetail(e);
@@ -518,7 +519,7 @@ function renderDoeExecutionDetail(e){
   document.getElementById('detailTabs').appendChild(tabs([{key:'plan',label:'执行方案'},{key:'entry',label:'结果录入'}],active,function(k){curDetailTab=k;renderDoeExecutionTab(e,k);setCrumb('exp:detail');}));
   renderDoeExecutionTab(e,active);
 }
-function doeActionButtons(e){return '<div class="page-acts"><button class="btn" onclick="copyDoeExecution(\''+e.id+'\')">复制</button><button class="btn" onclick="editDoeExecution(\''+e.id+'\')">编辑</button><button class="btn danger-outline" onclick="deleteDoeExecution(\''+e.id+'\')">删除</button><button class="btn" onclick="exportDoeExecution(\''+e.id+'\')">导出</button><button class="btn" onclick="showPage(\'exp:list\')">返回</button></div>';}
+function doeActionButtons(e){return '<div class="page-acts"><button class="btn" onclick="copyDoeExecution(\''+e.id+'\')">复制</button><button class="btn" onclick="editDoeExecution(\''+e.id+'\')">编辑</button><button class="btn danger-outline" onclick="deleteDoeExecution(\''+e.id+'\')">删除</button><button class="btn" onclick="exportDoeExecution(\''+e.id+'\')">导出</button><button class="btn" onclick="navBack(\'exp:detail\',\'exp:list\')">返回</button></div>';}
 function renderDoeExecutionTab(e,key){var tb=$('detailBody');tb.innerHTML=key==='entry'?tabDoeBatchEntry(e):tabDoeExecutionPlan(e);}
 function tabDoeExecutionPlan(e){
   var st=doeExecStat(e),allOpen=e.runs.every(function(r){return !!doeOpenRuns[e.id+':'+r.runSeq];});
@@ -1214,7 +1215,7 @@ regPage('exp:report',{
     renderAnalysis(e,curAnalysisResp);
   }
 });
-function backToAnalysisList(){ showPage('exp:analysis'); }
+function backToAnalysisList(){ navBack(curPage,'exp:analysis'); }
 var curAnalysisActiveTerms={};
 
 function renderAnalysis(e,respName){

@@ -51,27 +51,29 @@ with sync_playwright() as pw:
     ok(pg.evaluate("()=>TODOS.some(t=>t.kind==='实验结果录入')&&TODOS.some(t=>t.kind==='SDS 审批')&&TODOS.some(t=>t.kind==='项目节点')&&TODOS.some(t=>t.kind==='数据补齐')"),
        "覆盖实验录入/SDS 审批/项目节点/数据补齐四类")
 
-    # ========== ③ 推广阶段 ==========
-    print("\n== 3. 推广并为项目第七阶段 ==")
-    ok(pg.evaluate("()=>PROJECTS.every(p=>p.stageProgress.length===7&&p.stageProgress[6]==='推广')"),
-       "全部项目阶段序列为 7 段，末段为推广")
-    ok(pg.evaluate("()=>PROJECTS.find(p=>p.id==='PRJ-2026-005').stage==='推广'"),
-       "PRJ-2026-005 已进入推广阶段")
-    ok("推广" in pg.evaluate("()=>stageBar(PROJECTS[4])"), "首页阶段条渲染推广段")
-    ok("交付 → 推广" in t, "首页阶段说明含「交付 → 推广」")
-    # 项目详情：005 推广阶段表单
+    # ========== ③ 阶段新口径（F01） ==========
+    print("\n== 3. 阶段口径：评审/预研/小试/中试/试推广/验收 ==")
+    ok(pg.evaluate("()=>PROJECTS.every(p=>p.stageProgress.length===6&&p.stageProgress[4]==='试推广'&&p.stageProgress[5]==='验收')"),
+       "全部项目阶段序列为 6 段：…中试 → 试推广 → 验收")
+    ok(pg.evaluate("()=>PROJECTS.find(p=>p.id==='PRJ-2026-005').stage==='试推广'"),
+       "PRJ-2026-005 已进入试推广阶段")
+    ok("试推广" in pg.evaluate("()=>stageBar(PROJECTS[4])"), "首页阶段条渲染试推广段")
+    ok("试推广 → 验收" in t, "首页阶段说明含「试推广 → 验收」")
+    ok(pg.evaluate("()=>!document.querySelector('#pageHost').innerText.match(/试生产/)"),
+       "首页无旧阶段词「试生产」")
+    # 项目详情：005 试推广阶段表单
     pg.evaluate("()=>showPage('proj:detail',{id:'PRJ-2026-005'})")
     pg.wait_for_timeout(600)
     dt = pg.inner_text("#pageHost")
-    ok("推广 阶段表单" in dt, "005 默认定位推广阶段表单")
-    ok("目标客户" in dt and "推广渠道" in dt and "推进阶段" in dt, "推广表单含目标客户/渠道/推进阶段")
+    ok("试推广 阶段表单" in dt, "005 默认定位试推广阶段表单")
+    ok("目标客户" in dt and "推广渠道" in dt and "推进阶段" in dt, "试推广表单含目标客户/渠道/推进阶段")
     ok("商务谈判" in dt, "推进阶段值为商务谈判（来自推广计划要素）")
-    ok("产品试推广计划完成时间" in dt and "产品正式推广是否发起" in dt, "推广阶段 8 字段（1/2/3/7/8 为是/否）")
+    ok("产品试推广计划完成时间" in dt and "产品正式推广是否发起" in dt, "试推广阶段 8 字段（1/2/3/7/8 为是/否）")
     # 001 详情阶段导航有推广
     pg.evaluate("()=>{curProjStage=-1;showPage('proj:detail',{id:'PRJ-2026-001'})}")
     pg.wait_for_timeout(600)
     dt1 = pg.inner_text("#pageHost")
-    ok(dt1.count("推广") >= 1, "001 阶段导航含推广（未开始）")
+    ok(dt1.count("试推广") >= 1, "001 阶段导航含试推广（未开始）")
 
     # ========== ④ 问问 AI 移除 ==========
     print("\n== 4. 实验设计取消「问问 AI」 ==")

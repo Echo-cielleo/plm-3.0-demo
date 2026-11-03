@@ -137,7 +137,7 @@ regPage('home',{
   crumb:['个人工作台'],
   render:function(){
     var me='王研究员';
-    var running=PROJECTS.filter(function(p){return p.stage!=='交付';}).length;
+    var running=PROJECTS.filter(function(p){return p.stage!=='验收';}).length;
     var todoExp=experiments.filter(function(e){return e.status==='待执行'||e.status==='待配置';}).length;
     var pendingSds=SDS_ROWS.filter(function(r){return r.status==='审核中'||r.status==='编制中';}).length;
     var h='';
@@ -218,9 +218,9 @@ regPage('home',{
     });
     h+='</tbody></table></div></div>';
 
-    /* ⑥ 项目阶段进展：宽表 + 7 段进度条，通栏（第 4 行） */
+    /* ⑥ 项目阶段进展：宽表 + 6 段进度条（F01 新口径），通栏（第 4 行） */
     h+='<div class="card b-span2"><div class="card-hd"><h3>📈 项目阶段进展</h3>'+
-       '<span class="sub">评审 → 预研 → 小试 → 中试 → 试生产 → 交付 → 推广</span>'+
+       '<span class="sub">评审 → 预研 → 小试 → 中试 → 试推广 → 验收</span>'+
        '<div class="spacer"></div><button class="btn btn-sm" onclick="showPage(\'proj:list\')">查看全部</button></div>'+
        '<div class="card-b tight"><table class="tbl"><thead><tr>'+
        '<th style="width:230px">项目</th><th style="width:88px">负责人</th><th>阶段进度</th>'+
@@ -330,7 +330,7 @@ function demandToPrj(id){
       var nid=nextProjectId();
       PROJECTS.push({
         id:nid,name:d.title,stage:'评审',product:d.product,productCategory:'待维护',industry:'待维护',
-        stageProgress:['评审','预研','小试','中试','试生产','交付','推广'],stageDone:[],stageOn:0,
+        stageProgress:['评审','预研','小试','中试','试推广','验收'],stageDone:[],stageOn:0,
         startDate:todayStr(),dueDate:d.due,leader:d.owner,members:[d.owner],
         dept:'LAB-SH-1',category:'新产品',source:d.src==='customer'?'客户需求':'自研需求',
         coefficient:0.50,important:false,remark:'',oa:false,desc:d.want
@@ -421,7 +421,7 @@ var PROJ_GATE_GROUPS=[
   {name:'预研阶段',tone:'research',cols:['产品剖析','标准及方法建立/评审','总结/立项申请']},
   {name:'小试阶段',tone:'pilot',cols:['原料筛选','稳定性考察','压力测试','小试总结']},
   {name:'中试阶段',tone:'middle',cols:['中试申请','第一批合格']},
-  {name:'推广阶段',tone:'promote',cols:['产品验证','产品性能评审','技术与成本评审','产品试推广','放大生产','产品正式推广']},
+  {name:'试推广阶段',tone:'promote',cols:['产品验证','产品性能评审','技术与成本评审','产品试推广','放大生产','产品正式推广']},
   {name:'验收',tone:'accept',cols:['项目验收']}
 ];
 
@@ -518,7 +518,7 @@ function renderProjectMatrix(){
   var years=PROJECTS.map(projYear).filter(function(v,i,a){return v&&a.indexOf(v)===i;}).sort().reverse();
   var cats=PROJECTS.map(function(p){return p.category;}).filter(function(v,i,a){return v&&a.indexOf(v)===i;});
   var depts=(typeof DEPTS!=='undefined'?DEPTS:[]);
-  var h='<div class="page-hd"><div class="t"><h1>研发项目管理</h1><div class="page-sub">覆盖评审、预研、小试、中试、推广与验收节点的研发项目台账</div></div>'+
+  var h='<div class="page-hd"><div class="t"><h1>研发项目管理</h1><div class="page-sub">覆盖评审、预研、小试、中试、试推广与验收节点的研发项目台账</div></div>'+
     '<div class="page-acts"><button class="btn" disabled title="本原型尚未生成项目台账文件">⇩ 导出（未接入）</button><button class="btn btn-primary" onclick="showPage(\'proj:new\')">＋ 添加</button></div></div>'+
     '<div class="card proj-filter-card"><div class="card-b"><div class="proj-filter-grid">'+
       '<label><span>立项年份</span><select class="ctrl" id="projYear"><option value="">全部年份</option>'+projListOptions(years,projListState.year)+'</select></label>'+
@@ -539,7 +539,7 @@ function renderProjectMatrix(){
     var cells=PROJ_GATE_DATA[p.id]||[];
     h+='<tr><td class="proj-fixed proj-name"><button class="proj-name-link" onclick="showPage(\'proj:detail\',{id:\''+esc(p.id)+'\'})">'+esc(p.name)+'</button><small>'+esc(p.id)+'</small></td>'+
       '<td class="proj-fixed proj-owner">'+esc(p.leader)+'</td><td class="proj-fixed proj-dept">'+esc(projDeptName(p.dept))+'</td>'+
-      cells.map(projGateCellHtml).join('')+'<td class="proj-status"><span class="tag tag-blue">'+esc(p.stage==='交付'?'验收维护':p.stage+'维护')+'</span></td></tr>';
+      cells.map(projGateCellHtml).join('')+'<td class="proj-status"><span class="tag tag-blue">'+esc(p.stage==='验收'?'验收维护':p.stage+'维护')+'</span></td></tr>';
   });
   h+='</tbody></table></div><div class="proj-count">共 '+rows.length+' 个项目 · 横向滚动可查看全部阶段节点</div></div></div>';
   host.innerHTML=h;
@@ -600,9 +600,8 @@ function initialProjectStages(){
     {name:'预研',status:'todo',start:'—',end:'—'},
     {name:'小试',status:'todo',start:'—',end:'—',summaryFiles:[],files:[]},
     {name:'中试',status:'todo',start:'—',end:'—',evaluationFiles:[],files:[]},
-    {name:'试生产',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',goal:'—',result:'—',files:[]},
-    {name:'交付',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',goal:'—',result:'—',files:[]},
-    {name:'推广',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',goal:'—',result:'—',files:[],promoGates:[],promoFiles:[]}
+    {name:'试推广',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',goal:'—',result:'—',files:[],promoGates:[],promoFiles:[]},
+    {name:'验收',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',goal:'—',result:'—',files:[]}
   ];
 }
 function newProjectValue(id){return (($('pn'+id)||{}).value||'').trim();}
@@ -626,7 +625,7 @@ function saveNewProject(){
   PROJECTS.push({
     id:id,name:data.name,dept:data.dept,stage:'评审',product:data.product,
     productCategory:data.productCategory,industry:data.industry,
-    stageProgress:['评审','预研','小试','中试','试生产','交付','推广'],stageDone:[],stageOn:0,
+    stageProgress:['评审','预研','小试','中试','试推广','验收'],stageDone:[],stageOn:0,
     startDate:todayStr(),dueDate:data.dueDate,leader:data.leader,members:[data.leader],
     category:data.category,source:data.source,coefficient:Number(coefficient.toFixed(2)),
     important:data.important==='true',remark:data.remark,oa:false,desc:data.remark
@@ -659,11 +658,9 @@ var PROJ_STAGES={
      files:[{n:'DOE-2026-0312 实验方案.docx',t:'DOCX',s:'812 KB'},{n:'小试第 1 批检测报告.pdf',t:'PDF',s:'1.1 MB'}]},
     {name:'中试',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
      goal:'—',result:'—',files:[]},
-    {name:'试生产',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
-     goal:'—',result:'—',files:[]},
-    {name:'交付',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
-     goal:'—',result:'—',files:[]},
-    {name:'推广',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
+    {name:'试推广',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
+     goal:'—',result:'—',files:[],promoGates:[],promoFiles:[]},
+    {name:'验收',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
      goal:'—',result:'—',files:[]}
   ],
   'PRJ-2026-002':[
@@ -684,11 +681,9 @@ var PROJ_STAGES={
      goal:'500L 反应釜放大验证，确认传热差异对批次稳定性的影响',
      result:'进行中 · 已完成 3 批中试，第 2 批因传热差异出现粘度波动，已调整工艺',
      files:[{n:'中试方案 V1.3.docx',t:'DOCX',s:'668 KB'},{n:'中试第 2 批复盘.pdf',t:'PDF',s:'904 KB'}]},
-    {name:'试生产',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
-     goal:'—',result:'—',files:[]},
-    {name:'交付',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
-     goal:'—',result:'—',files:[]},
-    {name:'推广',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
+    {name:'试推广',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
+     goal:'—',result:'—',files:[],promoGates:[],promoFiles:[]},
+    {name:'验收',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
      goal:'—',result:'—',files:[]}
   ],
   'PRJ-2026-003':[
@@ -702,11 +697,9 @@ var PROJ_STAGES={
      goal:'—',result:'—',files:[]},
     {name:'中试',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
      goal:'—',result:'—',files:[]},
-    {name:'试生产',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
-     goal:'—',result:'—',files:[]},
-    {name:'交付',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
-     goal:'—',result:'—',files:[]},
-    {name:'推广',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
+    {name:'试推广',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
+     goal:'—',result:'—',files:[],promoGates:[],promoFiles:[]},
+    {name:'验收',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
      goal:'—',result:'—',files:[]}
   ],
   'PRJ-2026-004':[
@@ -723,11 +716,9 @@ var PROJ_STAGES={
      files:[{n:'HF-5 改配方检测报告.pdf',t:'PDF',s:'758 KB'}]},
     {name:'中试',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
      goal:'—',result:'—',files:[]},
-    {name:'试生产',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
-     goal:'—',result:'—',files:[]},
-    {name:'交付',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
-     goal:'—',result:'—',files:[]},
-    {name:'推广',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
+    {name:'试推广',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
+     goal:'—',result:'—',files:[],promoGates:[],promoFiles:[]},
+    {name:'验收',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
      goal:'—',result:'—',files:[]}
   ],
   'PRJ-2026-005':[
@@ -749,24 +740,17 @@ var PROJ_STAGES={
      result:'连续 5 批指标稳定，耐磨批次间波动 < 3%',
      evaluationFiles:[{n:'GL-9 中试产品应用评价报告.pdf',t:'PDF',s:'1.1 MB'}],
      files:[{n:'中试批记录汇总.xlsx',t:'XLSX',s:'1.3 MB'},{n:'第三方耐磨检测报告.pdf',t:'PDF',s:'892 KB'}]},
-    {name:'试生产',status:'done',start:'2026-04-16',end:'2026-06-30',
-     review:'通过',reviewer:'赵工',reviewDate:'2026-07-02',
-     goal:'试生产 2 吨并同步完成客户产线适用性验证',
-     result:'客户产线连续运行 72h 无异常，涂饰外观与进口品一致',
-     files:[{n:'试生产总结报告.pdf',t:'PDF',s:'1.5 MB'},{n:'客户产线验证记录.pdf',t:'PDF',s:'674 KB'}]},
-    {name:'交付',status:'done',start:'2026-07-01',end:'2026-09-05',
-     review:'通过',reviewer:'赵工',reviewDate:'2026-09-06',
-     goal:'完成 SDS V2.1 审批归档与欧盟客户合规文件交付',
-     result:'SDS V2.1 已审批归档，欧盟客户合规文件全部交付',
-     files:[{n:'GL-9 SDS V2.1（已归档）.pdf',t:'PDF',s:'2.8 MB'},{n:'ZDHC 符合性声明.pdf',t:'PDF',s:'486 KB'}]},
-    {name:'推广',status:'doing',start:'2026-09-06',end:'',
+    {name:'试推广',status:'doing',start:'2026-04-16',end:'',
      review:'进行中',reviewer:'陈工',reviewDate:'',
-     goal:'面向欧盟客户完成 GL-9 商务谈判与量产导入，同步启动国内市场试推广',
-     result:'进行中 · 客户商务谈判中，已完成产线适配验证，首批意向订单 2 吨',
+     goal:'2 吨产线试运行完成客户验证，合规文件归档，面向欧盟客户试推广',
+     result:'进行中 · 产线连续 72h 无异常，SDS V2.1 已归档，商务谈判中，首批意向订单 2 吨',
      target:'某知名沙发制造厂（出口欧盟）',channel:'展会 + 线上',promoStage:'商务谈判',
      promoGates:['是','是','是','2026-09-16','','否','否'],
      promoFiles:[{n:'GL-9 技术与成本评审纪要.pdf',t:'PDF',s:'612 KB'}],
-     files:[{n:'GL-9 客户产线适配报告.pdf',t:'PDF',s:'674 KB'}]}
+     files:[{n:'产线试运行总结报告.pdf',t:'PDF',s:'1.5 MB'},{n:'客户产线验证记录.pdf',t:'PDF',s:'674 KB'},
+            {n:'GL-9 SDS V2.1（已归档）.pdf',t:'PDF',s:'2.8 MB'},{n:'ZDHC 符合性声明.pdf',t:'PDF',s:'486 KB'}]},
+    {name:'验收',status:'todo',start:'—',end:'—',review:'—',reviewer:'—',reviewDate:'—',
+     goal:'—',result:'—',files:[]}
   ]
 };
 var STAGE_STATUS={done:'完成',doing:'进行中',todo:'未开始'};
@@ -792,9 +776,9 @@ var PROJ_CHANGES={
     {time:'2026-07-24 16:40',who:'李工',field:'验收标准',from:'APEO 未检出',to:'APEO < 100 mg/kg 且手感评分 ≥ 4.0',reason:'完全未检出导致手感显著下降，调整为限量管控'}
   ],
   'PRJ-2026-005':[
-    {time:'2026-09-06 15:40',who:'赵工',field:'阶段',from:'交付',to:'推广',reason:'SDS V2.1 已归档，客户商务谈判启动，进入推广'},
+    {time:'2026-09-06 15:40',who:'赵工',field:'推广渠道',from:'展会',to:'展会 + 线上',reason:'增加线上渠道覆盖华东客户'},
     {time:'2026-08-25 10:05',who:'陈工',field:'计划交付',from:'2026-08-30',to:'2026-09-15',reason:'REACH Annex XVII 新版生效，SDS 需重新分类'},
-    {time:'2026-06-28 14:30',who:'赵工',field:'阶段',from:'试生产',to:'交付',reason:'客户产线验证通过，进入交付'},
+    {time:'2026-06-28 14:30',who:'赵工',field:'阶段',from:'中试',to:'试推广',reason:'客户产线验证通过，进入试推广'},
     {time:'2026-02-14 09:25',who:'陈工',field:'配方',from:'含 APEO 乳化剂',to:'脂肪醇聚氧乙烯醚',reason:'满足 ZDHC MRSL V3.1'}
   ]
 };
@@ -817,7 +801,7 @@ var PROJ_AUDITS={
     {time:'2026-06-17 10:50',node:'预研阶段评审',who:'王研究员',role:'研发工程师',result:'通过',cmt:'替代路径明确，同意进入小试'}
   ],
   'PRJ-2026-005':[
-    {time:'2026-07-02 16:30',node:'试生产阶段评审',who:'赵工',role:'数据治理员',result:'通过',cmt:'客户产线验证通过，同意进入交付'},
+    {time:'2026-07-02 16:30',node:'产品验证评审',who:'赵工',role:'数据治理员',result:'通过',cmt:'客户产线验证通过，同意推进试推广'},
     {time:'2026-04-18 14:00',node:'中试阶段评审',who:'王研究员',role:'研发工程师',result:'通过',cmt:'批次一致性良好'},
     {time:'2026-01-22 11:20',node:'小试阶段评审',who:'陈工',role:'法规专员',result:'通过',cmt:'受限组分已全部替换，耐磨达标'},
     {time:'2025-11-01 09:30',node:'预研阶段评审',who:'陈工',role:'法规专员',result:'通过',cmt:'法规差异识别完整'},
@@ -856,7 +840,7 @@ var PROJ_DOCS={
     {n:'GL-9 SDS V2.1',t:'合规文档',v:'V2.1',owner:'陈工',upd:'2026-09-01',st:'审批中'},
     {n:'ZDHC MRSL V3.1 符合性声明',t:'合规文档',v:'V1.1',owner:'陈工',upd:'2026-08-20',st:'已发布'},
     {n:'REACH 差异分析',t:'合规文档',v:'V1.0',owner:'陈工',upd:'2026-07-22',st:'待更新'},
-    {n:'试生产总结报告',t:'技术文档',v:'V1.0',owner:'赵工',upd:'2026-06-30',st:'已发布'}
+    {n:'产线试运行总结报告',t:'技术文档',v:'V1.0',owner:'赵工',upd:'2026-06-30',st:'已发布'}
   ]
 };
 var DOC_ST={'已归档':'tag-grey','已发布':'tag-green','审批中':'tag-orange','草稿':'tag-grey','待更新':'tag-orange'};
@@ -1025,8 +1009,8 @@ function stageFormHTML(st,p){
       '<th style="text-align:left">中试产品应用评价报告</th><td>'+stageFilesHTML(st.evaluationFiles)+'</td></tr>'+
       '</tbody></table>';
   }
-  if(st.name==='推广'){
-    /* ③ 推广阶段专属表单：目标客户 / 渠道 / 推进阶段（原产品推广计划内容要素）
+  if(st.name==='试推广'){
+    /* ③ 试推广阶段专属表单：目标客户 / 渠道 / 推进阶段（原产品推广计划内容要素）
        + 8 个字段明细（对齐真实系统：5 项为「是/否」＋ 技术及成本评审附件 ＋ 试推广计划/实际完成时间） */
     var pm=(typeof PROMOS!=='undefined'?PROMOS.filter(function(x){return x.product===p.product;})[0]:null)||{};
     var h='<table class="tbl"><tbody>'+
@@ -1035,7 +1019,7 @@ function stageFormHTML(st,p){
       '<tr><th style="text-align:left">推进阶段</th><td>'+((st.promoStage||pm.stage)?'<span class="tag tag-blue">'+esc(st.promoStage||pm.stage)+'</span>':'<span class="muted">—</span>')+'</td>'+
       '<th style="text-align:left">阶段状态</th><td>'+stStatusTag(st.status)+'</td></tr>'+
       '</tbody></table>';
-    h+='<div style="margin-top:16px"><div class="muted" style="font-size:12.5px;margin-bottom:8px">推广阶段字段（8 项）</div>'+
+    h+='<div style="margin-top:16px"><div class="muted" style="font-size:12.5px;margin-bottom:8px">试推广阶段字段（8 项）</div>'+
        '<table class="tbl tbl-sm"><thead><tr><th style="width:260px">字段名称</th><th>取值</th></tr></thead><tbody>';
     (typeof PROMO_FIELDS!=='undefined'?PROMO_FIELDS:[]).forEach(function(f){
       var val;

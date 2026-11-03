@@ -109,7 +109,7 @@ with sync_playwright() as p:
         p.source==='技术预研'&&p.category==='中间体'&&p.coefficient===0.72&&p.important===true&&
         p.dueDate==='2027-06-30'&&p.remark==='验证中试放大稳定性';
     }"""))
-    ck('新增项目初始化七阶段（含推广）', page.evaluate('(PROJ_STAGES[PROJECTS[PROJECTS.length-1].id]||[]).length') == 7)
+    ck('新增项目初始化六阶段（含试推广/验收）', page.evaluate('(PROJ_STAGES[PROJECTS[PROJECTS.length-1].id]||[]).length') == 6)
 
     page.evaluate("showPage('proj:detail',{id:'PRJ-2026-002'})")
     page.wait_for_timeout(400)
@@ -163,10 +163,10 @@ with sync_playwright() as p:
     page.locator('#projTabBar .tabs button').nth(0).click()
     page.wait_for_timeout(300)
     ck('项目表单 Tab 有阶段导航', page.locator('#projTabBody .stage-nav').count() == 1)
-    ck('阶段项 = 7', page.locator('#projTabBody .sn-item').count() == 7,
+    ck('阶段项 = 6', page.locator('#projTabBody .sn-item').count() == 6,
        '%d 个' % page.locator('#projTabBody .sn-item').count())
     stage_names = page.evaluate("Array.from(document.querySelectorAll('#projTabBody .sn-item .snn')).map(x=>x.textContent)")
-    ck('阶段顺序正确', stage_names == ['评审', '预研', '小试', '中试', '试生产', '交付', '推广'], ' → '.join(stage_names))
+    ck('阶段顺序正确（F01 新口径）', stage_names == ['评审', '预研', '小试', '中试', '试推广', '验收'], ' → '.join(stage_names))
     ck('导航位于内容右侧', page.evaluate("""()=>{
       var f=document.querySelector('.proj-form-wrap>.card').getBoundingClientRect();
       var n=document.querySelector('.stage-nav').getBoundingClientRect();
@@ -296,30 +296,30 @@ with sync_playwright() as p:
     ck('弹窗给出命中或未检出结论', ('命中' in mbody) or ('未检出' in mbody))
     page.evaluate('closeModal()')
 
-    print('\n=== 7. 推广阶段 8 字段（真实系统口径）===')
+    print('\n=== 7. 试推广阶段 8 字段（真实系统口径）===')
     page.evaluate('showPage("proj:list")')
     page.wait_for_timeout(400)
     mh = page.inner_text('#pageHost')
-    ck('矩阵推广阶段 6 个子阶段列名对齐',
+    ck('矩阵试推广阶段 6 个子阶段列名对齐',
        all(k in mh for k in ['产品验证', '产品性能评审', '技术与成本评审', '产品试推广', '放大生产', '产品正式推广']))
     g5 = page.evaluate("()=>{var c=PROJ_GATE_DATA['PRJ-2026-005'];return c.slice(10,16).map(function(x){return x.value+'/'+x.state}).join('|')}")
-    ck('005 推广 6 格 = 是|是|是|2026-09-16(待完成)|否|否',
+    ck('005 试推广 6 格 = 是|是|是|2026-09-16(待完成)|否|否',
        g5 == '是/on-time|是/on-time|是/on-time|2026-09-16/pending|否/pending|否/pending', g5)
-    ck('推广字段定义：5 个是/否 + 1 附件 + 2 时间',
+    ck('试推广字段定义：5 个是/否 + 1 附件 + 2 时间',
        page.evaluate("()=>PROMO_FIELDS.filter(function(f){return f.type==='yn'}).length") == 5 and
        page.evaluate("()=>PROMO_FIELDS.filter(function(f){return f.type==='file'}).length") == 1 and
        page.evaluate("()=>PROMO_FIELDS.filter(function(f){return f.type==='date'}).length") == 2)
     page.evaluate("()=>showPage('proj:detail',{id:'PRJ-2026-005'})")
     page.wait_for_timeout(500)
     dt = page.inner_text('#pageHost')
-    ck('推广详情 8 字段齐全',
+    ck('试推广详情 8 字段齐全',
        all(k in dt for k in ['产品验证是否完成', '产品性能评审是否完成', '技术与成本评审是否完成',
                              '技术及成本评审附件', '产品试推广计划完成时间', '产品试推广实际完成时间',
                              '放大生产是否合格', '产品正式推广是否发起']),
        [k for k in ['产品验证是否完成', '产品性能评审是否完成', '技术与成本评审是否完成',
                     '技术及成本评审附件', '产品试推广计划完成时间', '产品试推广实际完成时间',
                     '放大生产是否合格', '产品正式推广是否发起'] if k not in dt])
-    pg5 = page.evaluate("()=>PROJ_STAGES['PRJ-2026-005'].filter(function(s){return s.name==='推广'})[0].promoGates")
+    pg5 = page.evaluate("()=>PROJ_STAGES['PRJ-2026-005'].filter(function(s){return s.name==='试推广'})[0].promoGates")
     ck('005 promoGates = 是/是/是/2026-09-16/空/否/否',
        pg5 == ['是', '是', '是', '2026-09-16', '', '否', '否'], str(pg5))
     ck('评审附件渲染文件名', 'GL-9 技术与成本评审纪要' in dt)

@@ -151,20 +151,36 @@ var QCREPORTS=[
 /* ==================================================================
    数据：设备列表 eq:list
    ================================================================== */
+/* [反馈F20] 设备台账补购入日期与实图：
+   · purchaseDate 按 demoYmd() 锚点平移（铁律，不写死年月日）
+   · photo 原型层占位图：内联 SVG data URI（eqPhoto 生成），不引外部文件 */
+var _eqT=demoYmd();
+function eqPhoto(e){
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="360" height="220">'+
+    '<rect width="360" height="220" fill="#eef3f9"/>'+
+    '<rect x="0" y="0" width="360" height="220" fill="none" stroke="#c9d7ea" stroke-width="2"/>'+
+    '<rect x="128" y="66" width="104" height="76" rx="8" fill="#dbe7f5" stroke="#8fb0d9" stroke-width="2"/>'+
+    '<circle cx="180" cy="104" r="22" fill="none" stroke="#5b87bd" stroke-width="3"/>'+
+    '<rect x="150" y="148" width="60" height="10" rx="3" fill="#8fb0d9"/>'+
+    '<text x="180" y="185" font-size="15" fill="#3d5a80" text-anchor="middle" font-family="sans-serif">'+e.name+'</text>'+
+    '<text x="180" y="26" font-size="11" fill="#8aa4c4" text-anchor="middle" font-family="sans-serif">设备实图 · 演示占位</text></svg>';
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
 var EQUIPMENTS=[
-  {id:'EQ-2026-001',name:'电子万能材料试验机',model:'WDW-20',loc:'检测中心 A101',status:'正常',owner:'李工',cal:'2026-11-20'},
-  {id:'EQ-2026-002',name:'气相色谱质谱联用仪',model:'GC-MS QP2020',loc:'检测中心 A103',status:'正常',owner:'陈工',cal:'2026-10-15'},
-  {id:'EQ-2026-003',name:'傅里叶变换红外光谱仪',model:'FTIR-650',loc:'检测中心 A103',status:'正常',owner:'陈工',cal:'2026-12-08'},
-  {id:'EQ-2026-004',name:'QUV 紫外老化试验箱',model:'QUV/spray',loc:'老化室 B201',status:'正常',owner:'李工',cal:'2027-01-12'},
-  {id:'EQ-2026-005',name:'恒温恒湿箱',model:'HS-408',loc:'老化室 B202',status:'校准中',owner:'李工',cal:'2026-09-18'},
-  {id:'EQ-2026-006',name:'马丁代尔耐磨试验仪',model:'M235',loc:'检测中心 A105',status:'正常',owner:'李工',cal:'2026-11-05'},
-  {id:'EQ-2026-007',name:'皮革柔软度测定仪',model:'GT-303',loc:'检测中心 A105',status:'正常',owner:'王研究员',cal:'2026-10-28'},
-  {id:'EQ-2026-008',name:'旋转粘度计',model:'NDJ-8S',loc:'合成实验室 C102',status:'正常',owner:'王研究员',cal:'2026-12-20'},
-  {id:'EQ-2026-009',name:'激光粒度分析仪',model:'LS-609',loc:'合成实验室 C104',status:'正常',owner:'王研究员',cal:'2027-02-10'},
-  {id:'EQ-2026-010',name:'高温老化试验箱',model:'GH-100',loc:'老化室 B203',status:'维修',owner:'赵工',cal:'2026-09-30'},
-  {id:'EQ-2026-011',name:'分析天平（万分之一）',model:'ME204E',loc:'检测中心 A102',status:'正常',owner:'陈工',cal:'2026-10-10'},
-  {id:'EQ-2026-012',name:'台式 pH 计',model:'FE28',loc:'合成实验室 C102',status:'停用',owner:'赵工',cal:'—'}
+  {id:'EQ-2026-001',name:'电子万能材料试验机',model:'WDW-20',loc:'检测中心 A101',status:'正常',owner:'李工',cal:'2026-11-20',purchaseDate:dateAdd(_eqT,-980),photo:''},
+  {id:'EQ-2026-002',name:'气相色谱质谱联用仪',model:'GC-MS QP2020',loc:'检测中心 A103',status:'正常',owner:'陈工',cal:'2026-10-15',purchaseDate:dateAdd(_eqT,-760),photo:''},
+  {id:'EQ-2026-003',name:'傅里叶变换红外光谱仪',model:'FTIR-650',loc:'检测中心 A103',status:'正常',owner:'陈工',cal:'2026-12-08',purchaseDate:dateAdd(_eqT,-820),photo:''},
+  {id:'EQ-2026-004',name:'QUV 紫外老化试验箱',model:'QUV/spray',loc:'老化室 B201',status:'正常',owner:'李工',cal:'2027-01-12',purchaseDate:dateAdd(_eqT,-540),photo:''},
+  {id:'EQ-2026-005',name:'恒温恒湿箱',model:'HS-408',loc:'老化室 B202',status:'校准中',owner:'李工',cal:'2026-09-18',purchaseDate:dateAdd(_eqT,-610),photo:''},
+  {id:'EQ-2026-006',name:'马丁代尔耐磨试验仪',model:'M235',loc:'检测中心 A105',status:'正常',owner:'李工',cal:'2026-11-05',purchaseDate:dateAdd(_eqT,-450),photo:''},
+  {id:'EQ-2026-007',name:'皮革柔软度测定仪',model:'GT-303',loc:'检测中心 A105',status:'正常',owner:'王研究员',cal:'2026-10-28',purchaseDate:dateAdd(_eqT,-380),photo:''},
+  {id:'EQ-2026-008',name:'旋转粘度计',model:'NDJ-8S',loc:'合成实验室 C102',status:'正常',owner:'王研究员',cal:'2026-12-20',purchaseDate:dateAdd(_eqT,-700),photo:''},
+  {id:'EQ-2026-009',name:'激光粒度分析仪',model:'LS-609',loc:'合成实验室 C104',status:'正常',owner:'王研究员',cal:'2027-02-10',purchaseDate:dateAdd(_eqT,-300),photo:''},
+  {id:'EQ-2026-010',name:'高温老化试验箱',model:'GH-100',loc:'老化室 B203',status:'维修',owner:'赵工',cal:'2026-09-30',purchaseDate:dateAdd(_eqT,-1100),photo:''},
+  {id:'EQ-2026-011',name:'分析天平（万分之一）',model:'ME204E',loc:'检测中心 A102',status:'正常',owner:'陈工',cal:'2026-10-10',purchaseDate:dateAdd(_eqT,-260),photo:''},
+  {id:'EQ-2026-012',name:'台式 pH 计',model:'FE28',loc:'合成实验室 C102',status:'停用',owner:'赵工',cal:'—',purchaseDate:dateAdd(_eqT,-1350),photo:''}
 ];
+EQUIPMENTS.forEach(function(e){ if(!e.photo)e.photo=eqPhoto(e); });
 
 /* ==================================================================
    数据：设备能力 eq:cap
@@ -458,7 +474,14 @@ regPage('eq:cap',{
       rows:EQCAPS,kwKeys:['eq','cap','proc'],
       acts:function(r){ return '<button class="btn btn-link" onclick="mdOpenEqCap(\''+esc(r.eq)+'\',\''+esc(r.cap)+'\')">查看</button>'; },
       onRowClick:function(r){ mdOpenEqCap(r.eq,r.cap); },
-      filters:[{k:'status',t:'状态',all:'全部',opts:[['正常','正常'],['校准中','校准中'],['维修','维修']]}]
+      /* [反馈F21] 补所属部门 / 责任人筛选（dept/owner 由 27z8 按设备联查补齐） */
+      filters:[{k:'status',t:'状态',all:'全部',opts:[['正常','正常'],['校准中','校准中'],['维修','维修']]},
+               {k:'dept',t:'所属部门',all:'全部',opts:(function(){
+                 var m={};EQCAPS.forEach(function(c){if(c.dept)m[c.dept]=1;});
+                 return Object.keys(m).map(function(d){return [d,d];});})()},
+               {k:'owner',t:'责任人',all:'全部',opts:(function(){
+                 var m={};EQCAPS.forEach(function(c){if(c.owner)m[c.owner]=1;});
+                 return Object.keys(m).map(function(o){return [o,o];});})()}]
     }));
   }
 });

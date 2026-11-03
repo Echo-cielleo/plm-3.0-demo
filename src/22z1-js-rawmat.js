@@ -368,7 +368,7 @@ function matOpen(code){
   if(!code){ toast('该行未匹配到物料档案','warn'); return; }
   showPage('bd:rawmat-detail',{code:code});
 }
-function matBack(){ showPage('bd:rawmat'); }
+function matBack(){ navBack('bd:rawmat-detail','bd:rawmat'); }
 /* 供应商页 → 原料信息页并按供应商名过滤 */
 function matBySup(supCode){
   var sp=supByCode(supCode);

@@ -12,7 +12,7 @@ function rptCount(arr,fn){
 }
 function rptPage(){
   var inProgress=rptCount(PROJECTS,function(p){
-    return ['交付','推广'].indexOf(p.stage)<0;
+    return ['试推广','验收'].indexOf(p.stage)<0;
   });
   var sdsTodo=rptCount(SDS_ROWS,function(s){
     return ['编制中','审核中','待改版'].indexOf(s.status)>=0;

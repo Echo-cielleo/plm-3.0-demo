@@ -105,19 +105,40 @@ function mdLink(text,js){
 }
 
 /* ---------- 通用：渲染 + 注册 ---------- */
+/* [反馈F19] 详情页头部面包屑（模块 / 列表页 / 当前页，每级可点）+ 返回优先回来源页 */
+function mdCrumb(def){
+  var c=def.crumb||[];
+  if(!c.length)return '';
+  var h='<div class="md-crumb">';
+  c.forEach(function(t,i){
+    if(i)h+='<span class="sep">/</span>';
+    if(i===c.length-1)h+='<b>'+esc(t)+'</b>';
+    else if(i===c.length-2)h+='<a onclick="showPage(\''+esc(def.listId)+'\')">'+esc(t)+'</a>';
+    else h+='<a onclick="showPage(\''+esc(mdModuleHome(t))+'\')">'+esc(t)+'</a>';
+  });
+  return h+'</div>';
+}
+function mdModuleHome(name){
+  var g=(typeof MENU!=='undefined'?MENU.filter(function(x){return x.name===name;})[0]:null);
+  if(!g)return 'home';
+  if(g.page)return g.page;
+  var f=null;
+  (function walk(ns){ (ns||[]).forEach(function(c){ if(!f&&!c.children&&PAGES[c.id])f=c.id; if(c.children)walk(c.children); }); })(g.children);
+  return f||'home';
+}
 function mdRender(def,params){
   var key=(params&&params.key)||'';
   var host=$('pageHost');
   var r=def.get(key);
   if(!r){
-    host.innerHTML='<div class="page-hd"><div class="t"><h1>'+esc(def.title)+'</h1></div></div>'+
+    host.innerHTML='<div class="page-hd"><div class="t">'+mdCrumb(def)+'<h1>'+esc(def.title)+'</h1></div></div>'+
       '<div class="card"><div class="card-b"><div class="muted">未找到记录 <code>'+esc(key||'—')+'</code></div>'+
-      '<div style="margin-top:12px"><button class="btn" onclick="showPage(\''+esc(def.listId)+'\')">← '+esc(def.back)+'</button></div></div></div>';
+      '<div style="margin-top:12px"><button class="btn" onclick="navBack(\''+esc(def.pageId)+'\',\''+esc(def.listId)+'\')">← '+esc(def.back)+'</button></div></div></div>';
     return;
   }
   var hero=def.hero(r);
-  var h='<div class="page-hd"><div class="t"><h1>'+hero.h1+'</h1><div class="page-sub">'+hero.sub+'</div></div>'+
-        '<div class="page-acts"><button class="btn" onclick="showPage(\''+esc(def.listId)+'\')">← '+esc(def.back)+'</button>'+
+  var h='<div class="page-hd"><div class="t">'+mdCrumb(def)+'<h1>'+hero.h1+'</h1><div class="page-sub">'+hero.sub+'</div></div>'+
+        '<div class="page-acts"><button class="btn" onclick="navBack(\''+esc(def.pageId)+'\',\''+esc(def.listId)+'\')">← '+esc(def.back)+'</button>'+
         (def.acts?def.acts(r):'')+'</div></div>';
   h+=mdNotice(def.warnLv||'warn',def.warnIcon||'!',def.warnTitle||'风险提示',def.warns?def.warns(r):[]);
   (def.sections(r)||[]).forEach(function(s){
@@ -437,6 +458,29 @@ function mdEqCaps(code){ return EQCAPS.filter(function(c){return c.eq===code;});
 function mdEqMaints(code){ return EQMAINTS.filter(function(m){return String(m.eq).indexOf(code)===0;}); }
 function mdEqSpares(code){ return EQSPARES.filter(function(s){return s['for']===code;}); }
 
+/* [反馈F22] 设备能力配套方法 SOP 附件（原型层：文件名 + 下载占位，不做文件管理）
+   日期按演示锚点平移；至少 2 台设备有 SOP */
+var EQ_SOP=(function(){
+  var T=demoYmd();
+  return {
+    'EQ-2026-001':[{n:'GB/T 4666 拉伸强度与撕裂强度试验 SOP',v:'V2.1',d:dateAdd(T,-120)},
+                   {n:'试验机夹具更换与力值零点校准作业指导',v:'V1.3',d:dateAdd(T,-60)}],
+    'EQ-2026-002':[{n:'VOC / SVOC 袋式法 GC-MS 检测 SOP',v:'V3.0',d:dateAdd(T,-90)}],
+    'EQ-2026-006':[{n:'马丁代尔耐磨试验（10 万次循环）SOP',v:'V1.2',d:dateAdd(T,-45)}],
+    'EQ-2026-009':[{n:'乳液粒径分布测定 SOP（激光衍射法）',v:'V1.0',d:dateAdd(T,-30)}]
+  };
+})();
+function eqSopHtml(code){
+  var list=(typeof EQ_SOP!=='undefined'?EQ_SOP[code]:null)||[];
+  if(!list.length)return '<span class="muted">暂未挂 SOP 附件（方法说明见上）</span>';
+  return '<div class="tbl-wrap"><table class="tbl tbl-sm"><thead><tr><th>文件名</th>'+
+         '<th style="width:70px">版本</th><th style="width:100px">发布日期</th><th style="width:120px">操作</th></tr></thead><tbody>'+
+         list.map(function(f){
+           return '<tr><td>📎 '+esc(f.n)+'</td><td>'+esc(f.v)+'</td><td>'+esc(f.d)+'</td>'+
+             '<td class="op"><button class="btn btn-link" onclick="toast(\'本原型仅演示下载操作，未提供实际文件\',\'info\')">下载</button></td></tr>';
+         }).join('')+'</tbody></table></div>';
+}
+
 mdReg({
   pageId:'eq:list-detail',listId:'eq:list',back:'返回设备列表',
   title:'设备详情',crumb:['设备资源','设备列表','设备详情'],
@@ -474,6 +518,8 @@ mdReg({
         ['责任人',esc(e.owner)],
         ['状态',gtag(e.status)],
         ['下次校准',esc(e.cal)+((mdDaysTo(e.cal)!==null&&mdDaysTo(e.cal)>=0&&mdDaysTo(e.cal)<=30)?' <span class="tag orange">临期</span>':'')],
+        ['购入日期',e.purchaseDate?esc(e.purchaseDate):'<span class="muted">—</span>'],
+        ['设备实图',e.photo?('<img src="'+e.photo+'" alt="'+esc(e.name)+' 实图（演示占位）" style="width:240px;border-radius:8px;display:block">'):'<span class="muted">—</span>'],
         ['可测能力项','<b>'+caps.length+'</b> 项'],
         ['关联备件','<b>'+sp.length+'</b> 项'+(sp.length?('（'+sp.map(function(s){return esc(s.name);}).join('、')+'）'):'')]
       ]},
@@ -549,11 +595,12 @@ mdReg({
          return [mdLink(esc(s.id),'mdOpenSubmit(\''+esc(s.id)+'\')'),esc(s.sample),esc(s.item),esc(s.org),gtag(s.status)];
        }),
        empty:'暂无检测记录引用该能力项'},
-      {t:'配套方法说明',sub:'',rows:[
+      {t:'配套方法说明',sub:'方法信息与 SOP 附件',rows:[
         ['检测方法','内部方法编号 PLM-QC-'+String(100+EQCAPS.indexOf(c)+1)+'（演示编号）'],
         ['标准依据','无对应国标时按内部方法执行，需在报告中注明方法与量程'],
         ['数据用途','可作为产品理化性质实测值来源，写入产品详情页「理化性质」区'],
-        ['量程风险','超出量程的样品需稀释或改用其他设备，稀释倍数须记录在原始记录中']
+        ['量程风险','超出量程的样品需稀释或改用其他设备，稀释倍数须记录在原始记录中'],
+        ['SOP 附件',eqSopHtml(c.eq)]
       ]}
     ];
   }

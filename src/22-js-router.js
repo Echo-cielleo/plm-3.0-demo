@@ -183,7 +183,7 @@ function renderSidebar(){
   });
   host.innerHTML=h;
   $$('[data-go]',host).forEach(function(b){
-    b.onclick=function(){ showPage(this.getAttribute('data-go')); };
+    b.onclick=function(){ _navFrom={}; showPage(this.getAttribute('data-go')); };   /* 侧栏导航清来源栈 */
   });
   $$('[data-grp]',host).forEach(function(b){
     b.onclick=function(){
@@ -216,6 +216,30 @@ function highlightSidebar(pageId){
 }
 
 /* ---------- 面包屑 ---------- */
+/* 标签→页面id 反查（面包屑中间级可点：模块名→模块首个注册页，页面名→该页） */
+function crumbIdMap(){
+  var m={};
+  MENU.forEach(function(g){
+    if(g.page){ m[g.name]=g.page; }
+    else{
+      var first=null;
+      (function walk(nodes){
+        nodes.forEach(function(c){
+          if(!first&&PAGES[c.id]&&!c.children)first=c.id;
+          if(c.children)walk(c.children);
+        });
+      })(g.children||[]);
+      if(first)m[g.name]=first;
+    }
+    (function walk(nodes){
+      nodes.forEach(function(c){
+        if(PAGES[c.id])m[c.name]=c.id;
+        if(c.children)walk(c.children);
+      });
+    })(g.children||[]);
+  });
+  return m;
+}
 function setCrumb(pageId){
   var el=$('crumb'); if(!el)return;
   var parts=[];
@@ -236,16 +260,38 @@ function setCrumb(pageId){
       if(found){ parts=found; break; }
     }
   }
-  var h='<a onclick="showPage(\'home\')">首页</a>';
+  /* [反馈F19] 有来源页时，面包屑最前给「← 返回来源」入口（返回优先回 from） */
+  var h='';
+  var rec=_navFrom[pageId];
+  if(rec&&rec.page&&PAGES[rec.page]){
+    h+='<a class="crumb-back" onclick="navBack(\''+esc(pageId)+'\',\'\')">← 返回'+esc(PAGES[rec.page].title||rec.page)+'</a><span class="sep">/</span>';
+  }
+  h+='<a onclick="showPage(\'home\')">首页</a>';
+  var idm=crumbIdMap();
   parts.forEach(function(t,i){
     var isHtml=typeof t==='string'&&t.indexOf('onclick=')>=0;
-    h+='<span class="sep">/</span>'+(i===parts.length-1?(isHtml?t:'<b>'+esc(t)+'</b>'):t);
+    if(i===parts.length-1){
+      h+='<span class="sep">/</span>'+(isHtml?t:'<b>'+esc(t)+'</b>');
+    }else{
+      /* 中间级可点：能反查到页面 id 就变链接 */
+      var tid=(!isHtml&&idm[t])?idm[t]:'';
+      h+='<span class="sep">/</span>'+(!isHtml&&tid?'<a onclick="showPage(\''+esc(tid)+'\')">'+esc(t)+'</a>':t);
+    }
   });
   el.innerHTML=h;
 }
 
 /* ---------- 路由主函数 ---------- */
 var curPage='',curParams={};
+/* [试用反馈F10/F11/F15/F19] 来源栈：站内跳转记录「从哪来（含参数）」，返回优先回来源页。
+   带参数是因为来源页常靠参数定位记录（如 exp:sum-detail 的 id），裸返回会落进空态。
+   侧栏导航 = 用户主动换模块，清空栈（见 renderSidebar 的 data-go 绑定）。 */
+var _navFrom={};
+function navBack(pageId,fallback){
+  var rec=_navFrom[pageId||curPage];
+  if(rec&&PAGES[rec.page])showPage(rec.page,rec.params);
+  else if(fallback)showPage(fallback);
+}
 function showPage(pageId,params){
   var p=PAGES[pageId];
   if(!p){
@@ -254,6 +300,7 @@ function showPage(pageId,params){
     setCrumb(pageId); highlightSidebar(baseOf(pageId));
     return;
   }
+  if(curPage&&curPage!==pageId)_navFrom[pageId]={page:curPage,params:curParams};   /* 记录来源+来源参数 */
   curPage=pageId; curParams=params||{};
   /* 1) 面包屑 + 标题 */
   setCrumb(pageId);
